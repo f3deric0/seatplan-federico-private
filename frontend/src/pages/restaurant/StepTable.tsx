@@ -444,6 +444,7 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, busy, conflict
               bookingTime={time}
               sunset={sunsetOf(map)}
               summary={cardTable?.ambience ? lightWords(cardTable.ambience.light) : null}
+              tableLabel={cardTable?.label ?? null}
             />
           </div>
         )}

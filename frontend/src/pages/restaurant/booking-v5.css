@@ -133,7 +133,7 @@
 .rb5-chair .rb-step-title {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(2.1rem, 6vw, 3.4rem);
+  font-size: clamp(2.1rem, 3.4vw, 2.6rem);
   line-height: 1.05;
   letter-spacing: -0.01em;
 }
@@ -258,10 +258,27 @@
   border-color: var(--c-primary);
 }
 
+/* The plan takes the height the screen has left, so the light control under it is in the same view. */
 .rb5-plan-card .seatmap-viewport,
 .rb5-your-table .seatmap-viewport {
-  height: min(52vh, 26rem);
+  height: clamp(18rem, calc(100vh - 35rem), 28rem);
   border-radius: var(--radius-lg);
+}
+
+/* The hints under the plan repeat the key and the light line: the plan is followed by the light, nothing else. */
+.rb5-plan-card .seatmap-caption,
+.rb5-plan-card .rb-scene-note {
+  display: none;
+}
+
+.rb-light-legend,
+.rb-light-live {
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.rb-light-still p {
+  margin: var(--space-1) 0 0;
 }
 
 .rb5-your-table .seatmap-viewport {

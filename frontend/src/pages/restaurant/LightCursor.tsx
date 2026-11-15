@@ -17,6 +17,13 @@ interface LightCursorProps {
   sunset: string | null;
   /** The light of the table in front of the diner, in words ("After dark"), for the one-line form on a phone. */
   summary?: string | null;
+  /** The table in front of the diner ("R1"), so the line under the slider says what the light does to it. */
+  tableLabel?: string | null;
+}
+
+/** True when the sun has already set when the visit starts: the light cannot change, so there is nothing to slide. */
+export function sunSetBeforeStay(steps: string[], sunset: string | null): boolean {
+  return Boolean(sunset) && steps.length > 0 && toMinutes(sunset as string) <= toMinutes(steps[0]);
 }
 
 /** Where the sunset falls along the stay, 0 to 100, or null when it is outside the stay. */
@@ -38,13 +45,24 @@ function startsOpen(): boolean {
   }
 }
 
-export function LightCursorControl({ steps, index, onChange, failed, bookingTime, sunset, summary }: LightCursorProps) {
+export function LightCursorControl({ steps, index, onChange, failed, bookingTime, sunset, summary, tableLabel }: LightCursorProps) {
   const id = useId();
   const regionId = useId();
   const [open, setOpen] = useState(startsOpen);
   const first = steps[0];
   const last = steps[steps.length - 1];
   const sun = sunsetPercent(steps, sunset);
+  // After dark for the whole visit there is nothing to move: say so, instead of a slider that seems broken.
+  if (sunSetBeforeStay(steps, sunset)) {
+    return (
+      <section className="rb-light-cursor rb-light-still" aria-label="Light during your visit">
+        <h3 className="rb-light-title">Light during your visit</h3>
+        <p className="rb-muted">
+          The sun sets at {sunset}, before your table time of {bookingTime}. It is dark for the whole visit, so the light does not change.
+        </p>
+      </section>
+    );
+  }
   return (
     <section className="rb-light-cursor" aria-label="Light during your visit">
       <div className="rb-light-head">
@@ -94,10 +112,12 @@ export function LightCursorControl({ steps, index, onChange, failed, bookingTime
             </span>
           </div>
         </div>
-        <p className="rb-muted" aria-live="polite">
+        <p className="rb-muted rb-light-live" aria-live="polite">
           <strong>Light preview at {steps[index]}.</strong> Booking at {bookingTime}.
+          {tableLabel && summary ? ` Table ${tableLabel}: ${summary.toLowerCase()}.` : ""}
           {sun !== null && sunset ? ` The sun sets at ${sunset}.` : ""}
         </p>
+        <p className="rb-muted rb-light-legend">Yellow stripes are where the sun reaches the floor. Dark blue is after sunset.</p>
         {failed && (
           <p className="rb-notice" role="status">
             We could not update the light just now. The picture shows an earlier time.
