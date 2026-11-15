@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { deletePhoto, describePhoto, listPhotos, orderPhotos, uploadPhoto } from "../../api/photos";
 import type { OwnerPhoto } from "../../api/photos";
-import { Button, ErrorState, Field, Skeleton } from "../../design/components";
+import { Badge, Button, ErrorState, Field, Skeleton } from "../../design/components";
 import { OwnerShell } from "./OwnerShell";
 import { useLoad } from "../restaurant/useLoad";
 import { PhotoPreview } from "./PhotoPreview";
@@ -11,8 +11,12 @@ import "./owner.css";
 
 export default function PhotoEditorPage() {
   const { venueId = "" } = useParams(), [query] = useSearchParams();
-  return <OwnerShell title="Restaurant photos" venueId={venueId} current="photos"><h1 className="ow-title">{query.get("opening") ? "Window view photo" : "Restaurant photos"}</h1><p>Step 3 of 6 · Photos</p><PhotoEditor venueId={venueId} openingKey={query.get("opening") ?? undefined} />
-    <Link className="btn btn-primary" to={`/owner/${venueId}/hours`}>Save and continue</Link>
+  return <OwnerShell title="Restaurant photos" venueId={venueId} current="photos">
+    <div className="ow-page-head"><div><h1 className="ow-title">{query.get("opening") ? "Window view photo" : "Restaurant photos"}</h1><p className="rb-muted">{query.get("opening") ? "Show guests the view from this window." : "Choose the cover photo guests see in discovery and on your listing."}</p></div>
+      <Link className="btn btn-secondary" to={`/owner/${encodeURIComponent(venueId)}/${query.get("opening") ? "rooms" : "profile"}`}>{query.get("opening") ? "Back to floor plan" : "Back to profile"}</Link>
+    </div>
+    <PhotoEditor venueId={venueId} openingKey={query.get("opening") ?? undefined} />
+    {!query.get("opening") && <div className="ow-page-next"><Link className="btn btn-primary" to={`/owner/${encodeURIComponent(venueId)}/hours`}>Continue to opening hours</Link></div>}
   </OwnerShell>;
 }
 
@@ -49,7 +53,7 @@ function Gallery({ venueId, openingKey, initial }: { venueId: string; openingKey
     {error && <p role="alert" className="owner-error">{error}</p>}
     <div className="owner-photo-grid">{items.map((photo, index) => <article key={photo.id} className="owner-photo-card" draggable={!openingKey && !busy} onDragStart={event => { event.dataTransfer.setData("application/x-seatplan-photo", String(index)); event.dataTransfer.effectAllowed = "move"; }} onDragOver={event => { if (!busy && !openingKey && event.dataTransfer.types.includes("application/x-seatplan-photo")) event.preventDefault(); }} onDrop={event => { if (!busy && !openingKey) { const from = event.dataTransfer.getData("application/x-seatplan-photo"); if (from !== "") { event.preventDefault(); move(Number(from), index); } } }}>
       <PhotoPreview url={photo.url} alt={photo.alt_text} className="owner-photo-thumbnail" />
-      {photo.is_cover && <p>Cover</p>}
+      {photo.is_cover && <p><Badge tone="success">Cover photo</Badge></p>}
       <PhotoDescription photo={photo} number={index + 1} disabled={busy} onSave={text => perform(() => describePhoto(venueId, photo.id, text))} />
       {!openingKey && <div className="owner-photo-actions"><Button variant="secondary" disabled={busy || photo.is_cover} aria-label={`Set photo ${index + 1} as cover`} onClick={() => void perform(() => orderPhotos(venueId, items.map(p => p.id), photo.id))}>Set as cover</Button>
         <Button variant="secondary" disabled={busy || index === 0} aria-label={`Move photo ${index + 1} left`} onClick={() => move(index, index - 1)}>Move left</Button><Button variant="secondary" disabled={busy || index === items.length - 1} aria-label={`Move photo ${index + 1} right`} onClick={() => move(index, index + 1)}>Move right</Button></div>}

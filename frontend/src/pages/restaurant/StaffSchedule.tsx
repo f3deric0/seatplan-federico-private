@@ -2,6 +2,7 @@
 // (how long a party of each size stays) and closed days. Staff edit a draft;
 // nothing changes for diners until Save.
 import { useEffect, useState } from "react";
+import type { ComponentType } from "react";
 import { getSchedule, saveSchedule } from "../../api/restaurant";
 import type { Schedule, ServicePeriod } from "../../api/restaurant";
 import { Button, ErrorState, Skeleton, useToast } from "../../design/components";
@@ -20,9 +21,19 @@ export function StaffSchedule({ venueId }: { venueId: string }) {
   return <ScheduleEditor venueId={venueId} saved={state.data} onSaved={setData} />;
 }
 
-const NEW_SERVICE: ServicePeriod = { name: "", weekday: 0, start_time: "12:00", end_time: "15:00", slot_minutes: 15, max_covers_per_slot: 20 };
+export const NEW_SERVICE: ServicePeriod = { name: "", weekday: 0, start_time: "12:00", end_time: "15:00", slot_minutes: 15, max_covers_per_slot: 20 };
 
-function ScheduleEditor({ venueId, saved, onSaved }: { venueId: string; saved: Schedule; onSaved: (s: Schedule) => void }) {
+interface ServicesProps {
+  services: ServicePeriod[];
+  onChange: (services: ServicePeriod[]) => void;
+}
+
+export function ScheduleEditor({ venueId, saved, onSaved, servicesEditor: Services = ServicesEditor }: {
+  venueId: string;
+  saved: Schedule;
+  onSaved: (schedule: Schedule) => void;
+  servicesEditor?: ComponentType<ServicesProps>;
+}) {
   const toast = useToast();
   const [draft, setDraft] = useState<Schedule>(saved);
   const [busy, setBusy] = useState(false);
@@ -51,14 +62,14 @@ function ScheduleEditor({ venueId, saved, onSaved }: { venueId: string; saved: S
   };
   return (
     <div className="st-schedule">
-      <header className="st-schedule-heading"><h2>Weekly schedule</h2><p className="rb-muted">Recurring opening hours for every week. The Day selector above only changes the floor and daily reports.</p><nav aria-label="Schedule sections"><a href="#st-services">Services</a><a href="#st-turn-times">Turn times</a><a href="#st-closed-days">Closed days</a></nav></header>
+      {Services === ServicesEditor && <header className="st-schedule-heading"><h2>Weekly schedule</h2><p className="rb-muted">Recurring opening hours for every week. The Day selector above only changes the floor and daily reports.</p><nav aria-label="Schedule sections"><a href="#st-services">Services</a><a href="#st-turn-times">Turn times</a><a href="#st-closed-days">Closed days</a></nav></header>}
       <div className="rb-actions st-schedule-save">
         <span role="status">{dirty ? "Unsaved changes" : "All changes saved"}</span>
         <Button variant="secondary" disabled={busy || !dirty} onClick={() => setDraft(saved)}>Undo my changes</Button>
         <Button busy={busy} disabled={!dirty || problems.length > 0} onClick={() => void save()}>Save schedule</Button>
       </div>
       <fieldset className="st-schedule-fields" disabled={busy}><legend className="visually-hidden">Weekly schedule draft</legend>
-      <ServicesEditor services={draft.services} onChange={(services) => setDraft({ ...draft, services })} />
+      <Services services={draft.services} onChange={(services) => setDraft({ ...draft, services })} />
       <TurnTimesEditor draft={draft} onChange={setDraft} />
       <BlackoutEditor draft={draft} onChange={setDraft} />
       </fieldset>
@@ -81,7 +92,7 @@ function ScheduleEditor({ venueId, saved, onSaved }: { venueId: string; saved: S
   );
 }
 
-function ServicesEditor({ services, onChange }: { services: ServicePeriod[]; onChange: (s: ServicePeriod[]) => void }) {
+function ServicesEditor({ services, onChange }: ServicesProps) {
   return (
     <section id="st-services" className="rb-card">
       <h2 className="rb-service-title">Services</h2>

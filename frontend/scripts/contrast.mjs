@@ -17,6 +17,9 @@ const NON_TEXT = 3;
 
 const PAIRS = [
   ["c-text", "c-bg", TEXT],
+  ["c-text", "c-ops-bg", TEXT],
+  ["c-text-muted", "c-ops-bg", TEXT],
+  ["c-ops-nav-text", "c-ops-nav", TEXT],
   ["c-text", "c-surface", TEXT],
   ["c-text", "c-surface-sunk", TEXT],
   ["c-text", "c-surface-strong", TEXT],
@@ -101,11 +104,14 @@ function ratio(foreground, background) {
 function main() {
   const themes = readThemes();
   let failures = 0;
+  let checks = 0;
   console.log("| Foreground | Background | Needs | Light | Dark | Restaurants light | Restaurants dark |");
   console.log("|---|---|---|---|---|---|---|");
   for (const [fg, bg, needed] of PAIRS) {
     const cells = ["light", "dark", "restLight", "restDark"].map((name) => {
       const t = themes[name];
+      if (!(fg in t && bg in t) && bg.startsWith("c-ops-") && (name === "light" || name === "dark")) return "—";
+      checks += 1;
       const r = ratio(t[fg], t[bg]);
       const pass = r >= needed;
       if (!pass) failures += 1;
@@ -113,7 +119,7 @@ function main() {
     });
     console.log(`| \`--${fg}\` | \`--${bg}\` | ${needed}:1 | ${cells.join(" | ")} |`);
   }
-  console.log(`\n${PAIRS.length * 4} checks, ${failures} failures.`);
+  console.log(`\n${checks} checks, ${failures} failures.`);
   process.exitCode = failures === 0 ? 0 : 1;
 }
 

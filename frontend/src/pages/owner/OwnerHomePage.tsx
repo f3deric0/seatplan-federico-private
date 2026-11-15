@@ -11,7 +11,7 @@ import { PhotoPreview } from "./PhotoPreview";
 export function nextStep(card: OwnerCard): { label: string; path: string } | null {
   const steps: Record<string, { label: string; path: string }> = {
     identity: { label: "Complete the profile", path: "profile" },
-    location: { label: "Pin your location", path: "profile" },
+    location: { label: "Pin your location", path: "profile?section=location" },
     photos: { label: "Add a cover photo", path: "photos" },
     hours: { label: "Add opening hours", path: "hours" },
     rooms: { label: "Add your first room", path: "rooms" },
@@ -40,7 +40,7 @@ function RestaurantCard({ card }: { card: OwnerCard }) {
   const publicPage = card.slug ? `/restaurants/${encodeURIComponent(card.slug)}` : `/r/${encodeURIComponent(card.public_id)}`;
   const complete = card.setup.done >= card.setup.total;
   const next = nextStep(card);
-  return <article className="owner-card">
+  return <article className="owner-card ow-venue-card">
     {card.cover_url ? <PhotoPreview className="owner-cover" url={card.cover_url} alt="" /> : <div className="owner-cover owner-cover-empty" aria-hidden="true" />}
     <div className="owner-card-body">
       <div className="ow-card-top"><Badge tone={published ? "success" : "warning"}>{published ? "Published" : "Draft"}</Badge></div>

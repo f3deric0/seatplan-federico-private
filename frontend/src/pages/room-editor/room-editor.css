@@ -134,4 +134,15 @@
 }
 /* The first problem now sits under the plan, so the status line no longer floats over it. */
 .room-status { position: static; border: 0; background: transparent; padding-inline: 0; }
-@media (max-width: 1023px) { .room-status { bottom: auto; } }
+.room-table-tools, .room-other-tools { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.room-table-tools .btn-primary { color: var(--c-on-primary); background: var(--c-primary); border-color: var(--c-primary); }
+.room-other-tools .btn-ghost { border-color: transparent; }
+.room-other-tools .btn-ghost[aria-pressed="true"] { border-color: var(--c-primary); }
+.room-title h1 { font-family: var(--font-body); font-weight: var(--fw-semibold); font-size: clamp(1.75rem, 5vw, 2.5rem); }
+@media (max-width: 1023px) {
+  .room-status { bottom: auto; }
+  .room-properties { grid-row: auto; min-width: 0; }
+  .room-tools { border-top: 1px solid var(--c-border); scroll-padding-inline: var(--space-2); }
+  .room-table-tools, .room-other-tools { flex: 0 0 auto; flex-wrap: nowrap; gap: 0; }
+  .room-table-tools .btn-primary { margin-inline: var(--space-1); }
+}

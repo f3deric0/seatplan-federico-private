@@ -63,7 +63,7 @@ describe("checklist", () => {
       ["No problems in the room plan", false],
       ["North set in rooms with windows", true],
     ]);
-    expect(rows.find((r) => r.label.startsWith("Address"))?.fix).toBe(`/owner/${VID}/profile`);
+    expect(rows.find((r) => r.label.startsWith("Address"))?.fix).toBe(`/owner/${VID}/profile?section=location`);
   });
 
   it("marks everything done when nothing is reported", () => {

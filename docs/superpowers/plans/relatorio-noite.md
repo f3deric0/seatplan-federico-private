@@ -772,3 +772,12 @@ alternativas. A lista e a planta recebem e devolvem o foco à escolha sugerida.
 Typecheck e os 20 testes de ambiente da reserva passaram. Foram acrescentados
 casos Playwright para 320/390 px. O ambiente recusou acesso às portas locais
 usadas pelo servidor Playwright.
+
+## Área do dono
+
+Cartões com a ação adequada ao estado da ficha, pré-visualização com perfil e
+fotografia de capa existentes, e ligação de localização diretamente ao mapa.
+Os horários agrupam dias com as mesmas regras e usam o editor de horários
+existente para validar e gravar. A planta destaca a adição de mesas e mantém
+os controlos de edição de sala. Typecheck, testes do dono e da planta,
+e 178 verificações de contraste sem falhas.

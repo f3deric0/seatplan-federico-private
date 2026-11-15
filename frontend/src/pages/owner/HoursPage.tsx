@@ -4,33 +4,34 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getSchedule, saveSchedule } from "../../api/restaurant";
+import type { Schedule } from "../../api/restaurant";
 import { Button, ErrorState, Skeleton } from "../../design/components";
 import { OwnerShell } from "./OwnerShell";
-import { StaffSchedule } from "../restaurant/StaffSchedule";
+import { ScheduleEditor } from "../restaurant/StaffSchedule";
 import { errorMessage } from "../restaurant/format";
 import { useLoad } from "../restaurant/useLoad";
 import { TEMPLATE_SCHEDULE, TEMPLATE_TEXT } from "./hoursTemplate";
+import { WeeklyServices } from "./WeeklyServices";
 import "./owner.css";
+import "../restaurant/staff.css";
 
 export default function HoursPage() {
   const { venueId = "" } = useParams();
-  const { state, reload } = useLoad(() => getSchedule(venueId), venueId);
-  const [saved, setSaved] = useState(0);
+  const { state, reload, setData } = useLoad(() => getSchedule(venueId), venueId);
+  const [custom, setCustom] = useState(false);
   return (
     <OwnerShell title="Opening hours" venueId={venueId} current="hours">
-      <h1 className="ow-title">Opening hours</h1>
+      <div className="ow-page-head"><div><h1 className="ow-title">Opening hours</h1><p className="rb-muted">Set the services guests can book each week.</p></div></div>
       {state.status === "loading" && <Skeleton label="Loading your opening hours" lines={4} />}
       {state.status === "error" && <ErrorState message="Could not open your opening hours. Check your sign-in or retry." onRetry={() => reload()} />}
-      {state.status === "ready" && state.data.services.length === 0 && saved === 0 && (
+      {state.status === "ready" && state.data.services.length === 0 && !custom && (
         <Proposal
           venueId={venueId}
-          onSaved={() => {
-            setSaved((n) => n + 1);
-            reload();
-          }}
+          onSaved={setData}
+          onCustom={() => setCustom(true)}
         />
       )}
-      {state.status === "ready" && (state.data.services.length > 0 || saved > 0) && <StaffSchedule key={saved} venueId={venueId} />}
+      {state.status === "ready" && (state.data.services.length > 0 || custom) && <ScheduleEditor key={venueId} venueId={venueId} saved={state.data} onSaved={(next) => { setCustom(true); setData(next); }} servicesEditor={WeeklyServices} />}
       <nav className="owner-card-links" aria-label="Setup steps">
         <Link to={`/owner/${encodeURIComponent(venueId)}/photos`}>← Photos</Link>
         <Link to={`/owner/${encodeURIComponent(venueId)}/rooms`}>Next: rooms →</Link>
@@ -40,15 +41,18 @@ export default function HoursPage() {
   );
 }
 
-function Proposal({ venueId, onSaved }: { venueId: string; onSaved: () => void }) {
+function Proposal({ venueId, onSaved, onCustom }: {
+  venueId: string;
+  onSaved: (schedule: Schedule) => void;
+  onCustom: () => void;
+}) {
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState("");
   const use = async (): Promise<void> => {
     setBusy(true);
     setProblem("");
     try {
-      await saveSchedule(venueId, { services: TEMPLATE_SCHEDULE.service_periods, turn_times: TEMPLATE_SCHEDULE.turn_times, blackout_dates: [] });
-      onSaved();
+      onSaved(await saveSchedule(venueId, { services: TEMPLATE_SCHEDULE.service_periods, turn_times: TEMPLATE_SCHEDULE.turn_times, blackout_dates: [] }));
     } catch (error) {
       setProblem(errorMessage(error, "We could not save the opening hours. Please try again."));
     } finally {
@@ -65,9 +69,10 @@ function Proposal({ venueId, onSaved }: { venueId: string; onSaved: () => void }
             {problem}
           </p>
         )}
-        <Button busy={busy} onClick={() => void use()}>
-          Use this
-        </Button>
+        <div className="rb-actions">
+          <Button busy={busy} onClick={() => void use()}>Use this</Button>
+          <Button variant="secondary" disabled={busy} onClick={onCustom}>Set my own hours</Button>
+        </div>
       </div>
     </section>
   );

@@ -25,8 +25,8 @@ interface OwnerShellProps {
 const STEPS: { key: Exclude<OwnerSection, "restaurants">; label: string; path: string }[] = [
   { key: "profile", label: "Profile", path: "profile" },
   { key: "photos", label: "Photos", path: "photos" },
-  { key: "hours", label: "Hours", path: "hours" },
-  { key: "rooms", label: "Rooms", path: "rooms" },
+  { key: "hours", label: "Opening hours", path: "hours" },
+  { key: "rooms", label: "Floor plan", path: "rooms" },
   { key: "review", label: "Review and publish", path: "review" },
 ];
 
@@ -53,6 +53,7 @@ export function OwnerShell({ title, venueId, venueName, current, publicHref, chi
               ))}
           </ul>
           <ul className="ow-nav-more">
+            {base && <li><Link to={`${base}/dashboard`}>Service floor</Link></li>}
             {venueId && (
               <li>
                 <Link to={publicHref ?? `/r/${encodeURIComponent(venueId)}`}>Public restaurant</Link>

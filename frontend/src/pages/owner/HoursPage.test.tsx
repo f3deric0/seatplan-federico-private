@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import HoursPage from "./HoursPage";
@@ -71,5 +71,29 @@ describe("Opening hours step", () => {
     expect(await screen.findByRole("button", { name: "Save schedule" })).toBeTruthy();
     expect(screen.queryByText(/Tuesday to Sunday/)).toBeNull();
     expect(screen.getByRole("link", { name: /Next: rooms/ }).getAttribute("href")).toBe(`/owner/${VID}/rooms`);
+  });
+
+  it("edits matching weekdays together and keeps a service with different booking rules", async () => {
+    const dinner = { name: "Dinner", start_time: "19:00", end_time: "22:00", slot_minutes: 30, max_covers_per_slot: 20 };
+    const different = { ...dinner, weekday: 5, slot_minutes: 15 };
+    const puts = server({
+      service_periods: [{ ...dinner, weekday: 3 }, { ...dinner, weekday: 4 }, different],
+      turn_times: [{ max_party: 4, minutes: 90 }],
+      blackout_dates: [],
+    });
+    open();
+    const groups = await screen.findAllByRole("button", { name: "Edit Dinner" });
+    expect(groups).toHaveLength(2);
+    fireEvent.click(groups[0]);
+    const dialog = within(screen.getByRole("dialog", { name: "Edit Dinner" }));
+    fireEvent.click(dialog.getByRole("checkbox", { name: "Wednesday" }));
+    fireEvent.change(dialog.getByLabelText("Opens"), { target: { value: "18:30" } });
+    fireEvent.click(dialog.getByRole("button", { name: "Save service" }));
+    expect(puts).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "Save schedule" }));
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(puts[0]).toMatchObject({
+      service_periods: [2, 3, 4].map((weekday) => ({ ...dinner, weekday, start_time: "18:30" })).concat(different),
+    });
   });
 });

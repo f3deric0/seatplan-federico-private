@@ -18,6 +18,9 @@
 
 :root[data-surface="restaurants"] {
   /* ---------- Colour: light ---------- */
+  --c-ops-bg: #f2f4ee;
+  --c-ops-nav: #172e26;
+  --c-ops-nav-text: #fffefb;
   --c-bg: #faf8f1;
   --c-surface: #fffefb;
   --c-surface-sunk: #e6eadf;   /* the floor under a plan */
@@ -69,6 +72,9 @@
 
 @media (prefers-color-scheme: dark) {
   :root[data-surface="restaurants"] {
+    --c-ops-bg: #151a15;
+    --c-ops-nav: #172e26;
+    --c-ops-nav-text: #f1efe4;
     --c-bg: #151a15;
     --c-surface: #1d241d;
     --c-surface-sunk: #0f130f;

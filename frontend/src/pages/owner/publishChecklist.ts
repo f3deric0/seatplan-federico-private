@@ -38,12 +38,13 @@ export function checklist(problems: PublishProblem[], tips: PublishProblem[]): C
   const all = [...problems, ...tips];
   return ROWS.map((row) => {
     const found = all.filter((p) => (row.codes === "rest" ? !NAMED.includes(p.code) : row.codes.includes(p.code)));
+    const first = found[0];
     return {
       label: row.label,
       done: found.length === 0,
       required: row.required,
       messages: found.map((p) => p.message),
-      fix: found[0]?.fix_url ?? null,
+      fix: first?.code === "location" ? `${first.fix_url}?section=location` : first?.fix_url ?? null,
       fixLabel: row.fixLabel,
     };
   });

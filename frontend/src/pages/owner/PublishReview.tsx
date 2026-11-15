@@ -4,30 +4,31 @@
 // checks everything again: this page is a convenience, not the source of truth.
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { getPublishCheck, publishProblems, publishRestaurant, unpublishRestaurant } from "../../api/owner";
+import { getOwnerProfile, getPublishCheck, publishProblems, publishRestaurant, unpublishRestaurant } from "../../api/owner";
 import type { PublishCheck, PublishProblem } from "../../api/owner";
 import { Badge, Button, Dialog, ErrorState, Skeleton } from "../../design/components";
 import { errorMessage } from "../restaurant/format";
 import { useLoad } from "../restaurant/useLoad";
 import { checklist } from "./publishChecklist";
 import { OwnerShell } from "./OwnerShell";
+import { ListingPreview } from "./ListingPreview";
 import "./owner.css";
 
 export default function PublishReview() {
   const { venueId = "" } = useParams();
-  const { state, reload } = useLoad(() => getPublishCheck(venueId), venueId);
+  const { state, reload, setData } = useLoad(() => getPublishCheck(venueId), venueId);
   return (
     <OwnerShell title="Review and publish" venueId={venueId} venueName={state.status === "ready" ? state.data.name : undefined} current="review" publicHref={state.status === "ready" && state.data.slug ? publicUrl(state.data.slug) ?? undefined : undefined}>
       {state.status === "loading" && <><h1 className="ow-title">Review and publish</h1><Skeleton label="Checking your restaurant" lines={5} /></>}
       {state.status === "error" && <><h1 className="ow-title">Review and publish</h1><ErrorState message="Could not check your restaurant. Check your sign-in or retry." onRetry={() => reload()} /></>}
-      {state.status === "ready" && <Review venueId={venueId} initial={state.data} refresh={() => reload(true)} />}
+      {state.status === "ready" && <Review key={venueId} venueId={venueId} check={state.data} onChange={setData} refresh={() => reload(true)} />}
     </OwnerShell>
   );
 }
 
-function Review({ venueId, initial, refresh }: { venueId: string; initial: PublishCheck; refresh: () => void }) {
-  const [check, setCheck] = useState(initial);
-  const [url, setUrl] = useState<string | null>(initial.status === "published" ? publicUrl(initial.slug) : null);
+function Review({ venueId, check, onChange, refresh }: { venueId: string; check: PublishCheck; onChange: (check: PublishCheck) => void; refresh: () => void }) {
+  const { state: profile } = useLoad(() => getOwnerProfile(venueId), venueId);
+  const [url, setUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [refused, setRefused] = useState<PublishProblem[]>([]);
   const [problem, setProblem] = useState("");
@@ -47,7 +48,7 @@ function Review({ venueId, initial, refresh }: { venueId: string; initial: Publi
     setProblem("");
     try {
       const answer = await publishRestaurant(venueId);
-      setCheck({ ...check, status: "published" });
+      onChange({ ...check, status: "published" });
       setUrl(answer.url);
     } catch (error) {
       const found = publishProblems(error);
@@ -64,7 +65,7 @@ function Review({ venueId, initial, refresh }: { venueId: string; initial: Publi
     setProblem("");
     try {
       await unpublishRestaurant(venueId);
-      setCheck({ ...check, status: "draft" });
+      onChange({ ...check, status: "draft" });
       setUrl(null);
       setConfirming(false);
     } catch (error) {
@@ -105,6 +106,7 @@ function Review({ venueId, initial, refresh }: { venueId: string; initial: Publi
         </div>
         <aside className="rb-card ow-listing" aria-label="Public listing">
           <h2 className="ow-card-title">Public listing</h2>
+          <ListingPreview venueId={venueId} name={check.name} profile={profile.status === "ready" ? profile.data : undefined} />
           <p className="rb-muted">
             {published
               ? `${check.name} is live and open for bookings.`
@@ -112,7 +114,7 @@ function Review({ venueId, initial, refresh }: { venueId: string; initial: Publi
                 ? "Everything required is done. Preview the restaurant, then publish it."
                 : `Preview the restaurant and fix the ${blocking.length === 1 ? "blocker" : `${blocking.length} blockers`} to enable publishing.`}
           </p>
-          {preview && <Link className="btn btn-secondary" to={preview}>{published ? "View public page" : "Preview listing"} <span aria-hidden="true">↗</span></Link>}
+          {preview && <Link className={`btn btn-${published ? "primary" : "secondary"}`} to={preview}>{published ? "View public page" : "Preview listing"} <span aria-hidden="true">↗</span></Link>}
           {!published && (
             <Button busy={busy} disabled={!check.ready} onClick={() => void publish()}>
               Publish restaurant
