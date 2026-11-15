@@ -2,7 +2,7 @@
 // in big type, a table board with words and patterns, and the map. Every
 // change by anyone (diners booking online, other staff) arrives through
 // useLive within about 2 seconds.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import { getFloor, moveBooking, venueDayScope } from "../../api/restaurant";
 import type { StaffBooking, StaffFloor as Floor, StaffTable } from "../../api/restaurant";
@@ -67,12 +67,12 @@ function tableIdAt(event: DragEvent): number | null {
 }
 
 /** Moving bookings by drag and drop or by "Move here". Reports the result in words. */
-function useMoves(venueId: string, floor: Floor, done: (message: string, tableIds: number[]) => void, problem: (message: string) => void) {
+function useMoves(venueId: string, floor: Floor, onMoved: (booking: StaffBooking, previousIds: number[]) => void, problem: (message: string) => void) {
   const moveTo = (id: string, target: StaffTable): void => {
     const moved = floor.bookings.find((b) => b.id === id);
     const name = moved?.name ?? "The booking";
     moveBooking(venueId, id, [target.id]).then(
-      () => done(`${name} moved to table ${target.label}.`, [...(moved?.table_ids ?? []), target.id]),
+      (booking) => onMoved(booking, moved?.table_ids ?? []),
       (error: unknown) => problem(errorMessage(error, `Could not move ${name} to table ${target.label}.`)),
     );
   };
@@ -96,12 +96,26 @@ function FloorView({ venueId, date, floor, time, live, onNow, onTime, onRefresh 
   const [walkin, setWalkin] = useState(false);
   const [checking, setChecking] = useState(false);
   const [view, setView] = useState<"map" | "list">("map");
+  const [queue, setQueue] = useState<"Upcoming" | "Seated" | "All active">("Upcoming");
   const [spoken, setSpoken] = useState("");
+  const selectedPanel = useRef<HTMLElement>(null);
   // The tables this member of staff just changed: the map shows that change without reading it out again.
   const [actedOn, setActedOn] = useState<number[]>([]);
-  const chooseTable=(id:number):void=>{setTableId(id);const selected=floor.tables.find(t=>t.id===id);if(selected?.booking_id)setBookingId(selected.booking_id);};
   const table = floor.tables.find((t) => t.id === tableId) ?? null;
   const booking = floor.bookings.find((b) => b.id === bookingId) ?? null;
+  const chooseTable = (id: number): void => {
+    const target = floor.tables.find((item) => item.id === id);
+    setTableId(id);
+    setBookingId(target?.booking_id ?? (target?.status === "free" && booking?.status === "confirmed" ? booking.id : null));
+  };
+  const selectBooking = (selected: StaffBooking): void => {
+    setBookingId(selected.id);
+    setTableId(selected.table_ids[0] ?? null);
+  };
+  const arrivals = queue === "Upcoming" ? upcomingArrivals(floor.bookings) : floor.bookings
+    .filter((item) => queue === "All active" || item.status === "seated" || item.status === "finishing")
+    .sort((a, b) => a.time.localeCompare(b.time));
+  const openWalkin = (): void => { onTime(time); setWalkin(true); };
   // Every successful action: say it out loud, close dialogs, fetch the floor again.
   const done = (message: string, tableIds: number[]): void => {
     setActedOn(tableIds);
@@ -111,13 +125,46 @@ function FloorView({ venueId, date, floor, time, live, onNow, onTime, onRefresh 
     setWalkin(false);
     onRefresh();
   };
+  const onMoved = (updated: StaffBooking, previousIds: number[]): void => {
+    selectBooking(updated);
+    done(`${updated.name} is now at ${tablesText(updated.table_labels)}.`, [...previousIds, ...updated.table_ids]);
+  };
   const problem = (message: string): void => toast.show(message, "danger");
-  const { moveTo, dropOn, dropOnMap } = useMoves(venueId, floor, done, problem);
+  const { moveTo, dropOn, dropOnMap } = useMoves(venueId, floor, onMoved, problem);
 
   return (
     <div className="st-floor">
-      <FloorHeader floor={floor} date={date} time={time} live={live} onNow={onNow} onTime={onTime} onWalkin={() => {onTime(time); setWalkin(true);}} onCheck={() => {onTime(time); setChecking(true);}} />
+      <FloorHeader floor={floor} date={date} time={time} live={live} onNow={onNow} onTime={onTime} onWalkin={openWalkin} onCheck={() => {onTime(time); setChecking(true);}} />
       <div className="st-grid">
+        <section className="rb-card st-arrivals-panel" aria-labelledby="st-arrivals-title">
+          <h2 id="st-arrivals-title" className="rb-service-title">Arrivals</h2>
+          <div className="st-queue-views" role="group" aria-label="Filter arrivals">
+            {(["Upcoming", "Seated", "All active"] as const).map((filter) => (
+              <Button key={filter} variant={queue === filter ? "primary" : "secondary"} aria-pressed={queue === filter} onClick={() => setQueue(filter)}>{filter}</Button>
+            ))}
+          </div>
+          <ArrivalsList
+            arrivals={arrivals}
+            services={floor.services}
+            selectedId={bookingId}
+            label={queue === "Upcoming" ? "Upcoming arrivals" : queue === "Seated" ? "Seated parties" : "All active parties"}
+            empty={queue === "Seated" ? "No parties are seated." : queue === "All active" ? "No active parties for this day." : undefined}
+            onSelect={(id) => {
+              const selected = floor.bookings.find((item) => item.id === id);
+              if (!selected) return;
+              selectBooking(selected);
+              window.requestAnimationFrame(() => selectedPanel.current?.focus());
+            }}
+          />
+        </section>
+        <div className="st-side">
+          <section className="rb-card st-selected-panel" aria-labelledby="st-selected-title" ref={selectedPanel} tabIndex={-1}>
+            <h2 id="st-selected-title" className="st-selection-label">Reservation details</h2>
+            <SelectionPanel venueId={venueId} floor={floor} table={table} booking={booking} onChanged={(message) => {
+              done(message, booking?.table_ids ?? (table ? [table.id] : []));
+              selectedPanel.current?.focus();
+            }} onProblem={problem} onMove={setMoving} onMoveHere={(b, t) => moveTo(b.id, t)} onWalkin={openWalkin} />
+          </section>
         <div className="st-main"><h2 className="st-plan-title">Floor plan</h2>
           <div className="st-view-controls" role="group" aria-label="Floor view"><Button variant={view === "map" ? "primary" : "secondary"} aria-pressed={view === "map"} onClick={() => setView("map")}>Map</Button><Button variant={view === "list" ? "primary" : "secondary"} aria-pressed={view === "list"} onClick={() => setView("list")}>Tables list</Button></div>
           <div hidden={view !== "map"} onDragOver={(e) => e.preventDefault()} onDrop={dropOnMap}>
@@ -136,24 +183,17 @@ function FloorView({ venueId, date, floor, time, live, onNow, onTime, onRefresh 
               onSelect={chooseTable}
             />
           </div>
-          <MapKey entries={STAFF_KEY} label="Table status key" />
+          {view === "map" && <MapKey entries={STAFF_KEY} label="Table status key" />}
           {view === "list" && <TableBoard floor={floor} selectedId={tableId} onSelect={chooseTable} onDropBooking={dropOn} />}
         </div>
-        <aside className="st-side" aria-label="Details and arrivals">
-          {(table || booking) && <section className="rb-card st-selected-panel" aria-label="Selected">
-            <h2 className="st-selection-label">Selected booking or table</h2>
-            <p className="rb-muted st-small">Status changes take effect now. Moves keep the booked time.</p>
-            <SelectionPanel venueId={venueId} floor={floor} table={table} booking={booking} onChanged={(message) => done(message, table ? [table.id] : (booking?.table_ids ?? []))} onProblem={problem} onMove={setMoving} onMoveHere={(b, t) => moveTo(b.id, t)} onWalkin={() => setWalkin(true)} />
-          </section>}
-          <section className="rb-card st-arrivals-panel">
-            <h2 className="rb-service-title">Upcoming arrivals</h2>
-            <p className="rb-muted st-small">Select a party to see its table and actions.</p>
-            <ArrivalsList arrivals={upcomingArrivals(floor.bookings)} services={floor.services} selectedId={bookingId} onSelect={id => {setBookingId(id); setTableId(floor.bookings.find(b => b.id === id)?.table_ids[0] ?? null);}} />
-          </section>
-        </aside>
+        </div>
       </div>
-      <MoveDialog venueId={venueId} booking={moving} tables={floor.tables} onClose={() => setMoving(null)} onMoved={(b) => done(`${b.name} is now at ${tablesText(b.table_labels)}.`, [...(moving?.table_ids ?? []), ...b.table_ids])} />
-      <WalkinDialog serviceName={floor.services.find(service=>service.start_time<=time && time<service.end_time)?.name} venueId={venueId} date={date} time={time} inService={floor.services.some(service => service.start_time <= time && time < service.end_time)} open={walkin} onClose={() => setWalkin(false)} onSeated={(b) => done(`Walk-in of ${b.party_size} seated at ${tablesText(b.table_labels)}.`, b.table_ids)} />
+      <MoveDialog venueId={venueId} booking={moving} tables={floor.tables} onClose={() => setMoving(null)} onMoved={(b) => onMoved(b, moving?.table_ids ?? [])} />
+      <WalkinDialog serviceName={floor.services.find(service=>service.start_time<=time && time<service.end_time)?.name} venueId={venueId} date={date} time={time} inService={floor.services.some(service => service.start_time <= time && time < service.end_time)} open={walkin} onClose={() => setWalkin(false)} onSeated={(b) => {
+        selectBooking(b);
+        setQueue("Seated");
+        done(`Walk-in of ${b.party_size} seated at ${tablesText(b.table_labels)}.`, b.table_ids);
+      }} />
       <Dialog open={checking} title={`Check a walk-in at ${time}`} onClose={() => setChecking(false)} actions={<Button variant="secondary" onClick={() => setChecking(false)}>Close simulation</Button>}>
         <p>Simulation only · {formatDate(date)} at {time}. No booking is created and no table is moved.</p>
         {checking && <WhatIfCard key={`${date}|${time}`} venueId={venueId} date={date} time={time} />}

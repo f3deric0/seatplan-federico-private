@@ -5,12 +5,12 @@ import StaffPage from "./StaffPage";
 import { FLOOR, VENUE } from "./__tests__/fixtures";
 import { mockApi } from "./__tests__/mockApi";
 afterEach(()=>vi.unstubAllGlobals());
-it("keeps Seat now primary and discloses uncommon booking actions",async()=>{
+it("keeps Seat guests primary and discloses uncommon booking actions",async()=>{
  mockApi({[`GET /api/staff/${VENUE}/floor`]:()=>FLOOR});
  render(<MemoryRouter initialEntries={[`/staff/${VENUE}`]}><Routes><Route path="/staff/:venueId" element={<StaffPage/>}/></Routes></MemoryRouter>);
  const arrivals=await screen.findByRole("list",{name:"Upcoming arrivals"});
  fireEvent.click(within(arrivals).getByRole("button",{name:/Rui Costa/}));
- expect(screen.getByRole("button",{name:"Seat now"})).toBeTruthy();
+ expect(screen.getByRole("button",{name:"Seat guests"}).classList.contains("btn-primary")).toBe(true);
  expect(screen.queryByRole("button",{name:"Move or combine"})).toBeNull();
  fireEvent.click(screen.getByRole("button",{name:"More actions"}));
  expect(screen.getByRole("button",{name:"Move or combine"})).toBeTruthy();

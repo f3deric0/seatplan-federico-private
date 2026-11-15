@@ -4,7 +4,7 @@ import type { StaffBooking, StaffFloor, StaffTable } from "../../api/restaurant"
 import { Badge, Button } from "../../design/components";
 import { BookingActions } from "./BookingActions";
 import { people, tablesText } from "./format";
-import { FLOOR_LOOK } from "./staffStatus";
+import { BOOKING_LOOK, FLOOR_LOOK } from "./staffStatus";
 import { prefWords } from "./prefs";
 
 interface SelectionPanelProps {
@@ -30,9 +30,9 @@ export function SelectionPanel(props: SelectionPanelProps) {
   return (
     <div className="st-selection">
       {table && !shown && <TableHeader table={table} />}
-      {table && table.status === "free" && <FreeTableActions {...props} table={table} />}
       {shown && <BookingDetails booking={shown} />}
       {shown && <BookingActions key={shown.id} venueId={props.venueId} booking={shown} onChanged={props.onChanged} onProblem={props.onProblem} onMove={props.onMove} />}
+      {table && table.status === "free" && <FreeTableActions {...props} table={table} />}
     </div>
   );
 }
@@ -49,14 +49,12 @@ function TableHeader({ table }: { table: StaffTable }) {
 function FreeTableActions({ table, booking, onMoveHere, onWalkin }: SelectionPanelProps & { table: StaffTable }) {
   return (
     <div className="st-actions">
-      {booking && booking.status === "confirmed" && (
-        <Button onClick={() => onMoveHere(booking, table)}>
-          Move {booking.name} here
+      {booking?.status === "confirmed" && !booking.table_ids.includes(table.id) && (
+        <Button variant="secondary" onClick={() => onMoveHere(booking, table)}>
+          Move to table {table.label}
         </Button>
       )}
-      <Button variant="secondary" onClick={onWalkin}>
-        Seat a walk-in
-      </Button>
+      {!booking && <Button variant="secondary" onClick={onWalkin}>Find a table for a walk-in</Button>}
     </div>
   );
 }
@@ -71,7 +69,7 @@ function BookingDetails({ booking }: { booking: StaffBooking }) {
         {booking.time} to {booking.end_time} · {people(booking.party_size)} · {tablesText(booking.table_labels)}
         {booking.source === "walk_in" && ", walk-in"}
       </p>
-      <div className="rb-badges"><Badge>{booking.status === "confirmed" ? "Confirmed" : booking.status}</Badge>
+      <div className="rb-badges"><Badge tone={BOOKING_LOOK[booking.status].tone}>{BOOKING_LOOK[booking.status].label}</Badge>
         {booking.needs_accessible && <Badge tone="info">Accessible table</Badge>}
         {booking.high_chairs > 0 && <Badge>High chairs: {booking.high_chairs}</Badge>}
       </div>

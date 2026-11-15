@@ -63,6 +63,15 @@ export function upcomingArrivals(bookings: StaffBooking[]): StaffBooking[] {
   return bookings.filter((b) => b.status === "confirmed").sort((a, b) => toMinutes(a.time) - toMinutes(b.time));
 }
 
+export const BOOKING_LOOK: Record<BookingStatus, { label: string; tone: "neutral" | "warning" | "success" }> = {
+  confirmed: { label: "Expected", tone: "warning" },
+  seated: { label: "Seated", tone: "success" },
+  finishing: { label: "Finishing", tone: "success" },
+  completed: { label: "Completed", tone: "neutral" },
+  cancelled: { label: "Cancelled", tone: "neutral" },
+  no_show: { label: "No-show", tone: "neutral" },
+};
+
 export function bookingOnTable(floor: StaffFloor, table: StaffTable): StaffBooking | null {
   return floor.bookings.find((b) => b.id === table.booking_id) ?? null;
 }
@@ -72,7 +81,7 @@ export function nextActions(status: BookingStatus): { status: BookingStatus; lab
   switch (status) {
     case "confirmed":
       return [
-        { status: "seated", label: "Seat now" },
+        { status: "seated", label: "Seat guests" },
         { status: "no_show", label: "No-show" },
       ];
     case "seated":

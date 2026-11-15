@@ -81,7 +81,8 @@ export function WalkinDialog({ venueId, date, time, inService = true, serviceNam
       setAnswer(null);
     });
 
-  const tableIds = answer?.table_ids ?? null;
+  const needsMoves = Boolean(answer?.displaced.length);
+  const tableIds = needsMoves ? null : (answer?.table_ids ?? null);
   const actions = (
     <>
       <Button variant="secondary" disabled={busy} onClick={close}>
@@ -93,7 +94,7 @@ export function WalkinDialog({ venueId, date, time, inService = true, serviceNam
         </Button>
       ) : (
         <Button busy={busy} onClick={() => void find()}>
-          Find a table
+          {needsMoves ? "Check again" : "Find a table"}
         </Button>
       )}
     </>
@@ -108,6 +109,7 @@ export function WalkinDialog({ venueId, date, time, inService = true, serviceNam
       {/* tabIndex -1: focusable by code only, so it does not add a Tab stop. */}
       <div aria-live="polite" ref={answerRef} tabIndex={-1} className="st-answer-focus">
         {answer && <WhatIfAnswerView answer={answer} party={form.party} />}
+        {needsMoves && <p className="rb-notice rb-notice-warning">Apply the table moves above from the service floor, then check again.</p>}
       </div>
       {problem && (
         <p className="rb-notice rb-notice-error" role="alert">

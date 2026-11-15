@@ -206,3 +206,54 @@
 .st-page .dialog:has(.st-walkin-fields) .st-walkin-hint {margin:.5rem 0;font-size:.75rem}
 .st-page .dialog:has(.st-walkin-fields) .dialog-actions {border-top:1px solid var(--c-border)}
 @media(max-width:64rem){.st-page .st-sidebar .st-tab{min-height:2.75rem}}
+
+/* Service workspace: the queue leads, with reservation details and the plan beside it. */
+.st-page { background: var(--c-ops-bg, var(--c-bg)); }
+.st-page .st-sidebar {
+  background: var(--c-ops-nav, var(--c-surface));
+  color: var(--c-ops-nav-text, var(--c-text));
+}
+.st-page .st-sidebar .wordmark,
+.st-page .st-sidebar .st-home-link,
+.st-page .st-sidebar .st-workspace-label,
+.st-page .st-sidebar .st-tab { color: inherit; }
+.st-page .st-sidebar :focus-visible { outline-color: var(--c-ops-nav-text, var(--c-focus)); }
+.st-page .st-sidebar .st-tab:hover,
+.st-page .st-sidebar .st-tab[aria-selected="true"] { background: var(--c-primary-soft); color: var(--c-primary); }
+.st-page .st-title,
+.st-page .st-plan-title,
+.st-page .st-booking-name,
+.st-page .st-arrivals-panel > .rb-service-title { font-family: var(--font-body); font-weight: var(--fw-semibold); }
+.st-page .st-booking-name strong { font-weight: inherit; }
+.st-page .st-top { padding-right: 0; min-height: 0; }
+.st-page .st-quick-actions { flex-wrap: wrap; }
+.st-page .st-quick-actions > .btn:first-child { position: static; }
+.st-page .st-grid { grid-template-columns: minmax(18rem, 0.85fr) minmax(0, 1.15fr); }
+.st-page .st-plan-title { margin-bottom: var(--space-2); }
+.st-page .st-view-controls { position: static; margin-bottom: var(--space-3); }
+.st-page .st-view-controls > .btn,
+.st-page .st-time-reference > .btn,
+.st-page .st-quick-actions > .btn { min-height: var(--touch-target); }
+.st-page .st-selection-label {
+  position: static;
+  width: auto;
+  height: auto;
+  clip-path: none;
+  margin: 0;
+  font-size: var(--fs-sm);
+  text-transform: none;
+  letter-spacing: normal;
+}
+.st-page .st-selected-panel:focus-visible { outline: 2px solid var(--c-focus); outline-offset: 2px; }
+.st-queue-views { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.st-queue-views .btn { padding-inline: var(--space-2); }
+.st-page .st-counts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); padding: 0; border: 0; }
+.st-page .st-count { display: grid; gap: var(--space-1); padding: var(--space-3); background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-md); }
+.st-page .st-count-number { font-size: var(--fs-xl); }
+@media (max-width: 64rem) {
+  .st-page .st-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 32rem) {
+  .st-page .st-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .st-page .st-arrival-button { gap: var(--space-2); }
+}

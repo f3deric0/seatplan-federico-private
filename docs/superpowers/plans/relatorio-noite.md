@@ -781,3 +781,12 @@ Os horários agrupam dias com as mesmas regras e usam o editor de horários
 existente para validar e gravar. A planta destaca a adição de mesas e mantém
 os controlos de edição de sala. Typecheck, testes do dono e da planta,
 e 178 verificações de contraste sem falhas.
+
+## Serviço de sala
+
+Lista de chegadas antes da planta, filtros para chegadas esperadas, mesas
+sentadas e reservas ativas, seleção com foco nos detalhes e mesa realçada.
+A confirmação de um walk-in aparece quando a sugestão está disponível
+para o grupo; sugestões com mudanças de mesas pedem nova verificação
+depois das mudanças. Testes de sala e build passaram. Verificação adicional
+em Chromium a 390 e 1440 px com respostas de API de teste.

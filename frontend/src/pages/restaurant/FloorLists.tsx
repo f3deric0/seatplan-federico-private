@@ -9,7 +9,7 @@ import { Badge } from "../../design/components";
 import { SEAT_RADIUS } from "../../seatmap/geometry";
 import { PatternDefs, SeatGlyph, safeId } from "../../seatmap/glyphs";
 import { people, tablesText } from "./format";
-import { FLOOR_LOOK, bookingOnTable } from "./staffStatus";
+import { BOOKING_LOOK, FLOOR_LOOK, bookingOnTable } from "./staffStatus";
 
 /** The drag payload type. A custom type, so dropping random text does nothing. */
 export const BOOKING_DRAG_TYPE = "application/x-seatplan-booking";
@@ -70,16 +70,18 @@ interface ArrivalsProps {
   selectedId: string | null;
   onSelect: (bookingId: string) => void;
   services?: StaffFloor["services"];
+  label?: string;
+  empty?: string;
 }
 
-export function ArrivalsList({ arrivals, selectedId, onSelect, services = [] }: ArrivalsProps) {
-  if (arrivals.length === 0) return <p className="rb-muted">No more arrivals expected for this day.</p>;
+export function ArrivalsList({ arrivals, selectedId, onSelect, services = [], label = "Upcoming arrivals", empty = "No more arrivals expected for this day." }: ArrivalsProps) {
+  if (arrivals.length === 0) return <p className="rb-muted">{empty}</p>;
   const startDrag = (event: DragEvent, booking: StaffBooking): void => {
     event.dataTransfer.setData(BOOKING_DRAG_TYPE, booking.id);
     event.dataTransfer.effectAllowed = "move";
   };
   return (
-    <ol className="st-arrivals" aria-label="Upcoming arrivals">
+    <ol className="st-arrivals" aria-label={label}>
       {arrivals.map((booking, index) => (
         <li key={booking.id} draggable onDragStart={(e) => startDrag(e, booking)} className="st-arrival">
           {(index === 0 || arrivals[index - 1].time !== booking.time) && <p className="st-arrival-group">{services.find(service => service.start_time <= booking.time && booking.time < service.end_time)?.name ?? "Arrivals"} · {booking.time}</p>}
@@ -89,7 +91,7 @@ export function ArrivalsList({ arrivals, selectedId, onSelect, services = [] }: 
               <strong>{booking.name}</strong>
               <span className="st-arrival-table">{people(booking.party_size)} · {tablesText(booking.table_labels)}</span>
             </span>
-            <Badge>Confirmed</Badge>
+            <Badge tone={BOOKING_LOOK[booking.status].tone}>{BOOKING_LOOK[booking.status].label}</Badge>
           </button>
           <span className="rb-badges">
             {booking.needs_accessible && <Badge tone="info">Accessible</Badge>}

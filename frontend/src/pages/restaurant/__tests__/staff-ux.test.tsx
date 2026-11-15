@@ -107,3 +107,21 @@ it("offers no seating confirmation when a walk-in search finds no table",async()
  expect(within(dialog).queryByRole("button",{name:/^Seat at/})).toBeNull();
  expect(callsTo(calls,"POST",`${API}/walkins`)).toHaveLength(0);
 });
+
+it("shows suggested moves but offers seating only once the walk-in table is available", async () => {
+  const calls = mockApi({
+    [`GET ${API}/floor`]: () => FLOOR,
+    [`POST ${API}/whatif`]: () => ({
+      possible: true, table_ids: [3], tables: ["3"], reasons: [],
+      displaced: [{ booking_id: "bk-rui", name: "Rui Costa", party_size: 2, from_tables: ["3"], to_tables: ["2"] }],
+    }),
+  });
+  show();
+  fireEvent.click(await screen.findByRole("button", { name: "New walk-in" }));
+  const dialog = within(screen.getByRole("dialog", { name: "New walk-in" }));
+  fireEvent.click(dialog.getByRole("button", { name: "Find a table" }));
+  expect(await dialog.findByText("Apply the table moves above from the service floor, then check again.")).toBeTruthy();
+  expect(dialog.queryByRole("button", { name: /^Seat at/ })).toBeNull();
+  expect(dialog.getByRole("button", { name: "Check again" })).toBeTruthy();
+  expect(callsTo(calls, "POST", `${API}/walkins`)).toHaveLength(0);
+});
