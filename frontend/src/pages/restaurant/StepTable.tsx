@@ -72,6 +72,27 @@ function holdFailure(error: unknown, tableId: number | null, label: string | nul
   return { message, failedId: tableId };
 }
 
+/** True on a phone-width screen; follows a rotation or a resize. Without matchMedia (tests) it is false. */
+function usePhone(): boolean {
+  const query = "(max-width: 47.99rem)";
+  const read = (): boolean => {
+    try {
+      return typeof window.matchMedia === "function" && window.matchMedia(query).matches;
+    } catch {
+      return false;
+    }
+  };
+  const [phone, setPhone] = useState(read);
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const list = window.matchMedia(query);
+    const onChange = (): void => setPhone(list.matches);
+    list.addEventListener?.("change", onChange);
+    return () => list.removeEventListener?.("change", onChange);
+  }, []);
+  return phone;
+}
+
 /** Today's sunset at the restaurant, from the first room that has one. */
 function sunsetOf(map: DinerMap): string | null {
   return (map.rooms ?? []).find((room) => room.sun?.sunset)?.sun?.sunset ?? null;
@@ -235,6 +256,9 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, busy, conflict
   const nothingFree = pickable.size === 0 && heldId === null;
   const panelShown = Boolean(details && hold && heldId !== null && secondsLeft !== null);
   const [view, setView] = useState<"map" | "list">("map");
+  // On a phone the suggestion comes first: one card and one button. The plan and the list wait behind "Choose another table".
+  const phone = usePhone();
+  const [choosing, setChoosing] = useState(false);
   // The plan has loaded (the page just grew): start the booking at the top of the screen, and again when the form takes over.
   useEffect(() => {
     const toStages = (): void => document.getElementById("booking-stages")?.scrollIntoView?.({ block: "start" });
@@ -335,6 +359,42 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, busy, conflict
     );
   }
 
+  if (phone && !choosing && heldId === null && !nothingFree && !combined && cardTable && pickable.has(cardTable.id)) {
+    return (
+      <>
+        {notices}
+        <ChooseHeader needs={needs} time={time} onBack={onBack} />
+        <TableCard
+          quick={{ party: needs.party }}
+          table={cardTable}
+          roomName={roomName}
+          zone={zoneOf(cardTable)}
+          recommended={recIds.includes(cardTable.id)}
+          reasons={map.recommended?.reasons ?? []}
+          heldId={heldId}
+          busy={busy}
+          onTake={() => undefined}
+        />
+        <div className="rb5-quick-more">
+          <Button variant="ghost" onClick={() => setChoosing(true)}>
+            Choose another table
+          </Button>
+        </div>
+        <div className="rb-actions rb-actions-sticky">
+          <Button
+            busy={busy}
+            onClick={() => {
+              setLooking(null);
+              onTake(cardTable.id);
+            }}
+          >
+            Continue with this table
+          </Button>
+        </div>
+      </>
+    );
+  }
+
   const cardNode = nothingFree ? (
     <p className="rb-notice">
       No table for {guests(needs.party)} is free at {time} any more. Please go back and pick another time.
@@ -377,6 +437,17 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, busy, conflict
       {/* Without the form beside the plan (older callers) the countdown sits above it. */}
       {hold && secondsLeft !== null && !panelShown && <HoldCountdown tableLabel={hold.tableLabel} secondsLeft={secondsLeft} />}
       <ChooseHeader needs={needs} time={time} onBack={onBack} view={view} onView={setView} />
+      {phone && bestTable && !combined && (
+        <Button
+          variant="ghost"
+          onClick={() => {
+            useSuggestion();
+            setChoosing(false);
+          }}
+        >
+          ‹ Back to the suggested table
+        </Button>
+      )}
       <div className="rb5-choose">
         <section className="rb-card rb5-plan-card" aria-label="Floor plan">
           <div className="rb5-plan-top">

@@ -11,45 +11,45 @@
   Every pair is checked by scripts/contrast.mjs (WCAG 2.2 AA), the same
   way as tokens.css.
 
-  Palette (brief of the 20-screen redesign): ivory #F6F4EC, surface #FFFDF7,
-  ink #222A22, secondary #555F53, action green #234C39, selection #E0EADF,
-  outline #D8D9CD, terracotta #A43F28 on #F8E5D5. Amber stays for the sun.
+  Palette (approved prototype, SeatPlan_Guia_Implementacao): ivory #FAF8F1, card #FFFEFB,
+  ink #1D2B25, secondary #526056, action green #234739, selection #E1EBE0, outline #D8D9CD,
+  warning amber #734619 on #F8EBD3, destructive red #923B31. Amber also stays for the sun.
 */
 
 :root[data-surface="restaurants"] {
   /* ---------- Colour: light ---------- */
-  --c-bg: #f6f4ec;
-  --c-surface: #fffdf7;
+  --c-bg: #faf8f1;
+  --c-surface: #fffefb;
   --c-surface-sunk: #e6eadf;   /* the floor under a plan */
   --c-surface-strong: #d3dacd; /* tables drawn on the floor */
-  --c-text: #222a22;
-  --c-text-muted: #555f53;
+  --c-text: #1d2b25;
+  --c-text-muted: #526056;
   --c-border: #d8d9cd;
   --c-border-strong: #7a8376;
 
-  --c-primary: #234c39;        /* dark green: the one action in a decision area */
-  --c-primary-hover: #1a3a2b;
-  --c-on-primary: #fffdf7;
-  --c-primary-soft: #e0eadf;   /* selection */
+  --c-primary: #234739;        /* dark green: the one action in a decision area */
+  --c-primary-hover: #1a362c;
+  --c-on-primary: #fffefb;
+  --c-primary-soft: #e1ebe0;   /* selection */
 
-  --c-accent: #7f5310;         /* amber, dark enough for text: sun and "recommended" */
+  --c-accent: #734619;         /* amber, dark enough for text: sun and "recommended" */
   --c-accent-bright: #a06a12;
-  --c-accent-soft: #f3e4c4;
+  --c-accent-soft: #f8ebd3;
 
-  --c-danger: #a43f28;         /* terracotta: needs attention, destructive */
-  --c-danger-soft: #f8e5d5;
+  --c-danger: #923b31;         /* terracotta: needs attention, destructive */
+  --c-danger-soft: #f6e3df;
 
   --c-focus: #005fcc;
-  --c-overlay: rgb(34 42 34 / 0.45);
+  --c-overlay: rgb(29 43 37 / 0.45);
 
-  --seat-free-fill: #fffdf7;
+  --seat-free-fill: #fffefb;
   --seat-free-stroke: #3b4541;
-  --seat-held: #7f5310;
-  --seat-held-soft: #f3e4c4;
+  --seat-held: #734619;
+  --seat-held-soft: #f8ebd3;
   --seat-taken: #59625e;
-  --seat-taken-mark: #fffdf7;
-  --seat-mine: #234c39;
-  --seat-mine-mark: #fffdf7;
+  --seat-taken-mark: #fffefb;
+  --seat-mine: #234739;
+  --seat-mine-mark: #fffefb;
   --seat-blocked: #7c7466;
   --seat-blocked-soft: #e3e5da;
   --seat-highlight: #a06a12;

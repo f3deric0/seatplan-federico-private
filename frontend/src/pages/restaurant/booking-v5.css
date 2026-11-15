@@ -828,3 +828,47 @@
 @media (max-width: 47.99rem) {
   .rb5-plan-card .seatmap-viewport { min-height: 11rem; height: min(24vh, 12rem); }
 }
+
+/* ---------- The quick suggestion of a phone: one card, one sticky button ---------- */
+
+.rb-table-quick {
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.rb-table-quick .rb-table-title {
+  font-size: 1.6rem;
+}
+
+.rb5-quick-more {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.rb5-quick-more .btn {
+  padding-left: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: var(--fw-semibold, 600);
+}
+
+/* ---------- Optional details fold away ---------- */
+
+.rb5-more-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.rb5-more-fields > summary {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch-target, 44px);
+  color: var(--c-primary);
+  font-weight: var(--fw-semibold, 600);
+  cursor: pointer;
+}
+
+.rb5-more-fields[open] > summary {
+  margin-bottom: var(--space-1);
+}

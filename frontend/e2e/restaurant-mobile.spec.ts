@@ -11,10 +11,14 @@ test("on a phone: one action per moment, a suggestion in another room, and a cha
   await page.goto(`${links.showcase_tagus_terrace}?date=${isoDaysFromToday(6)}&time=20:00&party=2`);
   await expect(page.getByRole("heading", { name: "Choose your table" })).toBeVisible();
 
-  // The card comes first and holds the one main action; there is no second, disabled "continue" bar.
+  // The suggestion comes first with one main action; the plan and the list wait behind "Choose another table".
+  await expect(page.getByRole("button", { name: "Continue with this table" })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Pick a table to continue" })).toHaveCount(0);
+  await expect(page.getByRole("tablist", { name: "Rooms" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Choose another table" }).click();
+  // Now the plan: the card of the table in front of the diner holds the one main action.
   const hold = page.getByRole("button", { name: /^Hold .* & continue/ });
   await expect(hold).toHaveCount(1);
-  await expect(page.getByRole("button", { name: "Pick a table to continue" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Edit date, time and guests" })).toBeVisible();
   const steps = page.getByRole("navigation", { name: "Booking steps" });
   await expect(steps.locator('[aria-current="step"]')).toContainText("Table");

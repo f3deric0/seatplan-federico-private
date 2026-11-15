@@ -2,7 +2,7 @@
 import { join } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "./fixtures";
-import { dinerMap, holdTable, preparedRestaurant, publishRestaurant } from "./restaurant-fixture";
+import { dinerMap, holdTable, openChooser, preparedRestaurant, publishRestaurant } from "./restaurant-fixture";
 
 for (const width of [1440, 390]) test(`diner sees rooms, daylight and night and books a chair at ${width}px`, async ({ page, request }, info) => {
   await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
@@ -25,6 +25,7 @@ for (const width of [1440, 390]) test(`diner sees rooms, daylight and night and 
   await page.getByRole("button", { name: "Edit date, time and guests" }).click();
   await page.getByRole("button", { name: "21:00 Available", exact: true }).click();
   await page.getByRole("button", { name: /^Choose a table at/ }).click();
+  await openChooser(page);
   // On a phone the light is one quiet line until "Explore" opens it.
   const explore = page.getByRole("button", { name: "Explore", exact: true });
   const cursor = page.getByRole("slider", { name: "Preview light (does not change your booking)" });

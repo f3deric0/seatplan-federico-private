@@ -49,12 +49,14 @@ export function StepDetails(props: StepDetailsProps) {
   const [touched, setTouched] = useState<Partial<Record<keyof ContactDetails, boolean>>>({});
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
   const errors = validateContact(contact);
   const shown = (field: keyof ContactDetails): string | null => (touched[field] ? (errors[field] ?? null) : null);
 
   const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     setTouched({ name: true, email: true, phone: true, notes: true });
+    if (errors.phone || errors.notes) setMoreOpen(true);
     if (focusFirstError(errors)) return;
     setBusy(true);
     setProblem(null);
@@ -94,8 +96,16 @@ export function StepDetails(props: StepDetailsProps) {
       {panel && summary && <p className="rb5-summary-band">{summary}</p>}
       <Field label="Name for the booking" autoComplete="name" required placeholder="e.g. Maria Costa" {...bind("name")} />
       <Field label="Email" hint="We send the confirmation and a calendar invite here." type="email" autoComplete="email" inputMode="email" required placeholder="e.g. maria@example.com" {...bind("email")} />
-      <Field label="Phone (optional)" hint="Only used if we need to reach you on the day." type="tel" autoComplete="tel" placeholder="Phone number" {...bind("phone")} />
-      <Field label="Notes for the restaurant (optional)" hint="Allergies, a birthday, a pram..." placeholder="Add a note" {...bind("notes")} />
+      {/* Name and email are all a booking needs: the rest opens on request, or when it holds something. */}
+      <details
+        className="rb5-more-fields"
+        open={moreOpen || contact.phone !== "" || contact.notes !== "" || Boolean(shown("phone") || shown("notes"))}
+        onToggle={(event) => setMoreOpen(event.currentTarget.open)}
+      >
+        <summary>Add a phone number or a note for the restaurant</summary>
+        <Field label="Phone (optional)" hint="Only used if we need to reach you on the day." type="tel" autoComplete="tel" placeholder="Phone number" {...bind("phone")} />
+        <Field label="Notes for the restaurant (optional)" hint="Allergies, a birthday, a pram..." placeholder="Add a note" {...bind("notes")} />
+      </details>
       {panel && onChooseSeat && <ChairRequest seatId={seatId} seatLabel={seatLabel ?? null} onChoose={onChooseSeat} onClear={onClearSeat} />}
       {problem && (
         <p className="rb-notice rb-notice-error" role="alert">

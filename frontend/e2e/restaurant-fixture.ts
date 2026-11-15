@@ -46,10 +46,19 @@ export async function dinerMap(page: Page, id: string, day: string, time = "13:0
   await page.getByRole("button", { name: `${time} Available`, exact: true }).click();
   await page.getByRole("button", {name:`Choose a table at ${time}`}).click();
   await expect(page.getByRole("heading", { name: "Choose your table" })).toBeVisible();
+  await openChooser(page);
+}
+
+/** On a phone the table step opens on one suggested table; "Choose another table" opens the plan and the list (a no-op on wide screens). */
+export async function openChooser(page: Page) {
+  const another = page.getByRole("button", { name: "Choose another table" });
+  await expect(another.or(page.getByRole("button", { name: "List", exact: true }))).toBeVisible();
+  if (await another.isVisible()) await another.click();
 }
 
 /** Holds a table the way a diner can from the list: switch to List, select the table, then hold it from its card. */
 export async function holdTable(page: Page, label: string) {
+  await openChooser(page);
   await page.getByRole("button", { name: "List", exact: true }).click();
   await page.getByRole("button", { name: `Select table ${label}`, exact: true }).click();
   await page.getByRole("button", { name: `Hold ${label} & continue`, exact: true }).click();

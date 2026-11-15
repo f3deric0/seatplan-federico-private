@@ -24,8 +24,10 @@ async function fromDiscoveryToTable(page: import("@playwright/test").Page, daysA
   }
   await expect(page).toHaveURL(/\/restaurants\/tasca-do-bairro\?date=.*&time=.*&party=2/);
   await expect(page.getByRole("heading", { name: "Choose your table" })).toBeVisible();
-  // One main action: the card's. No second, disabled bar under it.
-  await expect(page.getByRole("button", { name: /^Hold .* & continue/ })).toHaveCount(1);
+  // The suggestion first, with one main action. The plan and the list wait behind "Choose another table".
+  await expect(page.getByRole("button", { name: "Continue with this table" })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Choose another table" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Hold .* & continue/ })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Pick a table to continue" })).toHaveCount(0);
 }
 
@@ -36,7 +38,7 @@ async function sideways(page: import("@playwright/test").Page): Promise<boolean>
 test("on a phone, from a discovery time to a confirmed booking without a chair", async ({ page }) => {
   await fromDiscoveryToTable(page, 8);
   expect(await sideways(page)).toBe(false);
-  await page.getByRole("button", { name: /^Hold .* & continue/ }).click();
+  await page.getByRole("button", { name: "Continue with this table" }).click();
   await expect(page.getByRole("form", { name: "Your details" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Booking steps" }).locator('[aria-current="step"]')).toContainText("Details");
   await page.getByLabel("Name for the booking").fill("Journey Diner");
@@ -49,7 +51,7 @@ test("on a phone, from a discovery time to a confirmed booking without a chair",
 
 test("on a phone, from a discovery time to a confirmed booking with a chair request", async ({ page }) => {
   await fromDiscoveryToTable(page, 9);
-  await page.getByRole("button", { name: /^Hold .* & continue/ }).click();
+  await page.getByRole("button", { name: "Continue with this table" }).click();
   await page.getByRole("button", { name: "Choose a chair" }).click();
   await expect(page.getByRole("heading", { name: /Request a chair/ })).toBeVisible();
   await page.getByRole("radio").first().check();
