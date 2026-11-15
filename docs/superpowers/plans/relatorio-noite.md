@@ -837,3 +837,14 @@ contraste sem falhas. O Chromium a 1440, 390 e 320 px verificou a descoberta,
 o login e o mapa com respostas de teste. A suite com backend real ficou
 limitada pelo arranque do servidor local. Os caminhos protegidos de Eventos
 passaram na verificação.
+
+## Mapa da descoberta
+
+O mapa usa tons de cinza com um fundo ligeiramente arroxeado. Os controlos de
+zoom ficam no canto superior direito, com área de toque de 44 px e fundo
+transparente. A atribuição OpenStreetMap fica numa faixa abaixo da imagem
+do mapa e continua acessível com o cartão de restaurante aberto no telemóvel.
+
+O build, 509 testes Vitest e 182 verificações de contraste passaram. Em
+Chromium com tiles e API de teste, verificámos o zoom por teclado e rato,
+a seleção de pinos e a atribuição a 1440, 390 e 320 px.

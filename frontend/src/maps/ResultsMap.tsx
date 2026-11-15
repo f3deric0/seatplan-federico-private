@@ -41,13 +41,16 @@ export default function ResultsMap({ pins, highlightedId, selectedId = null, onS
   useEffect(() => tell.current?.(fallback), [fallback]);
   useEffect(() => {
     if (!host.current) return;
-    const view = L.map(host.current, { scrollWheelZoom: false }).setView(LISBON, 11);
-    view.attributionControl.setPrefix(false);
+    const view = L.map(host.current, {
+      scrollWheelZoom: false,
+      attributionControl: false,
+      zoomControl: false,
+    }).setView(LISBON, 11);
+    L.control.zoom({ position: "topright" }).addTo(view);
     map.current = view;
     const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       referrerPolicy: "strict-origin-when-cross-origin",
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(view);
     let loaded = 0;
     tiles.on("tileload", () => {
@@ -105,7 +108,12 @@ export default function ResultsMap({ pins, highlightedId, selectedId = null, onS
   return (
     <>
       {/* The Leaflet map stays mounted (hidden) while the diagram is shown, so it can recover if tiles arrive. */}
-      <div ref={host} className="discover-map" role="region" aria-label="Map of the restaurants found" hidden={fallback} />
+      <div className="discover-map-panel" hidden={fallback}>
+        <div ref={host} className="discover-map" role="region" aria-label="Map of the restaurants found" />
+        <div className="discover-map-credit">
+          &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors
+        </div>
+      </div>
       {fallback && <SchematicMap pins={pins} highlightedId={highlightedId} selectedId={selectedId} onSelect={onSelect} centre={center} />}
       {failed && !fallback && <p role="status">Map tiles are loading slowly. The list shows every restaurant.</p>}
     </>

@@ -122,6 +122,7 @@
  .discover-time { min-width:2.75rem;min-height:2.75rem; }
  .discover-map-column { position:relative;top:auto;height:calc(100dvh - 7rem); }
  .discover-pin-summary { display:block;position:absolute;inset-inline:-1rem;bottom:0;z-index:2;background:var(--c-surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;box-shadow:var(--shadow-lg);padding:.875rem; }
+ .discover-map-panel:not([hidden]) ~ .discover-pin-summary { bottom:1.75rem; }
  .discover-pin-summary .discover-card { display:grid;grid-template-columns:5.25rem minmax(0,1fr);border:0;box-shadow:none;position:relative;overflow:visible; }
  .discover-pin-summary .discover-card-photo { height:4.125rem;align-self:start;border-radius:var(--radius-sm);overflow:hidden; }
  .discover-pin-summary .discover-card-body { padding:0 2rem 0 .75rem; }

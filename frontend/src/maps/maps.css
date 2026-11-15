@@ -3,15 +3,37 @@
 .owner-location-map .leaflet-control-attribution { color: var(--c-text); background: var(--c-surface); }
 .owner-location-map .leaflet-control-attribution a { color: var(--c-primary); }
 .owner-location-map .leaflet-control-zoom a { min-width: 44px; min-height: 44px; line-height: 44px; }
-.discover-map { height: 100%; min-height: 20rem; width: 100%; isolation: isolate; border: 1px solid var(--c-border-strong); border-radius: var(--radius-lg); background: var(--c-surface-sunk); }
-.discover-map .leaflet-tile-pane { filter:saturate(.24) contrast(.92);opacity:.64; }
-.discover-map .leaflet-control-attribution { color:var(--c-text);background:var(--c-surface); }
-.discover-map .leaflet-control-attribution a { color:var(--c-primary); }
-.discover-map .leaflet-control-zoom { border:1px solid var(--c-border);box-shadow:none; }
-.discover-map .leaflet-control-zoom a {
-  min-width:44px;min-height:44px;line-height:44px;background:var(--c-surface);color:var(--c-text);
+.discover-map-panel {
+  display:flex;flex-direction:column;height:100%;min-height:20rem;overflow:hidden;
+  border:1px solid var(--c-border);border-radius:var(--radius-lg);background:var(--c-surface);
 }
-.discover-map .leaflet-control-zoom a:hover { background:var(--c-primary-soft); }
+.discover-map-panel[hidden] { display:none; }
+.discover-map { flex:1;min-height:0;width:100%;isolation:isolate;background:#605b6b; }
+.discover-map .leaflet-tile-pane { filter:grayscale(1) brightness(.57) contrast(.93);opacity:.85; }
+.discover-map-credit {
+  display:flex;align-items:center;justify-content:flex-end;gap:.22rem;
+  min-height:1.75rem;padding-inline:.75rem;color:var(--c-text-muted);font-size:.6875rem;
+}
+.discover-map-credit a { color:inherit; }
+.discover-map .leaflet-control-zoom {
+  display:flex;flex-direction:column;gap:2px;margin:12px;
+  border:0;box-shadow:none;
+}
+.discover-map .leaflet-control-zoom a {
+  display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;
+  background:transparent;color:var(--c-on-primary);font:600 1.5rem/1 var(--font-body);
+  text-shadow:0 1px 4px var(--c-primary);
+  transition:background-color 160ms ease-out,transform 160ms ease-out;
+}
+.discover-map .leaflet-control-zoom a:hover,
+.discover-map .leaflet-control-zoom a:focus-visible { background:var(--c-primary); }
+.discover-map .leaflet-control-zoom a:focus-visible { outline-color:var(--c-on-primary);outline-offset:0; }
+.discover-map .leaflet-control-zoom a:active:not(.leaflet-disabled) { transform:scale(.92); }
+.discover-map .leaflet-control-zoom a.leaflet-disabled { background:transparent;opacity:.55; }
+@media (prefers-reduced-motion:reduce) {
+  .discover-map .leaflet-control-zoom a { transition:none; }
+  .discover-map .leaflet-control-zoom a:active:not(.leaflet-disabled) { transform:none; }
+}
 /* Only the visible disc scales. The Leaflet marker keeps its 44px target. */
 .discover-pin span {
   display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;margin:9px;
