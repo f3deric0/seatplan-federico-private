@@ -162,3 +162,44 @@
 :root[data-surface="restaurants"] .btn {
   border-radius: var(--radius-md);
 }
+
+/* Purple carries the structure, as in the references: headings, restaurant names, chips and times.
+   Pink stays for the one main action and for what we recommend. */
+:root[data-surface="restaurants"] :is(h1, h2, h3) {
+  color: var(--c-primary);
+}
+
+:root[data-surface="restaurants"] .discover-card h3 a {
+  color: var(--c-primary);
+}
+
+:root[data-surface="restaurants"] .discover-card-number {
+  background: var(--c-primary);
+  color: var(--c-on-primary);
+}
+
+:root[data-surface="restaurants"] .discover-ambience {
+  color: var(--c-accent);
+}
+
+:root[data-surface="restaurants"] .discover-chip {
+  color: var(--c-primary);
+  border-color: #d9d3ee;
+}
+
+:root[data-surface="restaurants"] .discover-chip.is-on {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  color: var(--c-on-primary);
+}
+
+:root[data-surface="restaurants"] .discover-time {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  color: var(--c-on-primary);
+}
+
+:root[data-surface="restaurants"] .discover-time.is-requested {
+  background: var(--c-cta);
+  border-color: var(--c-cta);
+}
