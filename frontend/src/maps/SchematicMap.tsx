@@ -18,6 +18,8 @@ interface Props {
 
 export function SchematicMap({ pins, highlightedId, selectedId = null, onSelect, centre }: Props) {
   const schematic = useMemo(() => placePins(pins, centre), [pins, centre?.lat, centre?.lng]);
+  const focusedId = schematic.pins.find(pin => pin.id === highlightedId)?.id
+    ?? schematic.pins.find(pin => pin.id === selectedId)?.id;
   const press = (event: KeyboardEvent, id: string): void => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
@@ -54,7 +56,7 @@ export function SchematicMap({ pins, highlightedId, selectedId = null, onSelect,
             tabIndex={0}
             aria-label={`${pin.number}. ${pin.name}`}
             aria-pressed={selectedId === pin.id}
-            className={`schematic-pin${highlightedId === pin.id ? " is-active" : ""}${selectedId === pin.id ? " is-selected" : ""}`}
+            className={`schematic-pin${highlightedId === pin.id ? " is-active" : ""}${selectedId === pin.id ? " is-selected" : ""}${focusedId && focusedId !== pin.id ? " is-muted" : ""}`}
             transform={`translate(${pin.x} ${pin.y})`}
             onClick={() => onSelect(pin.id)}
             onKeyDown={(event) => press(event, pin.id)}

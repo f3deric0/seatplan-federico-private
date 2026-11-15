@@ -15,6 +15,7 @@ import { RestaurantCard } from "./RestaurantCard";
 import { completeWhen, cuisineLabel, DISCOVERY_FEATURE_LABELS, loadPlace, savePlace } from "./discoverModel";
 import type { Place } from "./discoverModel";
 import { loadDiscoveryState, saveDiscoveryState } from "./discoveryState";
+import { FIRST_HEADLINE, visitHeadline } from "./visitHeadline";
 import "./discover.css";
 const ResultsMap = lazy(() => import("../../maps/ResultsMap"));
 const PAGE = 20;
@@ -42,6 +43,8 @@ function contextSummary(place: Place | null, date: string, time: string, party: 
 }
 export default function DiscoverPage() {
   const [saved] = useState(loadDiscoveryState);
+  const [headline, setHeadline] = useState(FIRST_HEADLINE);
+  useEffect(() => setHeadline(visitHeadline()), []);
   const [text, setText] = useState(saved.text);
   const [q, setQ] = useState(saved.text);
   const [cuisines, setCuisines] = useState<string[]>(saved.cuisines);
@@ -209,9 +212,9 @@ export default function DiscoverPage() {
   }, [results,saved.scroll]);
   const showMap = wide || view === "map";
   const selectedCard = items.find(card => card.public_id === pinned);
-  return <div className={`discover-route${!wide && view === "map" ? " is-map-view" : ""}`}><PageShell title="Find a table you will love" width="wide" headerActions={<PublicHeaderActions />}>
+  return <div className={`discover-route${!wide && view === "map" ? " is-map-view" : ""}`}><PageShell title="Find a table you will love" width="wide" restaurantBrand headerActions={<PublicHeaderActions />}>
     <section className={`discover-top${!wide && view === "map" ? " discover-top-compact" : ""}`} aria-labelledby="discover-heading">
-      <h1 id="discover-heading" aria-label={wide?"Find a table you’ll love.":"Find your table."}><span className="discover-desktop-title">Find a table you’ll love.</span><span className="discover-mobile-title">Find your table.</span></h1><p>See the room and choose where you’ll sit.</p>
+      <h1 id="discover-heading" aria-label={wide || headline !== FIRST_HEADLINE ? headline : "Find your table."}><span className="discover-desktop-title">{headline}</span><span className="discover-mobile-title">{headline === FIRST_HEADLINE ? "Find your table." : headline}</span></h1><p>See the room and choose where you’ll sit.</p>
     </section>
     {!wide&&<button className="discover-summary" type="button" aria-label={`When and where: ${contextSummary(place,date,time,party)}`} aria-haspopup="dialog" aria-expanded={drawer} onClick={openFilters}>{contextSummary(place,date,time,party)} <span aria-hidden="true">⌄</span></button>}
     <DiscoverBar wide={wide} text={text} onText={setText} place={place} onPlace={choosePlace} locating={locating} onNearMe={nearMe} date={date} time={time} party={party} onDate={changeDate} onTime={setTime} onParty={setParty} onClearWhen={clearWhen} features={features} onFeatures={setFeatures} filterCount={filterCount} drawerOpen={drawer} onDrawer={openFilters}/>
@@ -235,7 +238,7 @@ export default function DiscoverPage() {
         {results.status==="loading"&&<Skeleton label="Finding restaurants" lines={6}/>}
         {results.status==="error"&&<ErrorState message={results.message} onRetry={search}/>}
         {results.status==="ready"&&<>
-          {!items.length?<EmptyState title={text?`No restaurants match “${text}”`:when?"Nothing available near this time":"No restaurants match"} action={<><Button onClick={()=>{if(text){setText("");setQ("");}else openFilters();}}>{text?"Clear search term":when?"Change time":"Edit filters"}</Button>{text&&<Button variant="secondary" onClick={openFilters}>Edit filters</Button>}</>}><p>{text?"Try a different name or clear the search term.":when?"Try another time or adjust the availability filter.":"Try another cuisine or room feature."}</p></EmptyState>:<div className="discover-cards">{items.map(card=><RestaurantCard key={card.public_id} card={card} when={results.when} navigationWhen={when} pending={updating} priorityFeatures={features} selected={pinned===card.public_id} highlighted={highlighted===card.public_id} onHighlight={setHighlighted} number={pinNumbers.get(card.public_id)}/>)}</div>}
+          {!items.length?<EmptyState title={text?`No restaurants match “${text}”`:when?"Nothing available near this time":"No restaurants match"} action={<><Button onClick={()=>{if(text){setText("");setQ("");}else openFilters();}}>{text?"Clear search term":when?"Change time":"Edit filters"}</Button>{text&&<Button variant="secondary" onClick={openFilters}>Edit filters</Button>}</>}><p>{text?"Try a different name or clear the search term.":when?"Try another time or adjust the availability filter.":"Try another cuisine or room feature."}</p></EmptyState>:<div className="discover-cards">{items.map(card=><RestaurantCard key={card.public_id} card={card} when={results.when} navigationWhen={when} pending={updating} priorityFeatures={features} selected={pinned===card.public_id} highlighted={highlighted===card.public_id} onHighlight={setHighlighted} onSelect={() => setPinned(card.public_id)} number={pinNumbers.get(card.public_id)}/>)}</div>}
           {moreError&&<p role="alert">{moreError}</p>}
           {items.length<results.total&&<Button variant="secondary" busy={loadingMore} disabled={updating} onClick={()=>void showMore()}>Show more</Button>}
         </>}

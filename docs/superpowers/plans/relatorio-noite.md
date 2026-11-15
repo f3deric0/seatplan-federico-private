@@ -818,3 +818,22 @@ Importação em SQLite nova validada com 20 fichas e 20 capas. A segunda
 execução não criou linhas. Verificadas as condições de publicação e a
 disponibilidade das 20 fichas, uma reserva de teste e o carregamento das
 20 imagens no Chromium com respostas preparadas a partir dessa base.
+
+## Anotações na descoberta de Restaurantes
+
+Cartões com aumento suave ao selecionar, fotografias com enquadramento uniforme
+e números centrados. O mapa atenua os outros pinos e usa uma base com menos
+cor. A atribuição OpenStreetMap continua visível e o prefixo Leaflet foi
+retirado. A data tem uma apresentação por extenso e mantém o calendário nativo.
+
+O cabeçalho tem uma marca de Restaurantes e dá prioridade ao login de clientes.
+O login usa a conta de convidado SeatPlan. As reservas continuam a ser geridas
+pelo link da confirmação. A descoberta tem 52 títulos em inglês distribuídos
+entre primeira visita, regresso e visitas frequentes. A contagem fica no
+navegador e o título é estável durante a visita.
+
+Typecheck e build passaram, com 509 testes Vitest e 182 verificações de
+contraste sem falhas. O Chromium a 1440, 390 e 320 px verificou a descoberta,
+o login e o mapa com respostas de teste. A suite com backend real ficou
+limitada pelo arranque do servidor local. Os caminhos protegidos de Eventos
+passaram na verificação.

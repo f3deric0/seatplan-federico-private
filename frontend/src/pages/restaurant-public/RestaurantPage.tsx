@@ -27,7 +27,7 @@ export default function RestaurantPage() {
   const { state, reload } = useLoad(() => getPublicRestaurant(slug), slug);
   const title = state.status === "ready" ? state.data.name : "Restaurant";
   return (
-    <PageShell title={title} width="wide" headerActions={<PublicHeaderActions />}>
+    <PageShell title={title} width="wide" restaurantBrand headerActions={<PublicHeaderActions />}>
       {state.status === "loading" && <Skeleton lines={6} label="Loading the restaurant" />}
       {state.status === "error" && <LoadError error={state.error} onRetry={() => reload()} />}
       {state.status === "ready" && <Page data={state.data} />}

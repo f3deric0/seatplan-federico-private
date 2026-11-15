@@ -1,8 +1,8 @@
-// The right side of the header on every public page (spec 4.2): "For restaurant
-// owners" and "Plan an event". On a phone the two links sit behind a Menu button.
+// The diner account stays visible in the public header. On phones the owner and
+// event links sit behind Menu.
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { getSessionToken } from "../../api/client";
+import { getGuestToken, getSessionToken } from "../../api/client";
 import "./discover.css";
 
 export function PublicHeaderActions() {
@@ -32,6 +32,9 @@ export function PublicHeaderActions() {
           Plan an event
         </Link>
       </div>
+      <Link to="/restaurants/account" className="btn btn-primary site-nav-login" onClick={() => setOpen(false)}>
+        {getGuestToken() ? "My account" : "Log in"}
+      </Link>
     </nav>
   );
 }

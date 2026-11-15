@@ -42,6 +42,7 @@ export default function ResultsMap({ pins, highlightedId, selectedId = null, onS
   useEffect(() => {
     if (!host.current) return;
     const view = L.map(host.current, { scrollWheelZoom: false }).setView(LISBON, 11);
+    view.attributionControl.setPrefix(false);
     map.current = view;
     const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
@@ -91,11 +92,14 @@ export default function ResultsMap({ pins, highlightedId, selectedId = null, onS
   }, [pins, center?.lat, center?.lng]);
   // The pin of the hovered card gets a bigger, darker look.
   useEffect(() => {
+    const selected = selectedId && markers.current.has(selectedId) ? selectedId : null;
+    const focusedId = highlightedId && markers.current.has(highlightedId) ? highlightedId : selected;
     markers.current.forEach((marker, id) => {
       marker.getElement()?.classList.toggle("discover-pin-active", id === highlightedId);
       marker.getElement()?.classList.toggle("discover-pin-selected", id === selectedId);
+      marker.getElement()?.classList.toggle("discover-pin-muted", focusedId !== null && id !== focusedId);
       marker.getElement()?.setAttribute("aria-current", id === selectedId ? "true" : "false");
-      marker.setZIndexOffset(id === highlightedId || id === selectedId ? 1000 : 0);
+      marker.setZIndexOffset(id === focusedId ? 1000 : 0);
     });
   }, [highlightedId, selectedId, pins]);
   return (

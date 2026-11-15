@@ -25,9 +25,21 @@ interface PageShellProps {
   width?: "normal" | "wide";
   /** Extra items on the right of the header, e.g. a "Sign out" button. */
   headerActions?: ReactNode;
+  restaurantBrand?: boolean;
 }
 
-export function Wordmark() {
+export function Wordmark({ restaurantBrand = false }: { restaurantBrand?: boolean } = {}) {
+  if (restaurantBrand) {
+    return (
+      <Link to="/" className="wordmark wordmark-restaurants" aria-label="SeatPlan Restaurantes, home">
+        <span className="restaurant-mark" aria-hidden="true"><span /></span>
+        <span className="restaurant-brand-text">
+          <span className="wordmark-text">SeatPlan</span>
+          <span className="restaurant-brand-label" lang="pt">Restaurantes</span>
+        </span>
+      </Link>
+    );
+  }
   return (
     <Link to="/" className="wordmark" aria-label="SeatPlan, home">
       <svg viewBox="0 0 32 32" className="wordmark-mark" aria-hidden="true">
@@ -42,7 +54,7 @@ export function Wordmark() {
   );
 }
 
-export function PageShell({ title, children, width = "normal", headerActions }: PageShellProps) {
+export function PageShell({ title, children, width = "normal", headerActions, restaurantBrand }: PageShellProps) {
   useEffect(() => {
     document.title = `${title} · SeatPlan`;
   }, [title]);
@@ -66,7 +78,7 @@ export function PageShell({ title, children, width = "normal", headerActions }: 
       </a>
       <header className="shell-header">
         <div className={`shell-inner shell-${width}`}>
-          <Wordmark />
+          <Wordmark restaurantBrand={restaurantBrand} />
           {headerActions && <div className="shell-actions">{headerActions}</div>}
         </div>
       </header>
