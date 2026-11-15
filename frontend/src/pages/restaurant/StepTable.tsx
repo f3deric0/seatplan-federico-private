@@ -8,7 +8,7 @@ import { ApiError } from "../../api/client";
 import { getDinerMap, holdTable, venueDayScope } from "../../api/restaurant";
 import type { BookingConfirmation, ContactDetails, DinerMap, DinerTable, PartyNeeds } from "../../api/restaurant";
 import { useLive } from "../../api/useLive";
-import { Button, ErrorState, Skeleton } from "../../design/components";
+import { Button, Checkbox, ErrorState, Skeleton } from "../../design/components";
 import { SeatMap } from "../../seatmap/SeatMap";
 import { errorMessage, guests, shortDate, tableName } from "./format";
 import { HoldCountdown } from "./HoldCountdown";
@@ -40,6 +40,7 @@ interface StepTableProps {
   secondsLeft: number | null;
   /** A message carried over from another step, e.g. "your hold ended while you typed". */
   carriedNotice: string | null;
+  onAccessibilityChange?: (checked: boolean) => void;
   onHold: (hold: Hold | null) => void;
   onNext: () => void;
   onBack: () => void;
@@ -62,6 +63,7 @@ export interface DetailsProps {
 interface Conflict {
   message: string;
   failedId: number | null;
+  title?: string;
 }
 
 /** The words for a failed hold. A 409 means someone was faster; anything else is a plain problem. */
@@ -100,21 +102,25 @@ function sunsetOf(map: DinerMap): string | null {
 
 export function StepTable(props: StepTableProps) {
   const { venueId, needs, time, hold, onHold } = props;
+  const phone = usePhone();
+  const phoneHeader = phone && !hold;
   const key = `${needs.date}|${time}|${needs.party}|${needs.needs_accessible}|${needs.high_chairs}|${(needs.prefs ?? []).join(",")}`;
-  const { state, reload } = useLoad(() => getDinerMap(venueId, needs, time), key);
+  const { state, reload } = useLoad(() => getDinerMap(venueId, needs, time).then((map) => ({ map, key })), key);
   // Someone else's booking bumps the venue-day version; we then quietly fetch the map again.
   useLive(venueDayScope(venueId, needs.date), () => reload(true));
   const [busy, setBusy] = useState(false);
-  const [conflict, setConflict] = useState<Conflict | null>(props.carriedNotice ? { message: props.carriedNotice, failedId: null } : null);
+  const [conflict, setConflict] = useState<Conflict | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [spoken, setSpoken] = useState("");
-  const map = state.status === "ready" ? state.data : null;
+  const map = state.status === "ready" && state.data.key === key ? state.data.map : null;
 
   // The form beside the map can lose the hold while this step stays on screen: show why, as a conflict does.
   const carried = props.carriedNotice;
   useEffect(() => {
-    if (carried) setConflict({ message: carried, failedId: null });
-  }, [carried]);
+    if (!carried) return;
+    setConflict({ title: "Choose an available table", message: carried, failedId: null });
+    reload(true);
+  }, [carried, reload]);
 
   // A live update shows our held table as booked: the hold was lost (it had expired).
   useEffect(() => {
@@ -147,12 +153,22 @@ export function StepTable(props: StepTableProps) {
 
   return (
     <section className="rb-step">
-      {/* Once the map is on screen it draws its own header (with the Map / List switch), or the details form takes over. */}
-      {state.status !== "ready" && <ChooseHeader needs={needs} time={time} onBack={props.onBack} />}
-      {state.status === "loading" && <Skeleton lines={6} label="Loading the floor plan" />}
+      {(phoneHeader || !map) && <ChooseHeader needs={needs} time={time} onBack={props.onBack} />}
+      {phoneHeader && props.onAccessibilityChange && (
+        <Checkbox
+          label="I need a wheelchair-accessible table"
+          checked={needs.needs_accessible}
+          disabled={busy}
+          onChange={(event) => {
+            setProblem(null);
+            props.onAccessibilityChange?.(event.currentTarget.checked);
+          }}
+        />
+      )}
+      {!map && state.status !== "error" && <Skeleton lines={6} label="Checking available tables" />}
       {state.status === "error" && <ErrorState title="We could not load the floor plan" message={errorMessage(state.error)} onRetry={() => reload()} />}
       {map && (
-        <TableStepBody map={map} {...props} busy={busy} conflict={conflict} problem={problem} onTake={(id) => void take(id)} />
+        <TableStepBody map={map} {...props} phone={phone} phoneHeader={phoneHeader} busy={busy} conflict={conflict} problem={problem} onTake={(id) => void take(id)} />
       )}
       <span className="visually-hidden" role="status" aria-live="polite">
         {spoken}
@@ -163,13 +179,15 @@ export function StepTable(props: StepTableProps) {
 
 interface BodyProps extends StepTableProps {
   map: DinerMap;
+  phone: boolean;
+  phoneHeader: boolean;
   busy: boolean;
   conflict: Conflict | null;
   problem: string | null;
   onTake: (tableId: number | null) => void;
 }
 
-function TableStepBody({ venueId, map: loaded, hold, secondsLeft, busy, conflict, problem, onTake, onHold, onNext, onBack, needs, time, details }: BodyProps) {
+function TableStepBody({ venueId, map: loaded, hold, secondsLeft, phone, phoneHeader, busy, conflict, problem, onTake, onHold, onNext, onBack, needs, time, details }: BodyProps) {
   const heldId = hold && secondsLeft !== 0 ? hold.tableId : null;
   // The light cursor only repaints the light; the tables, holds and live updates stay as they are.
   const steps = cursorSteps(loaded.stay_start, loaded.stay_end);
@@ -212,13 +230,13 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, busy, conflict
     setLooking(bestId);
     setChosenByDiner(false);
     const table = map.tables.find((t) => t.id === bestId);
-    if (table) setPicked(`Table ${table.label} is suggested for you and already selected. Use Hold table ${table.label} and continue to reserve it.`);
+    if (table) setPicked(`Table ${table.label} is suggested and selected.`);
   }, [looking, heldId, bestId, map]);
   const lookAt = (id: number): void => {
     setChosenByDiner(true);
     setLooking(id);
     const table = map.tables.find((t) => t.id === id);
-    setPicked(table ? `Table ${table.label} selected. Use Hold table ${table.label} and continue to reserve it.` : "");
+    setPicked(table ? `Table ${table.label} selected.` : "");
   };
   // A table the diner chose stays in front of them; our own suggestion gives way to whatever they point at.
   const focusId = chosenByDiner ? (looking ?? pointed) : (pointed ?? looking);
@@ -238,7 +256,7 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, busy, conflict
     setPointed(null);
     setLooking(bestTable.id);
     setChosenRoom(bestTable.room_id ?? null);
-    setPicked(`Table ${bestTable.label} is suggested for you and selected. Use Hold table ${bestTable.label} and continue to reserve it.`);
+    setPicked(`Suggested table ${bestTable.label} selected.`);
   };
   const heldTable = hold ? map.tables.find((t) => t.id === hold.tableId) : undefined;
   const heldRoomName = heldTable && tabs.length > 0 ? roomNameOf(heldTable.room_id) : null;
@@ -257,8 +275,16 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, busy, conflict
   const panelShown = Boolean(details && hold && heldId !== null && secondsLeft !== null);
   const [view, setView] = useState<"map" | "list">("map");
   // On a phone the suggestion comes first: one card and one button. The plan and the list wait behind "Choose another table".
-  const phone = usePhone();
   const [choosing, setChoosing] = useState(false);
+  const chooseAnotherRef = useRef<HTMLDivElement>(null);
+  const switchRef = useRef<HTMLDivElement>(null);
+  const movingBetweenViews = useRef(false);
+  useEffect(() => {
+    if (!movingBetweenViews.current) return;
+    movingBetweenViews.current = false;
+    if (choosing) switchRef.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus();
+    else chooseAnotherRef.current?.querySelector("button")?.focus();
+  }, [choosing]);
   // The plan has loaded (the page just grew): start the booking at the top of the screen, and again when the form takes over.
   useEffect(() => {
     const toStages = (): void => document.getElementById("booking-stages")?.scrollIntoView?.({ block: "start" });
@@ -288,7 +314,7 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, busy, conflict
 
   const notices = (
     <>
-      {conflict && <ConflictNotice message={conflict.message} options={alternatives(map, conflict.failedId, needs.party)} busy={busy} onTake={onTake} />}
+      {conflict && <ConflictNotice title={conflict.title ?? "Sorry, that table is gone."} message={conflict.message} options={alternatives(map, conflict.failedId, needs.party)} busy={busy} onTake={onTake} />}
       {problem && (
         <p className="rb-notice rb-notice-error" role="alert">
           {problem}
@@ -363,7 +389,6 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, busy, conflict
     return (
       <>
         {notices}
-        <ChooseHeader needs={needs} time={time} onBack={onBack} />
         <TableCard
           quick={{ party: needs.party }}
           table={cardTable}
@@ -375,8 +400,11 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, busy, conflict
           busy={busy}
           onTake={() => undefined}
         />
-        <div className="rb5-quick-more">
-          <Button variant="ghost" onClick={() => setChoosing(true)}>
+        <div className="rb5-quick-more" ref={chooseAnotherRef}>
+          <Button variant="ghost" onClick={() => {
+            movingBetweenViews.current = true;
+            setChoosing(true);
+          }}>
             Choose another table
           </Button>
         </div>
@@ -390,6 +418,22 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, busy, conflict
           >
             Continue with this table
           </Button>
+        </div>
+      </>
+    );
+  }
+
+  if (phoneHeader && nothingFree && !combined) {
+    return (
+      <>
+        {notices}
+        {!conflict && (
+          <p className="rb-notice rb-notice-warning" role="status">
+            {needs.needs_accessible ? "No wheelchair-accessible table" : "No table"} for {guests(needs.party)} is available at {time}.
+          </p>
+        )}
+        <div className="rb-actions rb-actions-sticky">
+          <Button onClick={onBack}>Choose another time</Button>
         </div>
       </>
     );
@@ -436,12 +480,15 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, busy, conflict
       {notices}
       {/* Without the form beside the plan (older callers) the countdown sits above it. */}
       {hold && secondsLeft !== null && !panelShown && <HoldCountdown tableLabel={hold.tableLabel} secondsLeft={secondsLeft} />}
-      <ChooseHeader needs={needs} time={time} onBack={onBack} view={view} onView={setView} />
+      {phoneHeader
+        ? <div ref={switchRef}><TableViewSwitch view={view} onView={setView} /></div>
+        : <ChooseHeader needs={needs} time={time} onBack={onBack} view={view} onView={setView} />}
       {phone && bestTable && !combined && (
         <Button
           variant="ghost"
           onClick={() => {
             useSuggestion();
+            movingBetweenViews.current = true;
             setChoosing(false);
           }}
         >
@@ -543,15 +590,19 @@ function ChooseHeader({ needs, time, onBack, view, onView }: { needs: PartyNeeds
           </Button>
         </p>
       </div>
-      {view && onView && (
-        <div className="rb5-view-switch" role="group" aria-label="Show the tables as">
-          {(["map", "list"] as const).map((choice) => (
-            <button key={choice} type="button" aria-pressed={view === choice} onClick={() => onView(choice)}>
-              {choice === "map" ? "Map" : "List"}
-            </button>
-          ))}
-        </div>
-      )}
+      {view && onView && <TableViewSwitch view={view} onView={onView} />}
+    </div>
+  );
+}
+
+function TableViewSwitch({ view, onView }: { view: "map" | "list"; onView: (view: "map" | "list") => void }) {
+  return (
+    <div className="rb5-view-switch" role="group" aria-label="Show the tables as">
+      {(["map", "list"] as const).map((choice) => (
+        <button key={choice} type="button" aria-pressed={view === choice} onClick={() => onView(choice)}>
+          {choice === "map" ? "Map" : "List"}
+        </button>
+      ))}
     </div>
   );
 }

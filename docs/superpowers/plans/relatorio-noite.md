@@ -762,3 +762,13 @@ Relatório completo e tabela das 11 capturas: [ux-v5-relatorio-codex.md](../../u
 Branch `codex/ux-v5-discovery-staff`, base `c8c75f2`; commits `b765515`, `0f422fe`, `cb4c4c3`.
 Ruff/formatação verdes (215 ficheiros), pytest 880, Vitest 495/67 ficheiros, typecheck/build verdes, contrast 172/172, Playwright 83/83 incluindo Eventos. Guard passou. Capturas e comparações fora do repositório em `C:\Users\marti\seatplan-screenshots-codex-v5\`.
 Sem push, PR ou merge; nenhuma edição aos outros checkouts ou caminhos de Eventos. Limitações de API e adaptações por captura registadas no relatório.
+
+## Reserva móvel, continuação de `claude/table-step`
+
+A escolha de mesa partilha a preferência de acessibilidade da etapa da hora.
+Ao expirar uma retenção, a reserva regressa à escolha de mesa com os dados
+introduzidos. A recuperação mantém a hora pedida como referência para as
+alternativas. A lista e a planta recebem e devolvem o foco à escolha sugerida.
+Typecheck e os 20 testes de ambiente da reserva passaram. Foram acrescentados
+casos Playwright para 320/390 px. O ambiente recusou acesso às portas locais
+usadas pelo servidor Playwright.

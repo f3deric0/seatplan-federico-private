@@ -48,16 +48,17 @@ export function SuggestionCard({ map, busy, onTake, onChooseForMe }: SuggestionP
 
 interface ConflictProps {
   message: string;
+  title: string;
   options: DinerTable[];
   busy: boolean;
   onTake: (tableId: number) => void;
 }
 
-export function ConflictNotice({ message, options, busy, onTake }: ConflictProps) {
+export function ConflictNotice({ title, message, options, busy, onTake }: ConflictProps) {
   return (
     <div className="rb-notice rb-notice-warning" role="alert">
       <p>
-        <strong>Sorry, that table is gone.</strong> {message}
+        <strong>{title}</strong> {message}
       </p>
       {options.length > 0 ? (
         <>

@@ -16,7 +16,7 @@ export function useSecondsLeft(expiresAt: string | null): number | null {
     return () => window.clearInterval(timer);
   }, [expiresAt]);
   if (!expiresAt) return null;
-  return Math.max(0, Math.round((Date.parse(expiresAt) - now) / 1000));
+  return Math.max(0, Math.ceil((Date.parse(expiresAt) - now) / 1000));
 }
 
 function spokenMessage(seconds: number): string {

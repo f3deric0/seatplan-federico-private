@@ -1,7 +1,7 @@
 // The memory of the booking flow: the answers so far and which step is on
 // screen. Kept apart from BookingPage so the page only draws, and this file
 // only decides.
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { releaseHold } from "../../api/restaurant";
 import type { BookingConfirmation, ContactDetails, PartyNeeds, RestaurantInfo } from "../../api/restaurant";
 import { todayIso } from "./format";
@@ -48,7 +48,8 @@ export async function releaseQuietly(venueId: string, hold: Hold | null): Promis
 export function useBookingFlow(info: RestaurantInfo, link: LinkAnswers = { date: null, party: null }) {
   const [step, setStep] = useState<number>(STEP.party);
   const [needs, setNeeds] = useState<PartyNeeds>(() => startNeeds(info, link));
-  const [time, setTime] = useState<string | null>(null);
+  const [picked, setPicked] = useState<{ time: string; date: string; party: number } | null>(null);
+  const time = picked?.date === needs.date && picked.party === needs.party ? picked.time : null;
   const [hold, setHoldState] = useState<Hold | null>(null);
   const [contact, setContact] = useState<ContactDetails>(NO_CONTACT);
   const [confirmation, setConfirmation] = useState<BookingConfirmation | null>(null);
@@ -60,6 +61,7 @@ export function useBookingFlow(info: RestaurantInfo, link: LinkAnswers = { date:
   // Stable function: StepTable calls it from inside an effect. A new hold is a new table: the old chair no longer applies.
   const setHold = useCallback((next: Hold | null) => {
     setHoldState(next);
+    if (next) setCarriedNotice(null);
     setSeatId(null);
     setSeatLabel(null);
   }, []);
@@ -90,16 +92,22 @@ export function useBookingFlow(info: RestaurantInfo, link: LinkAnswers = { date:
     setSeatLabel(null);
   };
   const pickTime = (picked: string): void => {
-    setTime(picked);
+    setPicked({ time: picked, date: needs.date, party: needs.party });
     go(STEP.table);
   };
   /** The hold ended while the diner typed: back to the map, with a message saying so. */
-  const holdLost = (message: string): void => {
+  const holdLost = useCallback((message: string): void => {
     setHold(null);
     setCarriedNotice(message);
     setChoosingSeat(false);
     setStep(STEP.table);
-  };
+  }, [setHold]);
+  const hasContact = Object.values(contact).some((value) => value.trim() !== "");
+  useEffect(() => {
+    if (!hold || secondsLeft !== 0 || Date.parse(hold.expiresAt) > Date.now()) return;
+    const saved = hasContact ? " Your details are saved for this booking." : "";
+    holdLost(`Your hold on table ${hold.tableLabel} expired.${saved}`);
+  }, [hold, secondsLeft, hasContact, holdLost]);
   const booked = (result: BookingConfirmation): void => {
     setConfirmation(result);
     setHold(null);

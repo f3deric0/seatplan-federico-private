@@ -252,7 +252,7 @@ describe("Choosing a table on the map", () => {
     await reachTableStep();
     fireEvent.click(screen.getByRole("option", { name: /Table 8,/ }));
     expect(callsTo(calls, "POST", `${API}/hold`)).toHaveLength(0);
-    expect(await screen.findByText(/Table 8 selected\. Use Hold table 8 and continue to reserve it\./)).toBeTruthy();
+    expect(await screen.findByText("Table 8 selected.")).toBeTruthy();
     const card = screen.getByRole("region", { name: /Table 8/ });
     fireEvent.click(within(card).getByRole("button", { name: "Hold 8 & continue" }));
     expect(await screen.findByRole("timer")).toBeTruthy();
@@ -287,7 +287,7 @@ describe("Step 2: suggested table already selected, and an unambiguous light pre
     expect(suggested.getAttribute("aria-selected")).toBe("true");
     expect(suggested.querySelector(".selected-tick")).not.toBeNull(); // outlined and ticked, not drawn as held
     expect(screen.getByRole("option", { name: /Table 8,/ }).getAttribute("aria-selected")).toBe("false");
-    expect(await screen.findByText(/Table 7 is suggested for you and already selected\. Use Hold table 7 and continue to reserve it\./)).toBeTruthy();
+    expect(await screen.findByText("Table 7 is suggested and selected.")).toBeTruthy();
     expect(screen.queryByRole("timer")).toBeNull(); // nothing is held until the diner says so
   });
 
