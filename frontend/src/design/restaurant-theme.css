@@ -19,7 +19,21 @@
 */
 
 :root[data-surface="restaurants"] {
+  /* The restaurant pages are always light, white and purple like the references,
+     whatever the system's dark mode says. The dark palette below is kept for a
+     later "dark" switch (data-theme="dark") and is not applied on its own. */
+  color-scheme: light;
+
   /* ---------- Colour: light ---------- */
+  /* The light values of the shared tokens the system dark mode would otherwise change. */
+  --c-friend: #6b3a68;
+  --c-friend-soft: #eedcec;
+  --c-info: #2f4f6b;
+  --c-info-soft: #dde6ee;
+  --seat-accessible: #2f4f6b;
+  --seat-accessible-mark: #fbf8f2;
+  --seat-friend: #6b3a68;
+  --seat-friend-soft: #eedcec;
   --c-ops-bg: #f6f5fa;
   --c-ops-nav: #2a2150;
   --c-ops-nav-text: #ffffff;
@@ -76,7 +90,8 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root[data-surface="restaurants"] {
+  :root[data-surface="restaurants"][data-theme="dark"] {
+    color-scheme: dark;
     --c-ops-bg: #14111d;
     --c-ops-nav: #1d1830;
     --c-ops-nav-text: #f1eef9;
