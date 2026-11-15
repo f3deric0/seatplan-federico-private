@@ -67,7 +67,7 @@ function Page({ data }: { data: PublicRestaurant }) {
   const price = priceText(data.price_level);
   const rows = weeklyRows(data.schedule.service_periods);
   const closed = data.schedule.blackout_dates;
-  const highlights = FEATURE_KEYS.filter((key) => data.features[key]).map((key) => FEATURE_LABELS[key]);
+  const highlights = data.demo_booking ? [] : FEATURE_KEYS.filter((key) => data.features[key]).map((key) => FEATURE_LABELS[key]);
   const tel = telHref(data.phone);
   const site = websiteHref(data.website);
   const instagram = instagramHref(data.instagram);
@@ -105,7 +105,7 @@ function Page({ data }: { data: PublicRestaurant }) {
         </div>
         {!data.preview && (
           <a className="btn btn-primary rp-cta" href="#book" onClick={goToBooking}>
-            Book a table
+            {data.demo_booking ? "Try a booking" : "Book a table"}
           </a>
         )}
       </header>
@@ -113,7 +113,8 @@ function Page({ data }: { data: PublicRestaurant }) {
 
       {/* The booking comes right after the identity: nothing has to be scrolled past to reserve. */}
       <section ref={book} id="book" className="rp-book" aria-labelledby="rp-book-title">
-        <h2 id="rp-book-title">Book a table</h2>
+        <h2 id="rp-book-title">{data.demo_booking ? "Try a booking" : "Book a table"}</h2>
+        {data.demo_booking && <p className="rb-notice rb-notice-warning rp-demo-note">SeatPlan demo. The opening hours, floor plan and table availability are simulated.</p>}
         {data.preview ? (
           <p className="rb-muted">Booking opens as soon as you publish {data.name}.</p>
         ) : (
@@ -133,7 +134,7 @@ function Page({ data }: { data: PublicRestaurant }) {
             </section>
           )}
           <section aria-labelledby="rp-hours">
-            <h2 id="rp-hours">Hours</h2>
+            <h2 id="rp-hours">{data.demo_booking ? "Demo hours" : "Hours"}</h2>
             {rows.length === 0 ? (
               <p className="rb-muted">Opening hours are not published yet.</p>
             ) : (

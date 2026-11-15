@@ -49,6 +49,10 @@ both demo verticals, and prints the entry links (for example `/e/<token>` for an
 attendee or `/r/<id>` for the restaurant). Run it from `backend/`: the backend
 package is imported as `app` everywhere (tests, seed, `api/index.py`).
 
+For the Lisbon demo catalogue, also run `../.venv/bin/python -m app.seed.lisbon_catalogue`
+from `backend/` with `DEMO_MODE=1`. It adds 20 restaurants and their licensed cover
+photos to the SQLite database. The discovery page marks their bookings as demos.
+
 Check it works: `curl http://127.0.0.1:8000/api/health` answers
 `{"status":"ok","database":"ok",...}`.
 

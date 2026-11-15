@@ -2,7 +2,7 @@
 // a full-screen view with arrows, swipe, and Esc to close (the Dialog handles
 // Esc, focus and returning focus). Every photo has its alt text.
 import { useEffect, useRef, useState } from "react";
-import type { PublicPhoto } from "../../api/discovery";
+import type { PhotoCredit, PublicPhoto } from "../../api/discovery";
 import { Button, Dialog } from "../../design/components";
 import { PhotoImg } from "./PhotoImg";
 
@@ -10,6 +10,14 @@ import { PhotoImg } from "./PhotoImg";
 export function coverFirst(photos: PublicPhoto[]): PublicPhoto[] {
   const cover = photos.findIndex((p) => p.is_cover);
   return cover <= 0 ? photos : [photos[cover], ...photos.filter((_, i) => i !== cover)];
+}
+
+function Credit({ credit }: { credit: PhotoCredit }) {
+  return (
+    <span className="rp-photo-credit">
+      Photo by <a href={credit.file}>{credit.author}</a> · <a href={credit.license_url}>{credit.license}</a>
+    </span>
+  );
 }
 
 export function Gallery({ photos, name, preview = false }: { photos: PublicPhoto[]; name: string; preview?: boolean }) {
@@ -43,6 +51,7 @@ export function Gallery({ photos, name, preview = false }: { photos: PublicPhoto
       <button type="button" className="rp-cover" onClick={() => setOpen(0)} aria-label={`Open photo 1 of ${ordered.length}: ${ordered[0].alt || name}`}>
         <PhotoImg url={ordered[0].url} alt={ordered[0].alt} preview={preview} />
       </button>
+      {ordered[0].credit && <Credit credit={ordered[0].credit} />}
       {ordered.length > 1 && (
         <ul className="rp-thumbs" aria-label="More photos">
           {ordered.slice(1).map((photo, index) => (
@@ -91,6 +100,7 @@ export function Gallery({ photos, name, preview = false }: { photos: PublicPhoto
             <figcaption role="status">
               Photo {(open ?? 0) + 1} of {ordered.length}
               {current.alt ? `: ${current.alt}` : ""}
+              {current.credit && <><br /><Credit credit={current.credit} /></>}
             </figcaption>
           </figure>
         )}

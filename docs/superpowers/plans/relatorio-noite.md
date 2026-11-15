@@ -806,3 +806,15 @@ atendimento com e sem reserva. O Playwright detetou os 86 testes do
 repositório. A execução ligada ao backend ficou bloqueada pelas permissões
 das portas locais no ambiente de trabalho. A proteção dos caminhos de
 Eventos passou.
+
+## Catálogo de Lisboa
+
+Importação aditiva com 20 restaurantes, 20 capas licenciadas e registo de
+fontes para a morada, o pin, a faixa de preço e cada imagem. Cada ficha
+abre no Google Maps. A pesquisa e a ficha identificam as reservas de
+demonstração. Horários, mesas e plantas são simulados.
+
+Importação em SQLite nova validada com 20 fichas e 20 capas. A segunda
+execução não criou linhas. Verificadas as condições de publicação e a
+disponibilidade das 20 fichas, uma reserva de teste e o carregamento das
+20 imagens no Chromium com respostas preparadas a partir dessa base.

@@ -15,6 +15,7 @@ export interface RestaurantCard {
   price_level: number | null;
   cover_url: string | null;
   cover_alt: string | null;
+  demo_booking?: boolean;
   address: string;
   lat: number | null;
   lng: number | null;
@@ -76,10 +77,18 @@ export function searchRestaurants(query: SearchQuery): Promise<SearchAnswer> {
   return api.get<SearchAnswer>(`/restaurants?${searchQueryString(query)}`);
 }
 
+export interface PhotoCredit {
+  author: string;
+  file: string;
+  license: string;
+  license_url: string;
+}
+
 export interface PublicPhoto {
   url: string;
   alt: string;
   is_cover: boolean;
+  credit?: PhotoCredit | null;
 }
 
 /** GET /restaurants/{slug}: everything the public page shows. */
@@ -89,6 +98,7 @@ export interface PublicRestaurant {
   name: string;
   /** True when the owner is looking at a restaurant that is not published yet. */
   preview: boolean;
+  demo_booking?: boolean;
   description: string;
   cuisines: string[];
   price_level: number | null;

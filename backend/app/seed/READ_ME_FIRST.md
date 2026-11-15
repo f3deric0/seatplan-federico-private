@@ -8,7 +8,7 @@ live in RESTAURANT_INDEXES, preserving the historical NEW_INDEXES contract.
 SQLite timestamp additions use DATETIME to match the fresh schema. Existing
 layouts remain untouched and are interpreted as an implicit room by the service.
 
-Two commands, run from `backend/`:
+Commands, run from `backend/`:
 
 - `python -m app.seed.migrate` creates any missing tables, then adds the
   columns and indexes listed in `NEW_COLUMNS` and `NEW_INDEXES` that the
@@ -16,6 +16,12 @@ Two commands, run from `backend/`:
   runs; the app never does it itself.
 - `python -m app.seed.run` creates the tables too, then the two demo accounts
   and the demo data for both verticals, and prints the links to open.
+- `python -m app.seed.lisbon_catalogue` adds 20 Lisbon restaurants to a local
+  SQLite database with `DEMO_MODE=1`. It can run on an empty database or after
+  the regular seed. Re-running it keeps existing listings, bookings and
+  galleries. Each restaurant has researched public details, a licensed cover,
+  an approximate price band and a direct Google Maps link. The public page
+  labels opening hours, floor plan and table availability as simulated.
 
 `POST /api/demo/reset` (in `routers/demo.py`) wipes the data and calls the
 same `seed_all()`.
@@ -33,7 +39,8 @@ same `seed_all()`.
 | `demo_restaurant.py` | `seed(session)` | "Casa Lumen": 18 tables in four zones, opening hours, bookings for today and the next three days, two weeks of past dinners; since the discovery page it also has a slug, address, location, cuisines and a drawn photo |
 | `demo_restaurant.py` | `free_slug(session, wanted)` | The slug, or `-2`, `-3`... when a restaurant already has it (a second seed) |
 | `demo_showcase.py` | `seed(session)` | Four invented restaurants in real Lisbon neighbourhoods with real rooms (south glass wall and a terrace, an awned patio and a fireplace room, a curved room with west windows, a small quiet room), published, with opening hours, drawn photos and `features`; returns `showcase_<slug>` links to `/restaurants/<slug>` |
-| `demo_photos.py` | `scene(name)`, `add_photos(session, venue, [(scene, alt)])` | The demo pictures, drawn from plain shapes by this file (400 x 225, cached per process). **The source of every demo photo is this file**: no third-party image, nothing to license |
+| `demo_photos.py` | `scene(name)`, `add_photos(session, venue, [(scene, alt)])` | The default demo's pictures, drawn from plain shapes by this file (400 x 225, cached per process) |
+| `lisbon_catalogue.json` and `lisbon_photos/` | Lisbon catalogue data and cover images | The manifest records the source for the listing, the map pin, the approximate price band, and the author, source page and licence of each cover. Images are the Commons web-size variants. |
 
 ## Data flow
 
@@ -55,8 +62,10 @@ page.
 ## Three likely walkthrough questions
 
 **Is any of this data real?**
-No. Every name is invented and every email ends in `@example.com`
-(contract section 7).
+The default demo uses fictional names and `@example.com` emails
+(contract section 7). The optional Lisbon catalogue uses publicly listed
+business names, addresses and photographs. Its reservations and layouts
+belong to the SeatPlan demo.
 
 **Why are the demo links not kept in the audit log?**
 A link like `/e/<token>` holds a raw secret token, and the rule is that tokens
