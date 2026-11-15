@@ -28,11 +28,13 @@ interface ServicesProps {
   onChange: (services: ServicePeriod[]) => void;
 }
 
-export function ScheduleEditor({ venueId, saved, onSaved, servicesEditor: Services = ServicesEditor }: {
+export function ScheduleEditor({ venueId, saved, onSaved, servicesEditor: Services = ServicesEditor, heading = true }: {
   venueId: string;
   saved: Schedule;
   onSaved: (schedule: Schedule) => void;
   servicesEditor?: ComponentType<ServicesProps>;
+  /** The "Weekly schedule" heading and section links of the staff tab; the owner Hours page has its own heading. */
+  heading?: boolean;
 }) {
   const toast = useToast();
   const [draft, setDraft] = useState<Schedule>(saved);
@@ -62,7 +64,7 @@ export function ScheduleEditor({ venueId, saved, onSaved, servicesEditor: Servic
   };
   return (
     <div className="st-schedule">
-      {Services === ServicesEditor && <header className="st-schedule-heading"><h2>Weekly schedule</h2><p className="rb-muted">Recurring opening hours for every week. The Day selector above only changes the floor and daily reports.</p><nav aria-label="Schedule sections"><a href="#st-services">Services</a><a href="#st-turn-times">Turn times</a><a href="#st-closed-days">Closed days</a></nav></header>}
+      {heading && <header className="st-schedule-heading"><h2>Weekly schedule</h2><p className="rb-muted">Recurring opening hours for every week. The Day selector above only changes the floor and daily reports.</p><nav aria-label="Schedule sections"><a href="#st-services">Services</a><a href="#st-turn-times">Turn times</a><a href="#st-closed-days">Closed days</a></nav></header>}
       <div className="rb-actions st-schedule-save">
         <span role="status">{dirty ? "Unsaved changes" : "All changes saved"}</span>
         <Button variant="secondary" disabled={busy || !dirty} onClick={() => setDraft(saved)}>Undo my changes</Button>

@@ -31,7 +31,7 @@ export default function HoursPage() {
           onCustom={() => setCustom(true)}
         />
       )}
-      {state.status === "ready" && (state.data.services.length > 0 || custom) && <ScheduleEditor key={venueId} venueId={venueId} saved={state.data} onSaved={(next) => { setCustom(true); setData(next); }} servicesEditor={WeeklyServices} />}
+      {state.status === "ready" && (state.data.services.length > 0 || custom) && <ScheduleEditor key={venueId} venueId={venueId} saved={state.data} onSaved={(next) => { setCustom(true); setData(next); }} servicesEditor={WeeklyServices} heading={false} />}
       <nav className="owner-card-links" aria-label="Setup steps">
         <Link to={`/owner/${encodeURIComponent(venueId)}/photos`}>← Photos</Link>
         <Link to={`/owner/${encodeURIComponent(venueId)}/rooms`}>Next: rooms →</Link>

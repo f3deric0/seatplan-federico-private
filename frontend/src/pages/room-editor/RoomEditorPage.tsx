@@ -159,6 +159,7 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
           <Button variant="secondary" aria-pressed={tool === "Tables"} disabled={drawing} onClick={() => { setTool("Tables"); setPlacement(null); setError(""); }}>Tables</Button>
           <Button disabled={drawing} onClick={() => { setTool("Tables"); setPlacement(null); setError(""); setOpenPalette(true); }}>Add table</Button>
         </div>
+        {/* No "Preview" button: the Light tool already shows the saved room as a diner will see it, and a button that never works is worse than none. */}
         <nav className="room-other-tools" aria-label="Room tools">
           {["Shape", "Walls", "North", "Fixed", "Zones", "Light"].map(name => <Button variant="ghost" key={name} aria-pressed={tool === name} disabled={drawing && name !== "Shape"} onClick={() => { setTool(name); setPlacement(null); setError(""); }}>{name}</Button>)}
         </nav>
