@@ -1,6 +1,7 @@
 """Invented pictures for the demo restaurants, drawn here from plain shapes.
 
-SOURCE OF EVERY DEMO PHOTO: this file. Each picture is made by the code below
+SOURCE OF EVERY DEMO PHOTO IN THE DEFAULT RESTAURANT SEED: this file.
+Each picture is made by the code below
 (rectangles, circles and colour bands written out as an indexed PNG by
 app/mail/png.py). No photograph, stock image or other third-party material is
 used, so there is nothing to license, and no real restaurant, brand or person

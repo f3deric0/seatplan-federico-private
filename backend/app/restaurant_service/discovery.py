@@ -21,6 +21,7 @@ from app.models import Room, Venue, VenuePhoto
 from app.restaurant_service import photos
 from app.restaurant_service.availability import PartyNeeds, max_party, slot_statuses
 from app.restaurant_service.schedule_edit import read_schedule
+from app.seed.lisbon_data import DEMO_ID_PREFIX, cover_credit
 
 FEATURES = ("sun", "view", "accessible", "terrace")
 NEXT_TIMES = 3
@@ -144,6 +145,7 @@ def _card(
         "distance_m": None if meters is None else round(meters),
         "features": {name: bool((venue.features or {}).get(name)) for name in FEATURES},
         "next_times": times,
+        "demo_booking": venue.is_demo and venue.public_id.startswith(DEMO_ID_PREFIX),
     }
 
 
@@ -200,6 +202,7 @@ def public_page(session: Session, venue: Venue, *, preview: bool) -> dict[str, A
         "public_id": venue.public_id,
         "name": venue.name,
         "preview": preview,
+        "demo_booking": venue.is_demo and venue.public_id.startswith(DEMO_ID_PREFIX),
         "description": venue.description,
         "cuisines": list(venue.cuisines),
         "price_level": venue.price_level,
@@ -213,7 +216,12 @@ def public_page(session: Session, venue: Venue, *, preview: bool) -> dict[str, A
         "features": {name: bool((venue.features or {}).get(name)) for name in FEATURES},
         "rooms_summary": [room.name for room in rooms],
         "photos": [
-            {"url": f"/api/photos/{p.public_id}", "alt": p.alt_text, "is_cover": p.is_cover}
+            {
+                "url": f"/api/photos/{p.public_id}",
+                "alt": p.alt_text,
+                "is_cover": p.is_cover,
+                "credit": cover_credit(p.public_id),
+            }
             for p in gallery
         ],
         "max_party": max_party(session, venue),
