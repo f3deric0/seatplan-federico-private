@@ -117,7 +117,7 @@ export function LightCursorControl({ steps, index, onChange, failed, bookingTime
           {tableLabel && summary ? ` Table ${tableLabel}: ${summary.toLowerCase()}.` : ""}
           {sun !== null && sunset ? ` The sun sets at ${sunset}.` : ""}
         </p>
-        <p className="rb-muted rb-light-legend">Yellow stripes are where the sun reaches the floor. Dark blue is after sunset.</p>
+        <p className="rb-muted rb-light-legend">Yellow is where the sun reaches the floor. After sunset the floor turns dark and the free tables get a candle.</p>
         {failed && (
           <p className="rb-notice" role="status">
             We could not update the light just now. The picture shows an earlier time.

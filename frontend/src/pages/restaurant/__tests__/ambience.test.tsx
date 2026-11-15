@@ -219,13 +219,13 @@ describe("Map key", () => {
   it("explains sun, night and the view once, in a sentence by the plan, only when there are rooms", async () => {
     mockApi({ [`GET ${API}`]: () => INFO, [`GET ${API}/slots`]: () => SLOTS, [`GET ${API}/map`]: () => roomsMap() });
     await reachTableStep();
-    expect(screen.getByText(/striped yellow is where the sun reaches the floor, dark blue is after sunset/)).toBeTruthy();
+    expect(screen.getByText(/yellow is where the sun reaches the floor, a dark floor with candles is after sunset/)).toBeTruthy();
   });
 
   it("says nothing about sun when there are no rooms", async () => {
     mockApi({ [`GET ${API}`]: () => INFO, [`GET ${API}/slots`]: () => SLOTS, [`GET ${API}/map`]: () => dinerMap() });
     await reachTableStep();
-    expect(screen.queryByText(/striped yellow/)).toBeNull();
+    expect(screen.queryByText(/yellow is where the sun reaches the floor/)).toBeNull();
     expect(within(screen.getByRole("list", { name: "Map key" })).getAllByRole("listitem")).toHaveLength(3);
   });
 

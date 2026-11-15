@@ -2,14 +2,14 @@
 // for 5 minutes; "Choose for me" lets the optimiser pick. Live updates
 // redraw the map within about 2 seconds when someone else books a table.
 import { useEffect, useRef, useState } from "react";
-import { applyAmbience, cursorSteps, defaultRoom, lightWords, roomTabs, seatsInRoom, tablesInRoom } from "./ambienceView";
+import { applyAmbience, cursorSteps, defaultRoom, lightWords, roomTabs, tablesInRoom } from "./ambienceView";
 import { useLightCursor } from "./useLightCursor";
 import { ApiError } from "../../api/client";
 import { getDinerMap, holdTable, venueDayScope } from "../../api/restaurant";
 import type { BookingConfirmation, ContactDetails, DinerMap, DinerTable, PartyNeeds } from "../../api/restaurant";
 import { useLive } from "../../api/useLive";
 import { Button, Checkbox, ErrorState, Skeleton } from "../../design/components";
-import { SeatMap } from "../../seatmap/SeatMap";
+import { FloorPlan } from "./FloorPlan";
 import { errorMessage, guests, shortDate, tableName } from "./format";
 import { HoldCountdown } from "./HoldCountdown";
 import { LightCursorControl } from "./LightCursor";
@@ -273,6 +273,15 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, submitting, ph
   ) : null;
 
   const highlight = new Set(map.recommended?.table_ids ?? []);
+  // The plan draws every room at once; the room being chosen in holds the options.
+  const planTables = tablesForMap(map, heldId);
+  const planRooms = map.rooms ?? [];
+  const selectOnPlan = (id: number): void => {
+    const table = map.tables.find((t) => t.id === id);
+    if (table && tabs.length > 0) setChosenRoom(table.room_id ?? null);
+    setPointed(null);
+    lookAt(id);
+  };
   const nothingFree = pickable.size === 0 && heldId === null;
   const panelShown = Boolean(details && hold && heldId !== null && secondsLeft !== null);
   const [view, setView] = useState<"map" | "list">("map");
@@ -357,23 +366,19 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, submitting, ph
             <p className="rb-muted">
               {[`${tableName(hold.tableLabel)}${heldTable && zoneOf(heldTable) ? ` · ${zoneOf(heldTable)} table` : ""}`, heldTable?.ambience?.view?.text].filter(Boolean).join(" · ")}
             </p>
-            <SeatMap
+            <FloorPlan
               label={`Floor plan with your table ${hold.tableLabel}`}
-              mode="tables"
-              tables={roomTables}
-              seats={seatsInRoom(map.seats, roomTables)}
+              tables={planTables}
+              seats={map.seats}
               zones={map.zones}
-              rooms={map.rooms}
-              activeRoomId={roomId}
-              onActiveChange={setPointed}
+              rooms={planRooms}
               selectable={() => false}
               selectedId={heldId}
-              ownId={heldId}
-              highlight={highlight}
+              highlight={new Set()}
               describe={describeDinerTables(map)}
-              onSelect={() => undefined}
+              narrow={phone}
             />
-            <MapKey entries={DINER_KEY_HELD} />
+            <MapKey entries={DINER_KEY_HELD} look="plan" />
             <div className="rb5-your-table-actions">
               <Button variant="ghost" disabled={submitting} onClick={changeTable}>
                 Choose a different table
@@ -392,6 +397,22 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, submitting, ph
     return (
       <>
         {notices}
+        <section className="rb5-quick-plan" aria-label="Floor plan">
+          <FloorPlan
+            label={`Floor plan for ${time}`}
+            tables={planTables}
+            seats={map.seats}
+            zones={map.zones}
+            rooms={planRooms}
+            selectable={(id) => pickable.has(id)}
+            selectedId={cardTable.id}
+            highlight={highlight}
+            describe={describeDinerTables(map)}
+            onSelect={selectOnPlan}
+            narrow
+          />
+        </section>
+        <div className="rb5-sheet">
         <TableCard
           quick={{ party: needs.party }}
           table={cardTable}
@@ -421,6 +442,7 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, submitting, ph
           >
             Continue with this table
           </Button>
+        </div>
         </div>
       </>
     );
@@ -509,24 +531,23 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, submitting, ph
           {view === "map" ? (
             <>
               <div className="rb-map-main">
-                <SeatMap
+                <FloorPlan
                   label={`Floor plan for ${time}`}
-                  mode="tables"
-                  tables={roomTables}
-                  seats={seatsInRoom(map.seats, roomTables)}
+                  tables={planTables}
+                  seats={map.seats}
                   zones={map.zones}
-                  rooms={map.rooms}
-                  activeRoomId={roomId}
+                  rooms={planRooms}
+                  activeRoomId={tabs.length > 0 ? roomId : undefined}
                   onActiveChange={setPointed}
                   selectable={(id) => pickable.has(id)}
                   selectedId={looking ?? heldId}
-                  ownId={heldId}
                   highlight={highlight}
                   describe={describeDinerTables(map)}
-                  onSelect={lookAt}
+                  onSelect={selectOnPlan}
+                  narrow={phone}
                 />
               </div>
-              <MapKey entries={heldId !== null ? DINER_KEY_HELD : DINER_KEY} />
+              <MapKey entries={heldId !== null ? DINER_KEY_HELD : DINER_KEY} look="plan" />
               {map.rooms && <p className="rb-muted rb-scene-note">{SCENE_NOTE}</p>}
             </>
           ) : (

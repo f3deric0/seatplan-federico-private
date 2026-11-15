@@ -1,0 +1,103 @@
+/* The diner's floor plan (FloorPlan.tsx). The plan is an illustration of the room, so its
+   materials keep their colours in dark mode; only the words around it follow the theme. */
+.fp {
+  --fp-green: var(--c-primary, #234739);
+  --fp-table: #fffefb;
+  --fp-gold: #d9a13b;
+  --fp-off-edge: #b3b2a7;
+  --fp-off-chair: #f1efe8;
+  --fp-off-text: #6f716a;
+  --fp-wall: #3a4a42;
+  --fp-glass: #9fc8d3;
+  --fp-fixture: #e9e3d6;
+  --fp-fixture-edge: #cdc4b0;
+  --fp-fixture-text: #5f5646;
+  --fp-pick-bg: #f8ebd3;
+  --fp-pick: #734619;
+  position: relative;
+}
+.fp-viewport {
+  border-radius: var(--radius-lg, 14px);
+  background: var(--c-surface);
+  outline: none;
+}
+.fp-viewport:focus-visible {
+  outline: 3px solid var(--c-focus);
+  outline-offset: 2px;
+}
+.fp-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 78vh;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Floors, walls, glass and fixed things. */
+.fp-oak { fill: #efe3cc; }
+.fp-oak-line { stroke: #e2d2b2; fill: none; }
+.fp-oak-night { fill: #3c463f; }
+.fp-oak-night-line { stroke: #343d37; fill: none; }
+.fp-stone { fill: #e6e2d6; }
+.fp-stone-line { stroke: #d6d1c3; fill: none; }
+.fp-stone-night { fill: #434c47; }
+.fp-stone-night-line { stroke: #3a423e; fill: none; }
+.fp-hatch-bg { fill: #f6f4ec; }
+.fp-hatch-line { stroke: #e0ddd2; stroke-width: 3; }
+.fp-wall { fill: none; stroke: var(--fp-wall); stroke-width: 6; stroke-linejoin: round; }
+.fp-room.is-outdoor .fp-wall { stroke: #b9b4a5; stroke-width: 2; stroke-dasharray: 8 6; }
+.fp-room.is-night .fp-wall { stroke: #9aa39c; }
+.fp-glass { fill: none; stroke: var(--fp-glass); stroke-width: 9; stroke-linecap: butt; }
+.fp-room.is-night .fp-glass { stroke: #f0cf7a; }
+.fp-door { fill: none; stroke: var(--c-surface); stroke-width: 10; }
+.fp-fixture { fill: var(--fp-fixture); stroke: var(--fp-fixture-edge); }
+.fp-room.is-night .fp-fixture { fill: #5d655f; stroke: #737b75; }
+.fp-sun { fill: #ffd36b; opacity: 0.34; }
+.fp-night path { fill: #0f1c26; opacity: 0.12; }
+
+/* The view outside: water or green. */
+.fp-band rect { fill: #8db3c1; }
+.fp-band line { stroke: #fff; stroke-width: 3; stroke-linecap: round; opacity: 0.55; }
+.fp-band-green rect { fill: #a9c79a; }
+.fp-band-green line { stroke: #eef5e8; }
+.fp-scene:has(.fp-night) .fp-band-water rect { fill: #22384a; }
+.fp-scene:has(.fp-night) .fp-band-water line { stroke: #f3c86a; opacity: 0.7; }
+
+/* Tables: free, yours, not for you. */
+.fp-table { cursor: default; }
+.fp-table.is-pickable { cursor: pointer; }
+.fp-hit { fill: transparent; }
+.fp-top { stroke-width: 3; }
+.fp-chair { stroke-width: 2; }
+.fp-table.is-free .fp-top, .fp-table.is-free .fp-chair { fill: var(--fp-table); stroke: var(--fp-green); }
+.fp-table.is-free.is-pickable:hover .fp-top { fill: #e1ebe0; }
+.fp-table.is-selected .fp-top, .fp-table.is-selected .fp-chair { fill: #234739; stroke: #234739; }
+.fp-tick circle { fill: #fffefb; stroke: #234739; stroke-width: 2.5; }
+.fp-tick path { fill: none; stroke: #234739; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.fp-ring { fill: none; stroke: var(--fp-gold); stroke-width: 4; }
+.fp-cursor { fill: none; stroke: var(--c-focus); stroke-width: 3; stroke-dasharray: 6 4; }
+.fp-table.is-off .fp-top { fill: var(--fp-hatch); stroke: var(--fp-off-edge); stroke-dasharray: 5 4; stroke-width: 2; }
+.fp-table.is-off .fp-chair { fill: var(--fp-off-chair); stroke: #c8c7bd; }
+.fp-table.is-elsewhere { opacity: 0.72; }
+.fp-glow-in { stop-color: #ffd98a; stop-opacity: 0.7; }
+.fp-glow-out { stop-color: #ffd98a; stop-opacity: 0; }
+
+/* Words: upright on a turned plan, sized in screen pixels by the component. */
+.fp-words text { pointer-events: none; }
+.fp-code, .fp-fixture-text, .fp-band-text, .fp-pick text { text-anchor: middle; dominant-baseline: central; }
+.fp-code { font-family: var(--font-body); font-weight: 650; fill: #234739; }
+.fp-code.is-selected { fill: #fffefb; }
+.fp-code.is-off { fill: var(--fp-off-text); font-weight: 500; }
+.fp-fixture-text { font-family: var(--font-body); font-weight: 600; fill: var(--fp-fixture-text); }
+.fp-fixture-text.is-night { fill: #ece7da; }
+.fp-band-text { font-family: var(--font-display); fill: #fff; }
+.fp-band-green .fp-band-text { fill: #1d2b25; }
+.fp-room-name { font-family: var(--font-display); fill: var(--c-text); }
+.fp-pick rect { fill: var(--fp-pick-bg); stroke: var(--fp-pick); stroke-width: 1.5; }
+.fp-pick text { font-family: var(--font-body); font-weight: 700; fill: var(--fp-pick); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .fp-top { transition: fill 0.15s ease; }
+}

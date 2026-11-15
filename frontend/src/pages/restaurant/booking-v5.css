@@ -872,3 +872,103 @@
 .rb5-more-fields[open] > summary {
   margin-bottom: var(--space-1);
 }
+
+/* ---------- The floor plan (FloorPlan.tsx): every room at once, the room fills the width ---------- */
+
+.rb5-plan-card .fp-svg {
+  max-height: clamp(18rem, calc(100vh - 20rem), 40rem);
+}
+
+.rb5-your-table .fp-svg {
+  max-height: 22rem;
+}
+
+.rb5-plan-card .legend-swatch.fp,
+.rb5-your-table .legend-swatch.fp {
+  width: 26px;
+  height: 22px;
+}
+
+/* What a table is like, one fact per line with its icon. */
+.rb-table-facts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.rb-table-facts li {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  gap: var(--space-2);
+  align-items: start;
+}
+
+.rb-fact-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-top: 0.05rem;
+  fill: none;
+  stroke: var(--c-primary);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rb-fact-icon.is-sun,
+.rb-fact-icon.is-night {
+  stroke: var(--c-warning-text, #734619);
+}
+
+@media (max-width: 47.99rem) {
+  .rb5-plan-card .fp-svg { max-height: 72vh; }
+
+  /* The phone opens on the plan with our pick chosen; its card and the one button sit in a sheet at the bottom. */
+  .rb5-quick-plan {
+    margin: var(--space-2) 0 var(--space-3);
+  }
+
+  .rb5-quick-plan .fp-svg {
+    max-height: none;
+  }
+
+  .rb5-sheet {
+    position: sticky;
+    bottom: 0;
+    z-index: var(--z-map-controls);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin: 0 calc(var(--space-4) * -1);
+    padding: var(--space-3) var(--space-4) var(--space-3);
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 30px rgb(29 43 37 / 0.14);
+  }
+
+  .rb5-sheet .rb-table-quick {
+    padding: 0;
+    gap: var(--space-1);
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .rb5-sheet .rb-table-quick .rb-table-title {
+    font-size: 1.4rem;
+  }
+
+  .rb5-sheet .rb-why {
+    display: none;
+  }
+
+  .rb5-sheet .rb-actions-sticky {
+    position: static;
+    padding: var(--space-1) 0 0;
+    border-top: 0;
+    background: transparent;
+  }
+}

@@ -23,6 +23,7 @@ self-check are in `docs/ux-restaurant.md`.
 | `StepParty.tsx`, `StepTime.tsx`, `StepTable.tsx`, `StepDetails.tsx`, `Confirmation.tsx` | The five booking steps |
 | `ChooseSeat.tsx` | "Where would you like to sit? (optional)" (spec 9.4), a stop inside the Table step after a table is held: the chairs of the held table(s) on a small map and as radio buttons with their sentence ("Seat 2 · Facing the window"), "Back to the map", "Skip" and "Continue with seat 2". Only a wish: the booking stays per table. With no usable chairs, or if they cannot be loaded, it steps aside by itself. `GET /r/{vid}/seats?table_ids=` feeds it |
 | `RoomTabs.tsx`, `LightCursor.tsx`, `useLightCursor.ts`, `ambienceView.ts` | The table step with rooms (spec 9.3): a tab per room with its free tables; the ambience card in `TablePanels.tsx` for the table under the pointer, else the held one, else our suggestion (only when its ambience is known); and the light cursor over the stay, which asks `GET /r/{vid}/ambience` 250 ms after the last move and repaints only sun, night and sentences, never the tables, holds or live updates. `ambienceView.ts` is the pure part (tabs, steps, merging the answer) |
+| `FloorPlan.tsx`, `floorPlanScene.ts`, `floor-plan.css` | The diner's floor plan in the table step (events keep the shared `SeatMap`): every room at once with wooden or stone floors, glass walls, the view beyond them as a band (water or green, from the opening's tags), sun on the floor by day and a candle on each free table after dark. Three table looks: free, yours (green with a gold ring and a tick) and not for you (hatched). Same listbox and keyboard model as `SeatMap`; no zoom, and a wide plan turns a quarter on a phone. The phone opens on this plan with our pick chosen and a bottom sheet holding its card and "Continue with this table". `floorPlanScene.ts` is the tested pure part |
 | `tableView.ts` | Pure rules for the diner map: the state each table shows, its spoken name, alternatives after a conflict |
 | `ChangeBookingForm.tsx`, `BookingSummary.tsx` | The manage page's form and the summary shared with the confirmation |
 | `StaffFloor.tsx`, `FloorLists.tsx`, `SelectionPanel.tsx`, `MoveDialog.tsx`, `WalkinDialog.tsx`, `WhatIf.tsx` | The live floor and its actions |
@@ -35,7 +36,7 @@ self-check are in `docs/ux-restaurant.md`.
 
 ```
 GET /r/{vid}/slots --> StepTime (times that have passed are left out)
-GET /r/{vid}/map   --> StepTable --> SeatMap (mode "tables", describe = table words)
+GET /r/{vid}/map   --> StepTable --> FloorPlan (every room, describe = table words)
 tap a table        --> POST /r/{vid}/hold   --> 5-minute countdown
    another table   --> new hold first, then DELETE /r/{vid}/hold/{old id}
    "Change time"   --> DELETE /r/{vid}/hold/{id}, back to step 2
