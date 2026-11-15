@@ -2,61 +2,64 @@
    By day it is light; after dark the whole plan turns to night (.is-night), with warm light at
    every free table. The plan is a picture of the room, so it keeps these colours in dark mode. */
 .fp-viewport {
-  --fp-bg: #fbfaf5;
-  --fp-floor: #f3f0e7;
-  --fp-floor-out: #edf1e8;
-  --fp-wall: #d8d4c7;
-  --fp-glass: #a9cbd6;
-  --fp-fixture: #e9e5da;
-  --fp-fixture-text: #7a7366;
-  --fp-sun: #ffdf94;
-  --fp-table: #ffffff;
-  --fp-table-edge: #d3d9d1;
-  --fp-chair: #b8c9bd;
-  --fp-chair-back: #9fb5a6;
-  --fp-code: #3c4a43;
-  --fp-mine: #234739;
-  --fp-mine-table: #234739;
-  --fp-halo: rgb(35 71 57 / 0.12);
-  --fp-off: #ecebe5;
-  --fp-off-chair: #e2e1da;
-  --fp-off-code: #a2a59c;
-  --fp-band-water: #d6e7ec;
-  --fp-band-green: #dfeadb;
-  --fp-band-text: #3f6a78;
-  --fp-pick: #b07a1f;
-  --fp-pick-bg: #fff4dc;
-  --fp-glow: #ffcf7a;
-  border-radius: var(--radius-lg, 16px);
+  --fp-bg: #ffffff;
+  --fp-floor: #faf9fd;
+  --fp-floor-out: #f6f8f5;
+  --fp-wall: #e6e3ef;
+  --fp-glass: #c9c2e6;
+  --fp-fixture: #f0eef6;
+  --fp-fixture-text: #8c86a3;
+  --fp-sun: #ffe1a6;
+  --fp-table: #d7d2e8;
+  --fp-table-edge: #d7d2e8;
+  --fp-chair: #5b4b9b;
+  --fp-chair-back: #3e3175;
+  --fp-code: #3a3456;
+  --fp-mine: #c2508f;
+  --fp-mine-table: #d7d2e8;
+  --fp-halo: rgb(194 80 143 / 0.10);
+  --fp-glow-chair: rgb(194 80 143 / 0.55);
+  --fp-off: #f0eef5;
+  --fp-off-chair: #e4e1ec;
+  --fp-off-code: #aaa6bb;
+  --fp-band-water: #e7f0f6;
+  --fp-band-green: #e6f0e4;
+  --fp-band-text: #5a7d90;
+  --fp-pick: #a12f6f;
+  --fp-pick-bg: #f9e8f1;
+  --fp-glow: #f6c0dc;
+  border-radius: var(--radius-lg, 18px);
   background: var(--fp-bg);
   border: 1px solid var(--c-border);
   outline: none;
   overflow: hidden;
 }
 .fp-viewport.is-night {
-  --fp-bg: #18211d;
-  --fp-floor: #212c27;
-  --fp-floor-out: #1d2823;
-  --fp-wall: #34413b;
-  --fp-glass: #e9c46a;
-  --fp-fixture: #2c3833;
-  --fp-fixture-text: #8f9b94;
-  --fp-table: #f6f1e4;
-  --fp-table-edge: #f6f1e4;
-  --fp-chair: #c9a85e;
-  --fp-chair-back: #a98a45;
-  --fp-code: #2a3530;
-  --fp-mine: #e9c46a;
-  --fp-mine-table: #e9c46a;
-  --fp-halo: rgb(233 196 106 / 0.18);
-  --fp-off: #2a3530;
-  --fp-off-chair: #2f3b36;
-  --fp-off-code: #6f7c75;
-  --fp-band-water: #1f3644;
-  --fp-band-green: #22352a;
-  --fp-band-text: #a9c8d4;
-  --fp-pick: #e9c46a;
-  --fp-pick-bg: #33402f;
+  --fp-bg: #1b1729;
+  --fp-floor: #221d33;
+  --fp-floor-out: #1f1b2e;
+  --fp-wall: #342e4a;
+  --fp-glass: #8f84c4;
+  --fp-fixture: #2b2540;
+  --fp-fixture-text: #9b94b5;
+  --fp-table: #3a3354;
+  --fp-table-edge: #3a3354;
+  --fp-chair: #b9adf0;
+  --fp-chair-back: #8f82cf;
+  --fp-code: #e9e5f7;
+  --fp-mine: #f29cc8;
+  --fp-mine-table: #3a3354;
+  --fp-halo: rgb(242 156 200 / 0.12);
+  --fp-glow-chair: rgb(242 156 200 / 0.6);
+  --fp-off: #262137;
+  --fp-off-chair: #2d273f;
+  --fp-off-code: #6c6585;
+  --fp-band-water: #1d2b3c;
+  --fp-band-green: #1f2e25;
+  --fp-band-text: #9db8cc;
+  --fp-pick: #f29cc8;
+  --fp-pick-bg: #3b2236;
+  --fp-glow: #f29cc8;
 }
 .fp-viewport:focus-visible {
   outline: 3px solid var(--c-focus);
@@ -79,7 +82,7 @@
 .fp-glass { fill: none; stroke: var(--fp-glass); stroke-width: 6; stroke-linecap: round; }
 .fp-door { fill: none; stroke: var(--fp-floor); stroke-width: 8; }
 .fp-fixture { fill: var(--fp-fixture); }
-.fp-sun { fill: var(--fp-sun); opacity: 0.3; }
+.fp-sun { fill: var(--fp-sun); opacity: 0.16; }
 .fp-night path { fill: transparent; }
 .fp-band { fill: var(--fp-band-water); }
 .fp-band-green { fill: var(--fp-band-green); }
@@ -88,14 +91,15 @@
 .fp-table { cursor: default; }
 .fp-table.is-pickable { cursor: pointer; }
 .fp-hit { fill: transparent; }
-.fp-top { fill: var(--fp-table); stroke: var(--fp-table-edge); stroke-width: 1.5; }
-.fp-table.is-free .fp-top { filter: drop-shadow(0 2px 3px rgb(29 43 37 / 0.14)); }
+.fp-top { fill: var(--fp-table); stroke: none; }
+.fp-chair-glow { fill: transparent; }
+.fp-table.is-selected .fp-chair-glow { fill: var(--fp-glow-chair); filter: blur(6px); }
 .fp-seat { fill: var(--fp-chair); }
 .fp-back { fill: var(--fp-chair-back); }
-.fp-table.is-free.is-pickable:hover .fp-top { stroke: var(--fp-mine); stroke-width: 2.5; }
-.fp-table.is-selected .fp-top { fill: var(--fp-mine-table); stroke: var(--fp-mine); stroke-width: 3; }
+.fp-table.is-free.is-pickable:hover .fp-seat { fill: var(--fp-mine); }
+.fp-table.is-selected .fp-top { fill: var(--fp-mine-table); }
 .fp-table.is-selected .fp-seat { fill: var(--fp-mine); }
-.fp-table.is-selected .fp-back { fill: var(--fp-mine); opacity: 0.75; }
+.fp-table.is-selected .fp-back { fill: var(--fp-mine); opacity: 0.8; }
 .fp-halo { fill: var(--fp-halo); stroke: none; }
 .fp-table.is-off .fp-top { fill: var(--fp-off); stroke: none; }
 .fp-table.is-off .fp-seat, .fp-table.is-off .fp-back { fill: var(--fp-off-chair); }
@@ -109,8 +113,8 @@
 .fp-words text { pointer-events: none; }
 .fp-code, .fp-fixture-text, .fp-band-text { text-anchor: middle; dominant-baseline: central; }
 .fp-code { font-family: var(--font-body); font-weight: 650; fill: var(--fp-code); }
-.fp-code.is-selected { fill: #fffefb; }
-.fp-viewport.is-night .fp-code.is-selected { fill: #3a2f12; }
+.fp-code.is-selected { fill: var(--fp-code); font-weight: 800; }
+
 .fp-code.is-off { fill: var(--fp-off-code); font-weight: 500; }
 .fp-fixture-text { font-family: var(--font-body); font-weight: 600; fill: var(--fp-fixture-text); }
 .fp-band-text { font-family: var(--font-body); font-weight: 600; letter-spacing: 0.02em; fill: var(--fp-band-text); }
@@ -119,9 +123,9 @@
 .fp-pick path { fill: var(--fp-pick); }
 
 /* The key under the plan shows the same three looks (MapKey look="plan"). */
-.legend-swatch.fp .fp-table.is-free .fp-top { fill: #ffffff; stroke: #9fb5a6; stroke-width: 2; }
-.legend-swatch.fp .fp-table.is-selected .fp-top { fill: #234739; stroke: #234739; stroke-width: 2.5; }
-.legend-swatch.fp .fp-table.is-off .fp-top { fill: #e4e3dc; stroke: none; }
+.legend-swatch.fp .fp-table.is-free .fp-top { fill: #d7d2e8; stroke: #5b4b9b; stroke-width: 2.5; }
+.legend-swatch.fp .fp-table.is-selected .fp-top { fill: #d7d2e8; stroke: #c2508f; stroke-width: 3; }
+.legend-swatch.fp .fp-table.is-off .fp-top { fill: #eceaf2; stroke: none; }
 
 @media (prefers-reduced-motion: no-preference) {
   .fp-top, .fp-seat { transition: fill 0.15s ease, stroke 0.15s ease; }

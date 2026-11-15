@@ -1,5 +1,6 @@
 /*
-  The Restaurants look: ivory paper, dark green actions, terracotta for what needs attention.
+  The Restaurants look: white and lavender surfaces, deep purple for structure and choices,
+  pink for the one main action and for what we recommend.
 
   PageShell sets data-surface="restaurants" on <html> for the diner, owner and
   staff routes ("/", "/restaurants/...", "/r/...", "/b/...", "/owner...",
@@ -7,91 +8,98 @@
   file changes only those pages: the events pages and the login for events keep
   the linen and bottle-green look from tokens.css.
 
-  It only re-defines token values; no stylesheet needs to know about it.
-  Every pair is checked by scripts/contrast.mjs (WCAG 2.2 AA), the same
-  way as tokens.css.
+  It only re-defines token values (and the main button's colour); no other stylesheet
+  needs to know about it. Every pair is checked by scripts/contrast.mjs (WCAG 2.2 AA),
+  the same way as tokens.css.
 
-  Palette (approved prototype, SeatPlan_Guia_Implementacao): ivory #FAF8F1, card #FFFEFB,
-  ink #1D2B25, secondary #526056, action green #234739, selection #E1EBE0, outline #D8D9CD,
-  warning amber #734619 on #F8EBD3, destructive red #923B31. Amber also stays for the sun.
+  Palette (chosen by Martim from the Dribbble references, Nov 2026): white #FFFFFF and
+  lavender #F8F7FC surfaces, ink #1F1B33, secondary #5F5A75, purple #4F3F8F for
+  structure and selection, pink #B0347A for the main action (white text 5.9:1) and
+  #A12F6F as text, warning amber #734619 on #F8EBD3, destructive red #923B31.
 */
 
 :root[data-surface="restaurants"] {
   /* ---------- Colour: light ---------- */
-  --c-ops-bg: #f2f4ee;
-  --c-ops-nav: #172e26;
-  --c-ops-nav-text: #fffefb;
-  --c-bg: #faf8f1;
-  --c-surface: #fffefb;
-  --c-surface-sunk: #e6eadf;   /* the floor under a plan */
-  --c-surface-strong: #d3dacd; /* tables drawn on the floor */
-  --c-text: #1d2b25;
-  --c-text-muted: #526056;
-  --c-border: #d8d9cd;
-  --c-border-strong: #7a8376;
+  --c-ops-bg: #f6f5fa;
+  --c-ops-nav: #2a2150;
+  --c-ops-nav-text: #ffffff;
+  --c-bg: #f8f7fc;
+  --c-surface: #ffffff;
+  --c-surface-sunk: #f0eef6;   /* the floor under a plan */
+  --c-surface-strong: #dcd8ea; /* tables drawn on the floor */
+  --c-text: #1f1b33;
+  --c-text-muted: #5f5a75;
+  --c-border: #e3e0ec;
+  --c-border-strong: #857f9c;
 
-  --c-primary: #234739;        /* dark green: the one action in a decision area */
-  --c-primary-hover: #1a362c;
-  --c-on-primary: #fffefb;
-  --c-primary-soft: #e1ebe0;   /* selection */
+  --c-primary: #4f3f8f;        /* deep purple: structure, selection, links */
+  --c-primary-hover: #3f3275;
+  --c-on-primary: #ffffff;
+  --c-primary-soft: #eeebf7;   /* selection */
 
-  --c-accent: #734619;         /* amber, dark enough for text: sun and "recommended" */
-  --c-accent-bright: #a06a12;
-  --c-accent-soft: #f8ebd3;
+  --c-cta: #b0347a;            /* pink: the one main action of a screen */
+  --c-cta-hover: #962a66;
 
-  --c-danger: #923b31;         /* terracotta: needs attention, destructive */
+  --c-accent: #a12f6f;         /* pink, dark enough for text: "recommended" */
+  --c-accent-bright: #c2508f;
+  --c-accent-soft: #f9e8f1;
+
+  --c-danger: #923b31;         /* needs attention, destructive */
   --c-danger-soft: #f6e3df;
 
   --c-focus: #005fcc;
-  --c-overlay: rgb(29 43 37 / 0.45);
+  --c-overlay: rgb(31 27 51 / 0.45);
 
-  --seat-free-fill: #fffefb;
-  --seat-free-stroke: #3b4541;
+  --seat-free-fill: #ffffff;
+  --seat-free-stroke: #3f3a55;
   --seat-held: #734619;
   --seat-held-soft: #f8ebd3;
-  --seat-taken: #59625e;
-  --seat-taken-mark: #fffefb;
-  --seat-mine: #234739;
-  --seat-mine-mark: #fffefb;
-  --seat-blocked: #7c7466;
-  --seat-blocked-soft: #e3e5da;
-  --seat-highlight: #a06a12;
+  --seat-taken: #625d76;
+  --seat-taken-mark: #ffffff;
+  --seat-mine: #4f3f8f;
+  --seat-mine-mark: #ffffff;
+  --seat-blocked: #7a7590;
+  --seat-blocked-soft: #e6e3ef;
+  --seat-highlight: #a12f6f;
 
-  /* ---------- Type: an editorial serif for headings, the system sans for everything else ---------- */
-  --font-display: "DM Serif Text", Georgia, "Iowan Old Style", Charter, Cambria, serif;
+  /* ---------- Type: one sans family; headings bold, as in the references ---------- */
+  --font-display: var(--font-body);
 
-  /* ---------- Shape: 8 px controls, 12 to 15 px surfaces ---------- */
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 14px;
+  /* ---------- Shape: soft, 12 px controls, 16 to 20 px surfaces ---------- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
 
-  --shadow-sm: 0 1px 2px rgb(34 42 34 / 0.08);
-  --shadow-md: 0 4px 14px rgb(34 42 34 / 0.1), 0 1px 3px rgb(34 42 34 / 0.08);
-  --shadow-lg: 0 18px 48px rgb(34 42 34 / 0.2);
+  --shadow-sm: 0 1px 2px rgb(31 27 51 / 0.06);
+  --shadow-md: 0 6px 18px rgb(31 27 51 / 0.08), 0 1px 3px rgb(31 27 51 / 0.06);
+  --shadow-lg: 0 18px 48px rgb(31 27 51 / 0.18);
 }
 
 @media (prefers-color-scheme: dark) {
   :root[data-surface="restaurants"] {
-    --c-ops-bg: #151a15;
-    --c-ops-nav: #172e26;
-    --c-ops-nav-text: #f1efe4;
-    --c-bg: #151a15;
-    --c-surface: #1d241d;
-    --c-surface-sunk: #0f130f;
-    --c-surface-strong: #2c362b;
-    --c-text: #f1efe4;
-    --c-text-muted: #b4bcb0;
-    --c-border: #384237;
-    --c-border-strong: #7e8a7a;
+    --c-ops-bg: #14111d;
+    --c-ops-nav: #1d1830;
+    --c-ops-nav-text: #f1eef9;
+    --c-bg: #14111d;
+    --c-surface: #1e1a2b;
+    --c-surface-sunk: #100e17;
+    --c-surface-strong: #2e2943;
+    --c-text: #f1eef9;
+    --c-text-muted: #bab4cc;
+    --c-border: #37314c;
+    --c-border-strong: #8b84a6;
 
-    --c-primary: #8fcfa8;
-    --c-primary-hover: #a9dfbf;
-    --c-on-primary: #11201a;
-    --c-primary-soft: #223a2c;
+    --c-primary: #c3b8f2;
+    --c-primary-hover: #d6cef8;
+    --c-on-primary: #1b1533;
+    --c-primary-soft: #2f2750;
 
-    --c-accent: #ffd480;
-    --c-accent-bright: #ffd480;
-    --c-accent-soft: #4a3419;
+    --c-cta: #f29cc8;
+    --c-cta-hover: #f7b8d8;
+
+    --c-accent: #f29cc8;
+    --c-accent-bright: #f29cc8;
+    --c-accent-soft: #4a2238;
 
     --c-danger: #f2a58f;
     --c-danger-soft: #45241b;
@@ -99,22 +107,40 @@
     --c-focus: #9ac2ff;
     --c-overlay: rgb(0 0 0 / 0.6);
 
-    --seat-free-fill: #1d241d;
-    --seat-free-stroke: #c9d2c4;
+    --seat-free-fill: #1e1a2b;
+    --seat-free-stroke: #cfc9e2;
     --seat-held: #ffd480;
     --seat-held-soft: #4a3419;
-    --seat-taken: #98a394;
-    --seat-taken-mark: #0f130f;
-    --seat-mine: #8fcfa8;
-    --seat-mine-mark: #0f130f;
-    --seat-blocked: #6f7a6b;
-    --seat-blocked-soft: #232b22;
-    --seat-highlight: #ffd480;
+    --seat-taken: #9d97b3;
+    --seat-taken-mark: #100e17;
+    --seat-mine: #c3b8f2;
+    --seat-mine-mark: #100e17;
+    --seat-blocked: #736d8c;
+    --seat-blocked-soft: #241f35;
+    --seat-highlight: #f29cc8;
 
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-md: 0 4px 14px rgb(0 0 0 / 0.45);
     --shadow-lg: 0 18px 48px rgb(0 0 0 / 0.6);
   }
+}
+
+/* The main action of a screen is pink; every other button keeps the purple and neutral looks. */
+:root[data-surface="restaurants"] .btn-primary {
+  background: var(--c-cta);
+  border-color: var(--c-cta);
+  color: var(--c-on-primary);
+}
+
+:root[data-surface="restaurants"] .btn-primary:hover:not(:disabled) {
+  background: var(--c-cta-hover);
+  border-color: var(--c-cta-hover);
+}
+
+/* Headings: the body sans, heavy, slightly tight, as in the references. */
+:root[data-surface="restaurants"] :is(h1, h2, h3) {
+  font-weight: 800;
+  letter-spacing: -0.015em;
 }
 
 /* Ordinary actions are rounded rectangles; capsules stay for filters and indicators. */

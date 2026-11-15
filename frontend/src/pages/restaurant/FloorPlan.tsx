@@ -78,8 +78,9 @@ function Chair({ seat, centre }: { seat: MapSeat; centre: { x: number; y: number
   const angle = (Math.atan2(-dx, dy) * 180) / Math.PI;
   return (
     <g className="fp-chair" transform={`translate(${seat.x} ${seat.y}) rotate(${angle})`}>
-      <rect className="fp-seat" x={-10} y={-8} width={20} height={15} rx={6} />
-      <rect className="fp-back" x={-10} y={8.5} width={20} height={4.5} rx={2.25} />
+      <rect className="fp-chair-glow" x={-13} y={-13} width={26} height={30} rx={11} />
+      <rect className="fp-seat" x={-11} y={-9} width={22} height={17} rx={7} />
+      <rect className="fp-back" x={-11} y={9.5} width={22} height={5} rx={2.5} />
     </g>
   );
 }

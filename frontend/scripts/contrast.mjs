@@ -34,6 +34,9 @@ const PAIRS = [
   ["c-primary", "c-primary-soft", TEXT],
   ["c-on-primary", "c-primary", TEXT],
   ["c-on-primary", "c-primary-hover", TEXT],
+  // Restaurants only: the pink main action.
+  ["c-on-primary", "c-cta", TEXT],
+  ["c-on-primary", "c-cta-hover", TEXT],
   ["c-accent", "c-bg", TEXT],
   ["c-accent", "c-surface", TEXT],
   ["c-accent", "c-accent-soft", TEXT],
@@ -110,7 +113,7 @@ function main() {
   for (const [fg, bg, needed] of PAIRS) {
     const cells = ["light", "dark", "restLight", "restDark"].map((name) => {
       const t = themes[name];
-      if (!(fg in t && bg in t) && bg.startsWith("c-ops-") && (name === "light" || name === "dark")) return "—";
+      if (!(fg in t && bg in t) && (bg.startsWith("c-ops-") || bg.startsWith("c-cta")) && (name === "light" || name === "dark")) return "—";
       checks += 1;
       const r = ratio(t[fg], t[bg]);
       const pass = r >= needed;
