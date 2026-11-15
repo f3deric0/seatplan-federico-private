@@ -22,8 +22,8 @@ export interface ViewBand {
 }
 
 /** How thick a view band is, in venue units, and how far it sits from the rooms. */
-export const BAND = 64;
-const GAP = 16;
+export const BAND = 34;
+const GAP = 10;
 
 const WATER = ["water", "river", "sea", "ocean", "lake", "harbour", "harbor", "beach"];
 const GREEN = ["garden", "park", "trees", "greenery", "patio", "courtyard"];

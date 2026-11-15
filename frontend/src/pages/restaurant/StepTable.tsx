@@ -372,6 +372,7 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, submitting, ph
               seats={map.seats}
               zones={map.zones}
               rooms={planRooms}
+              activeRoomId={tabs.length > 0 ? (heldTable?.room_id ?? null) : undefined}
               selectable={() => false}
               selectedId={heldId}
               highlight={new Set()}
@@ -404,6 +405,7 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, submitting, ph
             seats={map.seats}
             zones={map.zones}
             rooms={planRooms}
+            activeRoomId={tabs.length > 0 ? (cardTable.room_id ?? null) : undefined}
             selectable={(id) => pickable.has(id)}
             selectedId={cardTable.id}
             highlight={highlight}
