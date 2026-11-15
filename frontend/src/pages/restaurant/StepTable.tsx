@@ -38,6 +38,7 @@ interface StepTableProps {
   time: string;
   hold: Hold | null;
   secondsLeft: number | null;
+  submitting?: boolean;
   /** A message carried over from another step, e.g. "your hold ended while you typed". */
   carriedNotice: string | null;
   onAccessibilityChange?: (checked: boolean) => void;
@@ -58,6 +59,7 @@ export interface DetailsProps {
   onContactChange: (contact: ContactDetails) => void;
   onBooked: (confirmation: BookingConfirmation) => void;
   onHoldLost: (message: string) => void;
+  onSubmittingChange: (submitting: boolean) => void;
 }
 
 interface Conflict {
@@ -125,10 +127,10 @@ export function StepTable(props: StepTableProps) {
   // A live update shows our held table as booked: the hold was lost (it had expired).
   useEffect(() => {
     const ours = hold && map?.tables.find((t) => t.id === hold.tableId);
-    if (!hold || !ours || ours.state !== "taken") return;
+    if (props.submitting || !hold || !ours || ours.state !== "taken") return;
     setConflict({ message: `Table ${hold.tableLabel} was just booked by someone else.`, failedId: hold.tableId });
     onHold(null);
-  }, [map, hold, onHold]);
+  }, [map, hold, onHold, props.submitting]);
 
   const take = async (tableId: number | null): Promise<void> => {
     const label = map?.tables.find((t) => t.id === tableId)?.label ?? null;
@@ -187,8 +189,8 @@ interface BodyProps extends StepTableProps {
   onTake: (tableId: number | null) => void;
 }
 
-function TableStepBody({ venueId, map: loaded, hold, secondsLeft, phone, phoneHeader, busy, conflict, problem, onTake, onHold, onNext, onBack, needs, time, details }: BodyProps) {
-  const heldId = hold && secondsLeft !== 0 ? hold.tableId : null;
+function TableStepBody({ venueId, map: loaded, hold, secondsLeft, submitting, phone, phoneHeader, busy, conflict, problem, onTake, onHold, onNext, onBack, needs, time, details }: BodyProps) {
+  const heldId = hold?.tableId ?? null;
   // The light cursor only repaints the light; the tables, holds and live updates stay as they are.
   const steps = cursorSteps(loaded.stay_start, loaded.stay_end);
   const cursor = useLightCursor(venueId, needs, time, steps);
@@ -345,6 +347,7 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, phone, phoneHe
             onContactChange={details.onContactChange}
             onBooked={details.onBooked}
             onHoldLost={details.onHoldLost}
+            onSubmittingChange={details.onSubmittingChange}
             onBack={onBack}
             onChooseSeat={onNext}
             onClearSeat={details.onClearSeat}
@@ -372,10 +375,10 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, phone, phoneHe
             />
             <MapKey entries={DINER_KEY_HELD} />
             <div className="rb5-your-table-actions">
-              <Button variant="ghost" onClick={changeTable}>
+              <Button variant="ghost" disabled={submitting} onClick={changeTable}>
                 Choose a different table
               </Button>
-              <Button variant="ghost" onClick={onBack}>
+              <Button variant="ghost" disabled={submitting} onClick={onBack}>
                 Change date or time
               </Button>
             </div>

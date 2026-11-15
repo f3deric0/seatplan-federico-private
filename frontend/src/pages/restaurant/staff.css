@@ -217,6 +217,8 @@
 .st-page .st-sidebar .st-home-link,
 .st-page .st-sidebar .st-workspace-label,
 .st-page .st-sidebar .st-tab { color: inherit; }
+.st-page .st-sidebar .wordmark-table,
+.st-page .st-sidebar .wordmark-seat:not(.wordmark-seat-mine) { fill: currentColor; }
 .st-page .st-sidebar :focus-visible { outline-color: var(--c-ops-nav-text, var(--c-focus)); }
 .st-page .st-sidebar .st-tab:hover,
 .st-page .st-sidebar .st-tab[aria-selected="true"] { background: var(--c-primary-soft); color: var(--c-primary); }
@@ -254,6 +256,9 @@
   .st-page .st-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 32rem) {
-  .st-page .st-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .st-page .st-count { padding: var(--space-2); }
   .st-page .st-arrival-button { gap: var(--space-2); }
+}
+@media (max-width: 24rem) {
+  .st-page .st-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

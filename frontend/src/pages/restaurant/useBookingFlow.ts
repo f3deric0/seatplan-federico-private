@@ -53,6 +53,7 @@ export function useBookingFlow(info: RestaurantInfo, link: LinkAnswers = { date:
   const [hold, setHoldState] = useState<Hold | null>(null);
   const [contact, setContact] = useState<ContactDetails>(NO_CONTACT);
   const [confirmation, setConfirmation] = useState<BookingConfirmation | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [carriedNotice, setCarriedNotice] = useState<string | null>(null);
   // The optional chair (spec 9.4) is asked inside the Table step, once a table is held.
   const [choosingSeat, setChoosingSeat] = useState(false);
@@ -104,10 +105,10 @@ export function useBookingFlow(info: RestaurantInfo, link: LinkAnswers = { date:
   }, [setHold]);
   const hasContact = Object.values(contact).some((value) => value.trim() !== "");
   useEffect(() => {
-    if (!hold || secondsLeft !== 0 || Date.parse(hold.expiresAt) > Date.now()) return;
+    if (submitting || !hold || secondsLeft !== 0 || Date.parse(hold.expiresAt) > Date.now()) return;
     const saved = hasContact ? " Your details are saved for this booking." : "";
     holdLost(`Your hold on table ${hold.tableLabel} expired.${saved}`);
-  }, [hold, secondsLeft, hasContact, holdLost]);
+  }, [hold, secondsLeft, hasContact, holdLost, submitting]);
   const booked = (result: BookingConfirmation): void => {
     setConfirmation(result);
     setHold(null);
@@ -122,6 +123,8 @@ export function useBookingFlow(info: RestaurantInfo, link: LinkAnswers = { date:
     hold,
     setHold,
     secondsLeft,
+    submitting,
+    setSubmitting,
     contact,
     setContact,
     confirmation,

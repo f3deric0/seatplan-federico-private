@@ -97,7 +97,7 @@ function BookingFlow({ venueId, info }: { venueId: string; info: RestaurantInfo 
   const flow = useBookingFlow(info, link);
   const linked = useLinkedTime(venueId, link, flow);
   const { step, needs, time, hold } = flow;
-  const stage = stageOf(step, hold !== null && flow.secondsLeft !== 0, flow.choosingSeat);
+  const stage = stageOf(step, hold !== null, flow.choosingSeat);
   if (linked.checking) return <Skeleton lines={3} label="Checking that time" />;
   return (
     <>
@@ -116,12 +116,17 @@ function BookingFlow({ venueId, info }: { venueId: string; info: RestaurantInfo 
           time={time}
           hold={hold}
           secondsLeft={flow.secondsLeft}
+          submitting={flow.submitting}
           carriedNotice={flow.carriedNotice}
           onAccessibilityChange={(checked) => flow.setNeeds({ ...needs, needs_accessible: checked })}
           onHold={flow.setHold}
           onNext={flow.askSeat}
           onBack={() => flow.go(STEP.time)}
-          details={{ seatId: flow.seatId, seatLabel: flow.seatLabel, onClearSeat: flow.clearSeat, contact: flow.contact, onContactChange: flow.setContact, onBooked: flow.booked, onHoldLost: flow.holdLost }}
+          details={{
+            seatId: flow.seatId, seatLabel: flow.seatLabel, onClearSeat: flow.clearSeat,
+            contact: flow.contact, onContactChange: flow.setContact, onBooked: flow.booked,
+            onHoldLost: flow.holdLost, onSubmittingChange: flow.setSubmitting,
+          }}
         />
       )}
       {step === STEP.details && hold && (
@@ -135,6 +140,7 @@ function BookingFlow({ venueId, info }: { venueId: string; info: RestaurantInfo 
           onContactChange={flow.setContact}
           onBooked={flow.booked}
           onHoldLost={flow.holdLost}
+          onSubmittingChange={flow.setSubmitting}
           onBack={() => flow.go(STEP.table)}
         />
       )}

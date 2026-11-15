@@ -251,6 +251,14 @@
   border-top: 1px solid var(--c-border);
 }
 
+.ow-completed-disclosure summary {
+  cursor: pointer;
+  min-height: var(--touch-target);
+  align-content: center;
+  font-weight: var(--fw-semibold);
+}
+.ow-completed-disclosure[open] summary { border-bottom: 1px solid var(--c-border); }
+
 .ow-main, .ow-checks, .ow-listing, .ow-preview { min-width: 0; }
 .ow-preview { display: grid; gap: var(--space-2); overflow-wrap: anywhere; }
 .ow-preview h3, .ow-preview p { margin: 0; }
@@ -267,6 +275,7 @@
 @media (max-width: 55.99rem) {
   .ow-nav { min-width: 0; gap: 0; padding: var(--space-2); }
   .ow-nav .rb5-eyebrow { margin: var(--space-1) var(--space-2); }
-  .ow-nav ul { flex-wrap: nowrap; overflow-x: auto; }
+  .ow-nav ul { flex-wrap: wrap; }
   .ow-nav li { flex: 0 0 auto; }
+  .ow-nav a { padding-inline: var(--space-2); font-size: var(--fs-sm); }
 }

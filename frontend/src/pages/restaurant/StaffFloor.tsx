@@ -223,7 +223,7 @@ function FloorHeader({ floor, date, time, live, onNow, onTime, onWalkin, onCheck
         <span className="rb-muted st-small">{formatDate(date)} · 15-minute floor reference. Viewing does not change bookings.</span>
         <Button variant="secondary" aria-expanded={editingTime} onClick={()=>setEditingTime(!editingTime)}>Change floor time</Button>
         {editingTime && <label className="st-time-slider">View floor time<input type="range" min={0} max={1425} step={15} value={toMinutes(time)} aria-label="View floor time" aria-valuetext={`${time}, ${service}`} onChange={event => onTime(fromMinutes(Number(event.target.value)))} /></label>}
-        <Button variant="secondary" onClick={onNow}>Return to now</Button>
+        {!live && <Button variant="secondary" onClick={onNow}>Return to now</Button>}
       </div>
       <div className="st-quick-actions"><Button onClick={onWalkin}>New walk-in</Button><Button variant="secondary" onClick={onCheck}>Check a walk-in</Button></div>
     </div>

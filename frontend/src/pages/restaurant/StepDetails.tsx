@@ -36,6 +36,7 @@ interface StepDetailsProps {
   onBooked: (confirmation: BookingConfirmation) => void;
   /** The hold ended before we could book: go back to the map with this message. */
   onHoldLost: (message: string) => void;
+  onSubmittingChange?: (submitting: boolean) => void;
   onBack: () => void;
   /** "panel" is the compact form beside the map: no heading, no countdown (the table step shows it), no Back. */
   variant?: "step" | "panel";
@@ -44,7 +45,7 @@ interface StepDetailsProps {
 const FIELD_ORDER: (keyof ContactDetails)[] = ["name", "email", "phone", "notes"];
 
 export function StepDetails(props: StepDetailsProps) {
-  const { venueId, needs, hold, seatId, seatLabel, summary, secondsLeft, contact, onContactChange, onBooked, onHoldLost, onBack, onChooseSeat, onClearSeat, variant = "step" } = props;
+  const { venueId, needs, hold, seatId, seatLabel, summary, secondsLeft, contact, onContactChange, onBooked, onHoldLost, onSubmittingChange, onBack, onChooseSeat, onClearSeat, variant = "step" } = props;
   const panel = variant === "panel";
   const [touched, setTouched] = useState<Partial<Record<keyof ContactDetails, boolean>>>({});
   const [busy, setBusy] = useState(false);
@@ -55,20 +56,24 @@ export function StepDetails(props: StepDetailsProps) {
 
   const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
+    if (busy || secondsLeft === 0) return;
     setTouched({ name: true, email: true, phone: true, notes: true });
     if (errors.phone || errors.notes) setMoreOpen(true);
     if (focusFirstError(errors)) return;
     setBusy(true);
+    onSubmittingChange?.(true);
     setProblem(null);
     try {
       onBooked(await createBooking(venueId, hold.holdId, trimmed(contact), needs, seatId));
     } catch (error) {
-      setBusy(false);
       if (error instanceof ApiError && (error.code === "hold_expired" || error.code === "seat_taken")) {
         onHoldLost(`Your hold on table ${hold.tableLabel} ended before we could book it. Your details are not lost: pick a table again.`);
         return;
       }
       setProblem(errorMessage(error, "We could not finish the booking. Please try again."));
+    } finally {
+      setBusy(false);
+      onSubmittingChange?.(false);
     }
   };
 
@@ -106,7 +111,7 @@ export function StepDetails(props: StepDetailsProps) {
         <Field label="Phone (optional)" hint="Only used if we need to reach you on the day." type="tel" autoComplete="tel" placeholder="Phone number" {...bind("phone")} />
         <Field label="Notes for the restaurant (optional)" hint="Allergies, a birthday, a pram..." placeholder="Add a note" {...bind("notes")} />
       </details>
-      {panel && onChooseSeat && <ChairRequest seatId={seatId} seatLabel={seatLabel ?? null} onChoose={onChooseSeat} onClear={onClearSeat} />}
+      {panel && onChooseSeat && <ChairRequest seatId={seatId} seatLabel={seatLabel ?? null} onChoose={onChooseSeat} onClear={onClearSeat} disabled={busy} />}
       {problem && (
         <p className="rb-notice rb-notice-error" role="alert">
           {problem}
@@ -114,11 +119,11 @@ export function StepDetails(props: StepDetailsProps) {
       )}
       <div className={panel ? "rb-actions" : "rb-actions rb-actions-sticky"}>
         {!panel && (
-          <Button variant="secondary" onClick={onBack}>
+          <Button variant="secondary" disabled={busy} onClick={onBack}>
             Back to the map
           </Button>
         )}
-        <Button type="submit" busy={busy} disabled={secondsLeft === 0}>
+        <Button type="submit" busy={busy} disabled={secondsLeft === 0 && !busy}>
           Confirm booking {panel && <span aria-hidden="true">→</span>}
         </Button>
       </div>
@@ -127,7 +132,7 @@ export function StepDetails(props: StepDetailsProps) {
 }
 
 /** The optional chair, folded into the form: nothing to open unless the diner wants a chair. */
-function ChairRequest({ seatId, seatLabel, onChoose, onClear }: { seatId: number | null; seatLabel: string | null; onChoose: () => void; onClear?: () => void }) {
+function ChairRequest({ seatId, seatLabel, onChoose, onClear, disabled }: { seatId: number | null; seatLabel: string | null; onChoose: () => void; onClear?: () => void; disabled: boolean }) {
   return (
     <section className="rb-chair-request" aria-label="Chair request">
       <div className="rb5-chair-row">
@@ -136,7 +141,7 @@ function ChairRequest({ seatId, seatLabel, onChoose, onClear }: { seatId: number
           <p className="rb-muted">Optional · The restaurant will see your request. It does not change your booking.</p>
         </div>
         {seatId === null && (
-          <Button variant="secondary" onClick={onChoose}>
+          <Button variant="secondary" disabled={disabled} onClick={onChoose}>
             Choose a chair
           </Button>
         )}
@@ -146,11 +151,11 @@ function ChairRequest({ seatId, seatLabel, onChoose, onClear }: { seatId: number
           <p>
             <strong>Chair requested{seatLabel ? `: ${seatLabel}` : ""}</strong>
           </p>
-          <Button variant="ghost" onClick={onChoose}>
+          <Button variant="ghost" disabled={disabled} onClick={onChoose}>
             Change chair
           </Button>
           {onClear && (
-            <Button variant="ghost" onClick={onClear}>
+            <Button variant="ghost" disabled={disabled} onClick={onClear}>
               Remove request
             </Button>
           )}

@@ -41,6 +41,9 @@ function Review({ venueId, check, onChange, refresh }: { venueId: string; check:
   // One word for where the restaurant stands: what the owner should do next follows from it.
   const stage = published ? "Published" : check.ready ? "Ready to publish" : `Draft · ${blocking.length} ${blocking.length === 1 ? "blocker" : "blockers"}`;
   const preview = url ?? publicUrl(check.slug);
+  const completed = <ol className="owner-checklist" aria-label={pending.length === 0 ? "Before you publish" : "Checks already done"}>
+    {done.map((row) => <CheckRow key={row.label} row={row} />)}
+  </ol>;
 
   const publish = async (): Promise<void> => {
     setBusy(true);
@@ -95,14 +98,17 @@ function Review({ venueId, check, onChange, refresh }: { venueId: string; check:
             </>
           )}
           {/* What is already right stays visible, but below what still needs doing. */}
-          {done.length > 0 && (
+          {done.length > 0 && (pending.length === 0 ? (
+            <details className="ow-completed-disclosure">
+              <summary>Completed checks <Badge tone="success">{done.length} complete</Badge></summary>
+              {completed}
+            </details>
+          ) : (
             <section className="owner-done" aria-label="Completed checks">
               <h2 className="ow-card-title ow-card-title-small">Completed checks <Badge tone="success">{done.length} complete</Badge></h2>
-              <ol className="owner-checklist" aria-label={done.length === rows.length ? "Before you publish" : "Checks already done"}>
-                {done.map((row) => <CheckRow key={row.label} row={row} />)}
-              </ol>
+              {completed}
             </section>
-          )}
+          ))}
         </div>
         <aside className="rb-card ow-listing" aria-label="Public listing">
           <h2 className="ow-card-title">Public listing</h2>

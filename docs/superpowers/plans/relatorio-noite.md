@@ -790,3 +790,19 @@ A confirmação de um walk-in aparece quando a sugestão está disponível
 para o grupo; sugestões com mudanças de mesas pedem nova verificação
 depois das mudanças. Testes de sala e build passaram. Verificação adicional
 em Chromium a 390 e 1440 px com respostas de API de teste.
+
+## Verificação dos três percursos
+
+O envio da reserva aguarda a resposta da API quando o contador termina
+durante a confirmação. A verificação visual levou a mostrar todas as
+ligações da área do dono em ecrã estreito e a recolher as verificações
+concluídas na publicação.
+
+Typecheck e build passaram, 500 testes Vitest e 178 verificações de
+contraste sem falhas. Seis cenários no Chromium com a aplicação compilada
+e respostas de API de teste cobriram a confirmação, hora esgotada,
+retenção expirada, teclado a 320 px, configuração e publicação, e
+atendimento com e sem reserva. O Playwright detetou os 86 testes do
+repositório. A execução ligada ao backend ficou bloqueada pelas permissões
+das portas locais no ambiente de trabalho. A proteção dos caminhos de
+Eventos passou.

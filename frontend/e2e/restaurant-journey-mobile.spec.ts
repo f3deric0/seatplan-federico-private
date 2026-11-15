@@ -133,6 +133,8 @@ test("an expired table hold at 390 px restores selection and preserves entered d
   await expect(page.getByRole("heading", { name: "Choose your table" })).toBeFocused();
   const recovery = page.getByRole("alert").filter({ hasText: /expired/ });
   await expect(recovery).toContainText("Your details are saved for this booking.");
+  // Bring the browser clock back in sync before accepting a fresh server-side hold.
+  await page.clock.setSystemTime(new Date());
   await recovery.getByRole("button", { name: /Hold table/ }).first().click();
   await expect(page.getByLabel("Name for the booking")).toHaveValue("Expiry Diner");
   await expect(page.getByLabel("Email", { exact: true })).toHaveValue("expiry@example.com");
