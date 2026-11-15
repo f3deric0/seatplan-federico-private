@@ -88,6 +88,7 @@ def test_only_published_restaurants_are_listed_and_private_data_stays_private(
         "distance_m",
         "features",
         "next_times",
+        "demo_booking",
     }
     assert (
         item["slug"] == "tagus-terrace" and item["distance_m"] is None and item["next_times"] == []
