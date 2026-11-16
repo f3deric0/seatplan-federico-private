@@ -41,11 +41,15 @@
 }
 
 @media (min-width: 56rem) {
+  /* The menu follows the page below the sticky site header, at the same place at any scroll point. */
   .ow-nav {
     position: sticky;
-    top: var(--space-4);
+    top: calc(var(--space-8) + var(--space-4));
     align-self: start;
     min-height: 60vh;
+    max-height: calc(100dvh - var(--space-8) - var(--space-5));
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
   .ow-nav ul {
     flex-direction: column;
