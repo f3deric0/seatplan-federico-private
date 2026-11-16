@@ -4,8 +4,8 @@ import { createInitialShape } from "./shapeModel";
 import type { InitialShape } from "./shapeModel";
 import type { Room } from "./roomModel";
 
-export function NewRoomDialog({ onCreate, onClose }: { onCreate: (room: Room, draw: boolean) => void; onClose: () => void }) {
-  const [name, setName] = useState("Main room");
+export function NewRoomDialog({ defaultName, onCreate, onClose }: { defaultName: string; onCreate: (room: Room, draw: boolean) => void; onClose: () => void }) {
+  const [name, setName] = useState(defaultName);
   const [shape, setShape] = useState<InitialShape>("rectangle");
   const [width, setWidth] = useState("10");
   const [height, setHeight] = useState("7");

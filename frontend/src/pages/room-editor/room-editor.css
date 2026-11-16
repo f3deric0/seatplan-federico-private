@@ -25,6 +25,17 @@
 .room-properties { padding: var(--space-4); background: var(--c-surface); border-left: 1px solid var(--c-border); }
 .room-properties h2 { font-size: var(--fs-lg); margin-top: 0; }
 .room-form { display: grid; gap: var(--space-4); }
+/* Title of the selected wall or corner: a quiet section heading above its fields. It takes focus when the
+   selection changes so screen readers announce it, but it is not a control, so it shows no focus ring. */
+:root .room-properties .room-form > h3 {
+  margin: var(--space-2) 0 0;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--c-border);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+:root .room-properties .room-form > h3:focus { outline: none; }
 .room-fields { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
 .room-fields .field { min-width: 0; }
 .room-status { padding: var(--space-3); font-size: var(--fs-sm); }

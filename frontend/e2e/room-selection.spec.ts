@@ -72,7 +72,6 @@ test("shift and area selection, rotation and resize gestures have form equivalen
   await expect(page.getByLabel("Object rotation (degrees)")).toHaveValue("90");
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(page.getByLabel("Object rotation (degrees)")).toHaveValue("0");
-  await page.getByLabel("Show 50 cm grid").uncheck();
   const resize = (await page.locator('[data-table-handle="resize"]').boundingBox())!;
   await page.mouse.move(resize.x + resize.width / 2, resize.y + resize.height / 2); await page.mouse.down();
   await page.mouse.move(resize.x + resize.width / 2 + 60, resize.y + resize.height / 2 + 30, { steps: 5 }); await page.mouse.up();

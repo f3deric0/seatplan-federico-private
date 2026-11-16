@@ -4,7 +4,7 @@ import { ApiError, getVenue } from "../../api/client";
 import { getRooms } from "../../api/rooms";
 import type { RoomsAnswer } from "../../api/rooms";
 import type { VenueDetail } from "../../api/types";
-import { Button, Checkbox, ErrorState, Field, Select, Skeleton } from "../../design/components";
+import { Button, ErrorState, Field, Select, Skeleton } from "../../design/components";
 import { OwnerShell } from "../owner/OwnerShell";
 import { useUnsavedGuard } from "../editor/useUnsavedGuard";
 import { useLoad } from "../restaurant/useLoad";
@@ -14,7 +14,7 @@ import { useRoomDraft } from "./useRoomDraft";
 import { LightTools } from "./LightTools";
 import { useLightPreview } from "./useLightPreview";
 import { NewRoomDialog } from "./NewRoomDialog";
-import { addRoom, replaceRoom } from "./roomModel";
+import { addRoom, nextRoomName, replaceRoom } from "./roomModel";
 import type { Room } from "./roomModel";
 import { appendCorner, finishOutline, removeCorner } from "./shapeEditing";
 import { RoomProperties } from "./RoomProperties";
@@ -67,7 +67,7 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
   const [selectedTables, setSelectedTables] = useState<string[]>([]), [multiple, setMultiple] = useState(false), [areaMode, setAreaMode] = useState(false);
   const [focusTarget, setFocusTarget] = useState<{ roomKey: string; point: Point; serial: number } | null>(null);
   const [error, setError] = useState("");
-  const [grid, setGrid] = useState(true);
+  const grid = true; // the 50 cm grid is always on
   const [pointX, setPointX] = useState("0"), [pointY, setPointY] = useState("0");
   const room = history.present.rooms.find(r => r.key === selectedRoom) ?? history.present.rooms[0];
   const drawing = drawingRoom === room.key;
@@ -167,7 +167,6 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
       <RoomCanvas room={room} drawing={drawing} grid={grid} onPoint={addPoint} onCloseShape={closeShape} selection={selection} onSelect={setSelection} onChange={changeRoom} onDragStart={history.checkpoint} onError={setError} tool={tool} opening={opening} onOpening={setOpening} placement={placement} object={object} onObject={setObject} onPlace={placeObject} chair={chair} onTableSelect={chooseTable} tableKeys={tableKeys} multiple={multiple} areaMode={areaMode} onArea={keys => { updateKeys(keys); setAreaMode(false); }} problems={problems.filter(p => p.room_key === room.key)} focusTarget={focusTarget} light={tool === "Light" ? light.answer : null} />
       <aside className="room-properties"><h2>Room properties</h2><div className="room-form">
         <Field label="Selected room name" value={room.name} maxLength={60} onChange={e => history.commit(replaceRoom(history.present, { ...room, name: e.target.value }))} />
-        <Checkbox label="Show 50 cm grid" checked={grid} onChange={e => setGrid(e.target.checked)} />
         {drawing && <><p>Tap each corner, then close the shape.</p><div className="room-fields"><Field label="Corner x (cm)" inputMode="decimal" value={pointX} onChange={e => setPointX(e.target.value)} /><Field label="Corner y (cm)" inputMode="decimal" value={pointY} onChange={e => setPointY(e.target.value)} /></div><Button variant="secondary" onClick={() => { const x = Number(pointX.replace(",", ".")), y = Number(pointY.replace(",", ".")); if (Number.isFinite(x) && Number.isFinite(y)) addPoint({ x, y }); }}>Add corner</Button><Button disabled={room.outline.points.length < 3} onClick={closeShape}>Close shape</Button></>}
         <p>Walls: {room.outline.points.length} sides</p><p>Tables: {room.tables.length}</p>
         {!drawing && tool === "Shape" && <RoomProperties key={`${room.key}:${selection?.kind}:${selection?.index}`} room={room} selection={selection} onSelect={setSelection} onChange={changeRoom} onError={setError} />}
@@ -179,8 +178,8 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
         {!drawing && tool === "Zones" && <ZoneTools room={room} selected={object} placement={placement} onSelect={setObject} onArm={setPlacement} onCentre={placeCentre} onChange={changeRoom} />}
         {!drawing && tool === "Tables" && <div className="room-form" ref={palette}><TableTools room={room} selected={object} chair={chair} placement={placement} onSelect={key => updateKeys(key ? [key] : [])} onChair={setChair} onArm={setPlacement} onCentre={placeCentre} onChange={changeRoom} onError={setError} /><SelectionTools room={room} keys={tableKeys} multiple={multiple} area={areaMode} onMultiple={setMultiple} onArea={setAreaMode} onKeys={updateKeys} onChange={changeRoom} onError={setError} /></div>}
       </div></aside>
-    </div><footer className="room-status">{area.toLocaleString("pt-PT", { maximumFractionDigits: 1 })} m² · {grid ? "Grid on" : "Grid off"}<ProblemList problems={problems} onSelect={selectProblem} /></footer>
-    {adding && <NewRoomDialog onClose={() => setAdding(false)} onCreate={(created, draw) => { history.commit(addRoom(history.present, created)); setSelectedRoom(created.key); setDrawingRoom(draw ? created.key : null); setSelection(null); setTool("Shape"); setAdding(false); }} />}
+    </div><footer className="room-status">{area.toLocaleString("pt-PT", { maximumFractionDigits: 1 })} m² · Grid on<ProblemList problems={problems} onSelect={selectProblem} /></footer>
+    {adding && <NewRoomDialog defaultName={nextRoomName(history.present.rooms)} onClose={() => setAdding(false)} onCreate={(created, draw) => { history.commit(addRoom(history.present, created)); setSelectedRoom(created.key); setDrawingRoom(draw ? created.key : null); setSelection(null); setTool("Shape"); setAdding(false); }} />}
   </section>;
 }
 

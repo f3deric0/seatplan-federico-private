@@ -25,6 +25,14 @@ export interface RoomLayout { base_version: number; rooms: Room[] }
 
 export function newRoomKey(prefix: string): string { return `${prefix.slice(0, 2)}-${crypto.randomUUID()}`; }
 
+/** "Room 3" when two rooms exist; skips a number the restaurant already uses. */
+export function nextRoomName(rooms: { name: string }[]): string {
+  const taken = new Set(rooms.map(r => r.name.trim().toLowerCase()));
+  let number = rooms.length + 1;
+  while (taken.has(`room ${number}`)) number += 1;
+  return `Room ${number}`;
+}
+
 export function createRoom(name: string, width: number, height: number, outdoor = false): Room {
   if (![width, height].every(n => Number.isFinite(n) && n > 0)) throw new Error("Room dimensions must be positive.");
   return {
