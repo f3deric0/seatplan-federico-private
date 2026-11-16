@@ -25,7 +25,6 @@ export function RoomProperties({ room, selection, onSelect, onChange, onError }:
   const options = [{ value: "", label: "Choose…" }, ...points.map((_, i) => ({ value: String(i), label: String(i + 1) }))];
   return <div className="room-form">
     <Button variant="secondary" disabled={points.length >= 60} onClick={addWall}>Add a new wall</Button>
-    <p className="rb-muted">Splits the selected wall in two, or the longest wall if none is selected. Then drag the new corner or set its length.</p>
     {addError && <p role="alert" className="room-error">{addError}</p>}
     <Select label="Selected wall" value={selection?.kind === "side" && point ? String(index) : ""} options={options} onChange={e => onSelect(e.target.value === "" ? null : { kind: "side", index: Number(e.target.value) })} />
     <Select label="Selected corner" value={selection?.kind === "corner" && point ? String(index) : ""} options={options} onChange={e => onSelect(e.target.value === "" ? null : { kind: "corner", index: Number(e.target.value) })} />
@@ -34,7 +33,6 @@ export function RoomProperties({ room, selection, onSelect, onChange, onError }:
       <RoomNumberField label="Wall length (m)" value={sideLength(room.outline, index) / 100} decimals={2} min={0.01} onCommit={length => onChange(setSideLength(room, index, length * 100))} />
       <RoomNumberField label="Bulge (cm)" value={point.curve} onCommit={curve => onChange(setSideCurve(room, index, curve))} />
       <Button variant="secondary" onClick={() => apply(() => setSideCurve(room, index, 0))}>Make straight</Button>
-      <Button variant="secondary" disabled={points.length >= 60} onClick={() => { apply(() => insertCorner(room, index)); onSelect({ kind: "corner", index: index + 1 }); }}>Add corner at midpoint</Button>
     </>}
     {point && selection?.kind === "corner" && <>
       <h3 ref={heading} tabIndex={-1}>Corner {index + 1}</h3>

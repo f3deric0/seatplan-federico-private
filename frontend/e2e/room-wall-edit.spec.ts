@@ -13,7 +13,7 @@ test("owner edits curves and corners through accessible forms on a phone", async
   await page.getByLabel("Bulge (cm)", { exact: true }).press("Tab");
   await expect(page.locator(".room-outline")).toHaveAttribute("d", / A /);
   await page.screenshot({ path: join(tmpdir(), "seatplan-room-wall-curved-mobile.png"), fullPage: true });
-  await page.getByRole("button", { name: "Add corner at midpoint" }).click();
+  await page.getByRole("button", { name: "Add a new wall" }).click();
   await expect(page.getByText("Walls: 5 sides", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(page.getByText("Walls: 4 sides", { exact: true })).toBeVisible();
