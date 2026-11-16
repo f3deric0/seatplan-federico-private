@@ -17,10 +17,6 @@ for (const width of [1440, 390]) {
     await expect(page.getByText("6 chairs", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Undo", exact: true }).click();
     await expect(page.getByText("5 chairs", { exact: true })).toBeVisible();
-    await page.getByLabel("Wheelchair accessible", { exact: true }).check();
-    await page.getByLabel("Room for a high chair", { exact: true }).check();
-    await page.getByLabel("Can be joined with", { exact: true }).fill("A");
-    await page.getByLabel("Can be joined with", { exact: true }).press("Tab");
     await page.getByLabel("Selected chair", { exact: true }).selectOption({ label: "1" });
     await page.getByLabel("Chair label", { exact: true }).fill("Window seat");
     await page.getByLabel("Chair label", { exact: true }).press("Tab");

@@ -21,11 +21,6 @@ export function TableTools({ room, selected, chair, onSelect, onChair, onPlace, 
       <details className="room-more"><summary>Size and position</summary><div className="room-form"><ObjectFields item={table} onChange={update} /></div></details>
       <p>{table.seats.length} chairs</p><div className="room-actions"><Button variant="secondary" aria-label="Remove chair" disabled={table.seats.length <= 1} onClick={() => safe(() => onChange(setChairCount(room, table.key, table.seats.length - 1)))}>−</Button><Button variant="secondary" aria-label="Add chair" disabled={table.seats.length >= 20} onClick={() => safe(() => onChange(setChairCount(room, table.key, table.seats.length + 1)))}>+</Button></div>
       <p>Changing the chair count redistributes the chairs around this table.</p>
-      <RoomNumberField label="Minimum party size" value={table.min_party} min={1} max={table.max_party} onCommit={min_party => update({ min_party })} />
-      <RoomNumberField label="Maximum party size" value={table.max_party} min={table.min_party} max={table.seats.length} onCommit={max_party => update({ max_party })} />
-      <Checkbox label="Wheelchair accessible" checked={table.is_accessible} onChange={e => update({ is_accessible: e.target.checked })} />
-      <Checkbox label="Room for a high chair" checked={table.high_chair_ok} onChange={e => update({ high_chair_ok: e.target.checked })} />
-      <ObjectTextField label="Can be joined with" value={table.combine_group ?? ""} maxLength={40} onCommit={combine_group => update({ combine_group: combine_group || null })} />
       <Checkbox label="Available for booking" checked={table.is_active} onChange={e => update({ is_active: e.target.checked })} />
       <Select label="Table zone" value={table.zone_key ?? ""} options={[{ value: "", label: "No zone" }, ...room.zones.map(z => ({ value: z.key, label: z.name }))]} onChange={e => update({ zone_key: e.target.value || null })} />
       <Select label="Selected chair" value={seat?.key ?? ""} options={[{ value: "", label: "Choose a chair" }, ...table.seats.map(s => ({ value: s.key, label: s.label }))]} onChange={e => onChair(e.target.value || null)} />

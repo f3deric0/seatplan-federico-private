@@ -85,11 +85,13 @@ it. Counters use the first side of a rectangle with twice the requested count,
 so all chairs sit on one long side and span the counter width. Editing geometry
 keeps chair ids/labels/flags and rotates custom displacements relative to the
 generated chair positions. Changing chair count redistributes chairs explicitly,
-retaining the first existing ids/keys and custom labels/flags. Party sizes stay
-within the chair count. A room allows 200 tables/1000 chairs; each table 1–20.
+retaining the first existing ids/keys and custom labels/flags. Chairs are 30 cm
+across; a square table has chairs on all four sides. Party sizes are no longer
+edited: minimum is 1 and maximum follows the chair count. A room allows 200 tables/1000 chairs; each table 1–20.
 
-TableTools exposes labels, geometry, party bounds, zone, availability, accessibility,
-high chair and join group, plus individual chair coordinates/label/flags.
+TableTools exposes labels, geometry, zone, availability and the chair count,
+plus individual chair coordinates/label/flags. There are no party-size, wheelchair,
+high-chair or join-group fields.
 TableLayer selects and drags tables or individual chairs with one history step.
 Chair drag uses centimetres, table drag the optional room grid. Inactive tables
 have dashed outlines and an (off) label. Accessible/blocked chairs have extra

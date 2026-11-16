@@ -15,7 +15,7 @@ it("aligns and distributes table edges while carrying chairs without mutation", 
   expect(original.tables.map(t => t.y)).toEqual([100, 200, 300]);
   const spaced = distributeTables(aligned, keys, "horizontal");
   expect(spaced.tables.map(t => t.x)).toEqual([100, 400, 700]);
-  expect(spaced.tables[1].seats[0].x).toBe(420);
+  expect(spaced.tables[1].seats[0].x).toBe(440);
   const moved = moveTables(original, keys.slice(0, 2), 10, -5);
   expect(moved.tables.map(t => [t.x, t.y])).toEqual([[110, 95], [310, 195], [700, 300]]);
 });

@@ -1,4 +1,5 @@
-import { seatPositions } from "../../seatmap/seatPositions";
+import { seatPositions, CHAIR_GAP } from "../../seatmap/seatPositions";
+import { rotateOffset, tableCentre } from "../../seatmap/geometry";
 import type { Point } from "./geometry";
 import { newRoomKey } from "./roomModel";
 import type { Room, RoomSeat, RoomTable } from "./roomModel";
@@ -14,7 +15,7 @@ export const TABLE_NAMES: Record<TableKind, string> = { round: "Round table", sq
  */
 const ROUND_DIAMETER: Record<number, number> = { 1: 60, 2: 70, 3: 80, 4: 90, 5: 105, 6: 130, 7: 140, 8: 150, 9: 165, 10: 180 };
 const SQUARE_SIDE: Record<number, number> = { 1: 60, 2: 70, 3: 75, 4: 80, 5: 90, 6: 105, 7: 120, 8: 130 };
-export const CHAIR_DIAMETER = 40;
+export const CHAIR_DIAMETER = 30;
 
 /** How many chairs a new table of this kind starts with. */
 export function defaultChairs(kind: TableKind): number { return kind === "counter" ? 5 : kind === "long" ? 6 : 4; }
@@ -35,7 +36,19 @@ export function tableKind(table: Pick<RoomTable, "shape" | "w" | "h">): TableKin
   return Math.abs(table.w - table.h) <= 2 ? "square" : "long";
 }
 
+/** A square table has chairs on all four sides (top and bottom first), not only on two. */
+function squareChairs(table: RoomTable, count: number): Point[] {
+  const sides = [0, 1, 2, 3].map(side => Math.floor(count / 4) + ([0, 2, 1, 3].indexOf(side) < count % 4 ? 1 : 0));
+  const centre = tableCentre(table), half = table.w / 2 + CHAIR_GAP, spots: Point[] = [];
+  sides.forEach((n, side) => { for (let i = 0; i < n; i++) {
+    const along = -table.w / 2 + (table.w * (i + 0.5)) / n;
+    const offset = side === 0 ? { x: along, y: -half } : side === 1 ? { x: half, y: along } : side === 2 ? { x: -along, y: half } : { x: -half, y: -along };
+    spots.push(rotateOffset(centre.x, centre.y, offset.x, offset.y, table.rotation));
+  } });
+  return spots;
+}
 function chairPositions(table: RoomTable, count: number): Point[] {
+  if (table.shape === "rect" && tableKind(table) === "square") return squareChairs(table, count);
   return table.shape === "row" ? seatPositions({ ...table, shape: "rect" }, count * 2).slice(0, count) : seatPositions(table, count);
 }
 function generatedChairs(table: RoomTable, count: number): RoomTable["seats"] {
