@@ -49,6 +49,8 @@
 .room-window { fill: none; stroke: var(--c-info); stroke-width: 10; }
 .room-window-middle { fill: none; stroke: var(--c-surface); stroke-width: 3; }
 .room-door-arc { fill: none; stroke: var(--c-info); stroke-width: 3; }
+.room-main-entrance rect { fill: var(--c-primary); }
+.room-main-entrance text { fill: var(--c-on-primary); font-weight: 600; }
 .room-opening-hit { fill: none; stroke: transparent; pointer-events: stroke; cursor: grab; }
 .room-opening.selected .room-window, .room-opening.selected .room-door-arc { stroke: var(--c-primary); }
 .room-north-dial { position: absolute; top: var(--space-4); left: 50%; transform: translateX(-50%); width: min(200px, 70%); text-align: center; color: var(--c-text); background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); padding: var(--space-2); }

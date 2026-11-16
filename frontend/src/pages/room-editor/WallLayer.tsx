@@ -39,9 +39,20 @@ export function WallLayer({ room, zoom, editing, selected, toWorld, onSelect, on
           {o.kind === "door" ? <path d={`M ${end.x} ${end.y} A ${o.width} ${o.width} 0 0 1 ${hinge.x} ${hinge.y} L ${start.x} ${start.y}`} className="room-door-arc" /> : <><path d={path} className="room-window" />{o.kind === "window" && <path d={path} className="room-window-middle" />}</>}
           {editing && <path d={path} className="room-opening-hit" strokeWidth={44 / zoom} />}
         </g>
+        {o.kind === "door" && o.is_main_entrance && <MainEntranceTag at={sidePoint(room.outline, o.side, (o.offset + o.width / 2) / length)} normal={normal} zoom={zoom} />}
         {editing && selected === o.key && o.kind !== "glass_wall" && ([{ part: "start", point: start }, { part: "end", point: end }] as const).map(({ part, point }) => <g key={part} data-opening-handle={part} onPointerDown={event => down(event, o, part)}><circle cx={point.x} cy={point.y} r={22 / zoom} className="room-handle-hit" /><circle cx={point.x} cy={point.y} r={6 / zoom} className="room-handle" /></g>)}
       </g>;
       } catch { return null; }
     })}
+  </g>;
+}
+
+/** A small "Main entrance" tag beside the door, on the side away from its swing. It never takes clicks. */
+function MainEntranceTag({ at, normal, zoom }: { at: Point; normal: Point; zoom: number }) {
+  const width = 100 / zoom, height = 20 / zoom, gap = 22 / zoom;
+  const x = at.x + normal.x * gap, y = at.y + normal.y * gap;
+  return <g className="room-main-entrance" pointerEvents="none" data-main-entrance>
+    <rect x={x - width / 2} y={y - height / 2} width={width} height={height} rx={height / 2} />
+    <text x={x} y={y} textAnchor="middle" dominantBaseline="central" fontSize={12 / zoom}>Main entrance</text>
   </g>;
 }
