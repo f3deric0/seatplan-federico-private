@@ -47,3 +47,7 @@ Smoothness (discoveryBasemap.ts): a stored tile is decoded once and kept (40 til
 bounding box, so redrawing a tile skips decoding and every shape that is off screen (this matters most when zoomed in past the stored
 detail, where many canvas tiles are cut from one parent). Tiles for the in-between zoom steps are not drawn (updateWhenZooming:
 false) and more tiles are kept around the view (keepBuffer 3). Names are worked out once per stored tile and zoom.
+
+Wheel zoom (wheelZoom.ts): ResultsMap turns Leaflet's own wheel zoom off. A trackpad sends a stream of wheel events for a second or
+more and Leaflet turned each burst into another zoom step (one swipe zoomed four levels). WheelGesture makes one stream one level,
+zoomed around the pointer, and a clearly bigger push in the middle of a stream (a fast wheel) starts a new gesture.

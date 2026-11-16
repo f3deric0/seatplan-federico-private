@@ -8,6 +8,7 @@ import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { DiscoveryBasemap } from "./discoveryBasemap";
 import { DiscoveryLabels } from "./discoveryLabels";
+import { wheelZoomOneStep } from "./wheelZoom";
 import { SchematicMap } from "./SchematicMap";
 import "./maps.css";
 export interface ResultPin {
@@ -59,13 +60,14 @@ export default function ResultsMap({ pins, highlightedId = null, selectedId = nu
   useEffect(() => {
     if (!host.current) return;
     const view = L.map(host.current, {
-      scrollWheelZoom: true,
+      scrollWheelZoom: false, // replaced by wheelZoomOneStep: one scroll gesture, one zoom level
       attributionControl: false,
       zoomControl: false,
       minZoom: MIN_ZOOM,
       maxZoom: MAX_ZOOM,
     }).setView(LISBON, INITIAL_ZOOM);
     view.on("zoomend", () => setZoom(view.getZoom()));
+    const stopWheel = wheelZoomOneStep(view, host.current);
     map.current = view;
     const tiles = new DiscoveryBasemap();
     let loaded = 0;
@@ -87,6 +89,7 @@ export default function ResultsMap({ pins, highlightedId = null, selectedId = nu
     return () => {
       window.clearTimeout(patience);
       window.removeEventListener("online", retryTiles);
+      stopWheel();
       // A pan or zoom still animating when the map is removed throws inside Leaflet.
       view.stop();
       view.remove();
