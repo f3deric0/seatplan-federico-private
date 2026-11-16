@@ -102,7 +102,7 @@ describe("DiscoverPage: the command bar", () => {
     expect(screen.getByRole("link", { name: "Plan an event" }).getAttribute("href")).toBe("/demo");
     await screen.findByText("No restaurants match");
   });
-  it("keeps the selected card and pin highlighted when the pointer moves to another card", async () => {
+  it("moves the only card and pin highlight to the hovered result and restores it on leave", async () => {
     server(() => ({ items: [card(1), card(2)], total: 2 }));
     renderPage();
     const first = await screen.findByRole("article", { name: "Casa 1" });
@@ -116,11 +116,18 @@ describe("DiscoverPage: the command bar", () => {
     fireEvent.click(within(first).getByText("Terrace"));
     fireEvent.mouseLeave(first);
     fireEvent.mouseEnter(second);
+    expect(first.getAttribute("aria-current")).toBeNull();
+    expect(second.classList.contains("is-highlighted")).toBe(true);
+    expect(map.getAttribute("data-selection")).toBeNull();
+    expect(map.getAttribute("data-preview")).toBe("pid2");
+
+    fireEvent.mouseLeave(second);
     expect(first.getAttribute("aria-current")).toBe("true");
     expect(second.classList.contains("is-highlighted")).toBe(false);
     expect(map.getAttribute("data-selection")).toBe("pid1");
     expect(map.getAttribute("data-preview")).toBeNull();
 
+    fireEvent.mouseEnter(second);
     fireEvent.click(within(second).getByText("Terrace"));
     expect(first.getAttribute("aria-current")).toBeNull();
     expect(second.getAttribute("aria-current")).toBe("true");

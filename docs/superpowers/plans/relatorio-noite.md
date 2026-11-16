@@ -865,3 +865,8 @@ rato, seleção de pinos e recuperação sem tiles, incluindo a 320 e 390 px.
 Depois de selecionar um resultado, o destaque fica no cartão e no pino desse
 restaurante até selecionar outro. O foco continua visível nas ligações.
 Build, 513 testes Vitest e reprodução em Chromium com dados de teste passaram.
+
+Ao passar o rato sobre outro cartão, o contorno e o pino passam para esse
+restaurante. Ao sair, regressam ao restaurante selecionado. Na ficha pública,
+o mapa e o diagrama mostram um ponto roxo com o nome por cima. Build, 513
+testes Vitest e os dois percursos no Chromium com dados de teste passaram.

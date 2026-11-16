@@ -12,18 +12,19 @@ interface Props {
   pins: PinPoint[];
   highlightedId: string | null;
   selectedId?: string | null;
-  onSelect: (id: string) => void;
+  onSelect?: (id: string) => void;
+  showNames?: boolean;
   centre?: { lat: number; lng: number } | null;
 }
 
-export function SchematicMap({ pins, highlightedId, selectedId = null, onSelect, centre }: Props) {
+export function SchematicMap({ pins, highlightedId, selectedId = null, onSelect, centre, showNames = false }: Props) {
   const schematic = useMemo(() => placePins(pins, centre), [pins, centre?.lat, centre?.lng]);
   const focusedId = schematic.pins.find(pin => pin.id === highlightedId)?.id
     ?? schematic.pins.find(pin => pin.id === selectedId)?.id;
   const press = (event: KeyboardEvent, id: string): void => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      onSelect(id);
+      onSelect?.(id);
     }
   };
   return (
@@ -49,7 +50,12 @@ export function SchematicMap({ pins, highlightedId, selectedId = null, onSelect,
             </text>
           </g>
         )}
-        {schematic.pins.map((pin) => (
+        {schematic.pins.map((pin) => showNames ? (
+          <g key={pin.id} transform={`translate(${pin.x} ${pin.y})`}>
+            <circle r="2.5" className="schematic-location-dot" />
+            <text y="-5" textAnchor="middle" className="schematic-location-name">{pin.name}</text>
+          </g>
+        ) : (
           <g
             key={pin.id}
             role="button"
@@ -58,7 +64,7 @@ export function SchematicMap({ pins, highlightedId, selectedId = null, onSelect,
             aria-pressed={selectedId === pin.id}
             className={`schematic-pin${highlightedId === pin.id ? " is-active" : ""}${selectedId === pin.id ? " is-selected" : ""}${focusedId && focusedId !== pin.id ? " is-muted" : ""}`}
             transform={`translate(${pin.x} ${pin.y})`}
-            onClick={() => onSelect(pin.id)}
+            onClick={() => onSelect?.(pin.id)}
             onKeyDown={(event) => press(event, pin.id)}
           >
             <circle r="8" className="schematic-pin-hit" />
@@ -81,7 +87,7 @@ export function SchematicMap({ pins, highlightedId, selectedId = null, onSelect,
         )}
       </svg>
       <p role="status" className="schematic-note">
-        <strong>Location diagram · map unavailable.</strong> Map tiles are not available. Numbers match the list.
+        <strong>Location diagram · map unavailable.</strong> Map tiles are not available.{!showNames && " Numbers match the list."}
       </p>
     </div>
   );

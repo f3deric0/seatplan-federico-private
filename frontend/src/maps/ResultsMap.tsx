@@ -18,9 +18,10 @@ export interface ResultPin {
 }
 interface Props {
   pins: ResultPin[];
-  highlightedId: string | null;
+  highlightedId?: string | null;
   selectedId?: string | null;
-  onSelect: (id: string) => void;
+  onSelect?: (id: string) => void;
+  showNames?: boolean;
   /** Where the diner searched from, shown as a small dot. */
   center?: { lat: number; lng: number } | null;
   /** Tells the page when the tiles failed and a numbered diagram took the map's place, so cards can show the same numbers. */
@@ -32,7 +33,14 @@ const LISBON = { lat: 38.7223, lng: -9.1393 };
 const INITIAL_ZOOM = 11;
 const MIN_ZOOM = 0;
 const MAX_ZOOM = 19;
-export default function ResultsMap({ pins, highlightedId, selectedId = null, onSelect, center, onFallback }: Props) {
+function locationIcon(name: string) {
+  const label = document.createElement("span");
+  label.className = "restaurant-location-label";
+  label.textContent = name;
+  return L.divIcon({ className: "restaurant-location-pin", html: label, iconSize: [14, 14], iconAnchor: [7, 7] });
+}
+
+export default function ResultsMap({ pins, highlightedId = null, selectedId = null, onSelect, center, onFallback, showNames = false }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const markers = useRef(new Map<string, L.Marker>());
@@ -89,20 +97,25 @@ export default function ResultsMap({ pins, highlightedId, selectedId = null, onS
     markers.current.clear();
     for (const [index,pin] of pins.entries()) {
       const marker = L.marker([pin.lat, pin.lng], {
-        title: pin.name,
+        title: showNames ? undefined : pin.name,
         alt: `${pin.name} on the map`,
-        icon: L.divIcon({ className: "discover-pin", html: `<span aria-hidden="true">${pin.number ?? index+1}</span>`, iconSize: [44, 44], iconAnchor: [22, 22] }),
+        interactive: !showNames,
+        keyboard: !showNames,
+        icon: showNames
+          ? locationIcon(pin.name)
+          : L.divIcon({ className: "discover-pin", html: `<span aria-hidden="true">${pin.number ?? index+1}</span>`, iconSize: [44, 44], iconAnchor: [22, 22] }),
       }).addTo(view);
-      marker.on("click", () => select.current(pin.id));
+      if (!showNames) marker.on("click", () => select.current?.(pin.id));
       markers.current.set(pin.id, marker);
     }
     const points: L.LatLngExpression[] = pins.map((pin) => [pin.lat, pin.lng]);
     if (center) points.push([center.lat, center.lng]);
     if (points.length > 1) view.fitBounds(L.latLngBounds(points), { padding: [30, 30], maxZoom: 15, animate: false });
     else if (points.length === 1) view.setView(points[0], 14, { animate: false });
-  }, [pins, center?.lat, center?.lng]);
+  }, [pins, center?.lat, center?.lng, showNames]);
   // The pin of the hovered card gets a bigger, darker look.
   useEffect(() => {
+    if (showNames) return;
     const selected = selectedId && markers.current.has(selectedId) ? selectedId : null;
     const focusedId = highlightedId && markers.current.has(highlightedId) ? highlightedId : selected;
     markers.current.forEach((marker, id) => {
@@ -112,7 +125,7 @@ export default function ResultsMap({ pins, highlightedId, selectedId = null, onS
       marker.getElement()?.setAttribute("aria-current", id === selectedId ? "true" : "false");
       marker.setZIndexOffset(id === focusedId ? 1000 : 0);
     });
-  }, [highlightedId, selectedId, pins]);
+  }, [highlightedId, selectedId, pins, showNames]);
   const changeZoom = (step: number) => {
     const view = map.current;
     view?.setZoom(view.getZoom() + step, { animate: false });
@@ -127,7 +140,7 @@ export default function ResultsMap({ pins, highlightedId, selectedId = null, onS
           <button type="button" aria-label="Zoom out" disabled={zoom <= MIN_ZOOM} onClick={() => changeZoom(-1)}>−</button>
         </div>
       </div>
-      {fallback && <SchematicMap pins={pins} highlightedId={highlightedId} selectedId={selectedId} onSelect={onSelect} centre={center} />}
+      {fallback && <SchematicMap pins={pins} highlightedId={highlightedId} selectedId={selectedId} onSelect={onSelect} centre={center} showNames={showNames} />}
       {failed && !fallback && <p role="status">Map tiles are loading slowly. The list shows every restaurant.</p>}
     </>
   );

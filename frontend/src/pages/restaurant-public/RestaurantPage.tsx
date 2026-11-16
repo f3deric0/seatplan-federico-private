@@ -168,7 +168,7 @@ function Page({ data }: { data: PublicRestaurant }) {
           {data.lat !== null && data.lng !== null && (
             <div className="rp-map">
               <Suspense fallback={<Skeleton label="Loading the map" lines={3} />}>
-                <ResultsMap pins={[{ id: data.public_id, name: data.name, lat: data.lat, lng: data.lng }]} highlightedId={data.public_id} onSelect={() => undefined} />
+                <ResultsMap pins={[{ id: data.public_id, name: data.name, lat: data.lat, lng: data.lng }]} showNames />
               </Suspense>
             </div>
           )}
