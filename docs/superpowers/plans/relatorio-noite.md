@@ -890,3 +890,10 @@ A imagem aprovada da mesa e da cadeira roxa é usada pela marca partilhada
 nos cabeçalhos de Restaurantes e Eventos e na área de equipa. Build e 513
 testes Vitest passaram. No Chromium verificámos o carregamento na pesquisa,
 na ficha pública, na entrada do dono e em Eventos, incluindo o modo escuro.
+
+## Recentrar o mapa
+
+Cada clique num cartão centra o mapa no restaurante, mesmo ao repetir a
+seleção. Ao voltar de uma vista afastada, o mapa aproxima para a zona do
+restaurante. Um zoom mais próximo é mantido. Build, 513 testes Vitest e
+os percursos de zoom e arrasto no Chromium com dados de teste passaram.

@@ -20,6 +20,8 @@ interface Props {
   pins: ResultPin[];
   highlightedId?: string | null;
   selectedId?: string | null;
+  /** A new request for every explicit card click, including repeat clicks on the same card. */
+  centerRequest?: { id: string } | null;
   onSelect?: (id: string) => void;
   showNames?: boolean;
   /** Where the diner searched from, shown as a small dot. */
@@ -31,6 +33,7 @@ interface Props {
 const TILE_PATIENCE_MS = 6000;
 const LISBON = { lat: 38.7223, lng: -9.1393 };
 const INITIAL_ZOOM = 11;
+const RESTAURANT_ZOOM = 14;
 const MIN_ZOOM = 0;
 const MAX_ZOOM = 19;
 function locationIcon(name: string) {
@@ -40,7 +43,7 @@ function locationIcon(name: string) {
   return L.divIcon({ className: "restaurant-location-pin", html: label, iconSize: [14, 14], iconAnchor: [7, 7] });
 }
 
-export default function ResultsMap({ pins, highlightedId = null, selectedId = null, onSelect, center, onFallback, showNames = false }: Props) {
+export default function ResultsMap({ pins, highlightedId = null, selectedId = null, centerRequest, onSelect, center, onFallback, showNames = false }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const markers = useRef(new Map<string, L.Marker>());
@@ -111,8 +114,15 @@ export default function ResultsMap({ pins, highlightedId = null, selectedId = nu
     const points: L.LatLngExpression[] = pins.map((pin) => [pin.lat, pin.lng]);
     if (center) points.push([center.lat, center.lng]);
     if (points.length > 1) view.fitBounds(L.latLngBounds(points), { padding: [30, 30], maxZoom: 15, animate: false });
-    else if (points.length === 1) view.setView(points[0], 14, { animate: false });
+    else if (points.length === 1) view.setView(points[0], RESTAURANT_ZOOM, { animate: false });
   }, [pins, center?.lat, center?.lng, showNames]);
+  useEffect(() => {
+    const view = map.current;
+    const marker = centerRequest && markers.current.get(centerRequest.id);
+    if (view && marker) {
+      view.setView(marker.getLatLng(), Math.max(view.getZoom(), RESTAURANT_ZOOM), { animate: false });
+    }
+  }, [centerRequest]);
   // The pin of the hovered card gets a bigger, darker look.
   useEffect(() => {
     if (showNames) return;
