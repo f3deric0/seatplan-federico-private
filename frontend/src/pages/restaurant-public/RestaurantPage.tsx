@@ -15,7 +15,7 @@ import { FEATURE_KEYS, FEATURE_LABELS, cuisineLabel, formatDistance, loadPlace, 
 import { BookingEmbed } from "../restaurant/BookingPage";
 import { errorMessage } from "../restaurant/format";
 import { useLoad } from "../restaurant/useLoad";
-import { Gallery } from "./Gallery";
+import { Gallery, GalleryCredits } from "./Gallery";
 import { RestaurantReviews } from "./RestaurantReviews";
 import { instagramHref, metersBetween, shortDate, telHref, websiteHref } from "./pageModel";
 import { weeklyRows } from "./scheduleText";
@@ -30,7 +30,8 @@ export default function RestaurantPage() {
   const title = state.status === "ready" ? state.data.name : "Restaurant";
   const hasMap = state.status === "ready" && state.data.lat !== null && state.data.lng !== null;
   return (
-    <PageShell title={title} width="wide" restaurantBrand headerActions={<PublicHeaderActions />} footerContent={hasMap && <MapCredits />}>
+    <PageShell title={title} width="wide" restaurantBrand headerActions={<PublicHeaderActions />}
+      footerContent={<>{hasMap && <MapCredits />}{state.status === "ready" && <GalleryCredits photos={state.data.photos} />}</>}>
       {state.status === "loading" && <Skeleton lines={6} label="Loading the restaurant" />}
       {state.status === "error" && <LoadError error={state.error} onRetry={() => reload()} />}
       {state.status === "ready" && <Page data={state.data} />}

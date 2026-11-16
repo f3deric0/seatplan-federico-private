@@ -39,7 +39,7 @@ function CapsuleSelect({ label, name, value, onChange, options }: {
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
 }) {
-  return <label><span>{label}</span><select className="discover-select" aria-label={name} value={value}
+  return <label><span>{label}</span><select className="select-themed" aria-label={name} value={value}
     onChange={event => onChange(event.target.value)}>
     {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
   </select></label>;
@@ -53,10 +53,10 @@ export function ContextControls({ place, onPlace, date, time, party, onDate, onT
   if (variant === "stacked") {
     return (
       <div className="discover-stacked">
-        <Select label="Choose a city" value={cityValue} options={cityOptions(place)} onChange={(event) => changeCity(event.target.value)} />
+        <Select className="select-themed" label="Choose a city" value={cityValue} options={cityOptions(place)} onChange={(event) => changeCity(event.target.value)} />
         <DiscoveryDate value={date} onChange={onDate} stacked />
-        <Select label="Time" value={time} options={timeOptions(time)} onChange={event => onTime(event.target.value)} />
-        <Select label="People" value={party} options={PARTIES} onChange={(event) => onParty(event.target.value)} />
+        <Select className="select-themed" label="Time" value={time} options={timeOptions(time)} onChange={event => onTime(event.target.value)} />
+        <Select className="select-themed" label="People" value={party} options={PARTIES} onChange={(event) => onParty(event.target.value)} />
       </div>
     );
   }

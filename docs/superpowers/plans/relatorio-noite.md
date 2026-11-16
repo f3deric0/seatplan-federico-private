@@ -923,3 +923,8 @@ adicionou zero, e as médias e a ordenação foram verificadas na API.
 Nos cartões, a nota e a cadeira foram ampliadas e centradas no lado
 direito. Verificámos a apresentação e a ligação às reviews no Chromium
 a 320, 390 e 1440 px. O build e os 513 testes Vitest passaram.
+
+A escala das reviews passou de 0–5 para 0–10. A migração duplica uma única
+vez as notas antigas. Os cartões apresentam grupos de uma a quatro cadeiras,
+com o grupo completo a partir de 8,5. Os filtros de reviews e pesquisa usam
+o mesmo estilo e os créditos das fotos estão no rodapé da ficha.

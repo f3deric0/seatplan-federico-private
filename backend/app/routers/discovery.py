@@ -25,7 +25,7 @@ router = APIRouter(tags=["discovery"])
 
 
 class ReviewIn(Strict):
-    score: int = Field(ge=0, le=5, strict=True)
+    score: int = Field(ge=0, le=10, strict=True)
     comment: PlainText = Field(default="", max_length=1500)
     table_type: reviews.TableType | None = None
 
@@ -127,7 +127,7 @@ def restaurant_reviews(
     request: Request,
     session: db.SessionDep,
     sort: reviews.ReviewSort = "recent",
-    score: Annotated[int | None, Query(ge=0, le=5)] = None,
+    score: Annotated[int | None, Query(ge=0, le=10)] = None,
     table_type: reviews.TableType | None = None,
     verified: bool = False,
     limit: Annotated[int, Query(ge=1, le=50)] = 20,

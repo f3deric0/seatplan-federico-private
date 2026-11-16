@@ -506,7 +506,9 @@ class RestaurantReview(Base):
     """One public review per customer and restaurant."""
 
     __tablename__ = "restaurant_reviews"
-    __table_args__ = (CheckConstraint("score BETWEEN 0 AND 5", name="ck_restaurant_review_score"),)
+    __table_args__ = (
+        CheckConstraint("score BETWEEN 0 AND 10", name="ck_restaurant_review_score_10"),
+    )
 
     venue_id: Mapped[int] = mapped_column(
         ForeignKey("venues.id", ondelete="CASCADE"), primary_key=True

@@ -1,9 +1,11 @@
 from datetime import timedelta
 
 from guest_helpers import account_headers, make_account
+from sqlalchemy.schema import CreateTable
 from test_discovery import venue
 
-from app.models import Booking, utc_now
+from app import db
+from app.models import Booking, RestaurantReview, utc_now
 
 
 def test_reviews_are_owned_filtered_and_aggregated(client, session, organiser):
@@ -18,7 +20,7 @@ def test_reviews_are_owned_filtered_and_aggregated(client, session, organiser):
     assert client.put(f"{path}/mine", json=payload).status_code == 401
     assert client.get("/api/restaurants/draft/reviews").status_code == 404
     headers = account_headers(alice)
-    for invalid in (6, -1, 4.3, True):
+    for invalid in (11, -1, 4.3, True):
         assert (
             client.put(
                 f"{path}/mine", headers=headers, json={**payload, "score": invalid}
@@ -28,21 +30,21 @@ def test_reviews_are_owned_filtered_and_aggregated(client, session, organiser):
     assert client.put(f"{path}/mine", headers=headers, json=payload).status_code == 200
     assert client.get(f"{path}/mine", headers=headers).json()["review"]["score"] == 0
     assert (
-        client.put(f"{path}/mine", headers=headers, json={**payload, "score": 4}).status_code == 200
+        client.put(f"{path}/mine", headers=headers, json={**payload, "score": 8}).status_code == 200
     )
 
-    second = {"score": 5, "comment": "Loved the view.", "table_type": "window"}
+    second = {"score": 10, "comment": "Loved the view.", "table_type": "window"}
     assert client.put(f"{path}/mine", headers=account_headers(bob), json=second).status_code == 200
     result = client.get(path, params={"sort": "highest"}).json()
-    assert result["summary"] == {"average": 4.5, "count": 2}
+    assert result["summary"] == {"average": 9.0, "count": 2}
     assert [review["author"] for review in result["items"]] == ["Bob", "Alice"]
     assert "alice@example.com" not in str(result)
-    filtered = client.get(path, params={"score": 4, "table_type": "terrace"}).json()
+    filtered = client.get(path, params={"score": 8, "table_type": "terrace"}).json()
     assert filtered["total"] == 1 and filtered["items"][0]["comment"] == "Too loud."
     assert client.get("/api/restaurants").json()["items"][0]["reviews"] == result["summary"]
     assert client.get("/api/restaurants/tagus").json()["reviews"] == result["summary"]
     assert client.delete(f"{path}/mine", headers=headers).status_code == 200
-    assert client.get(path).json()["summary"] == {"average": 5.0, "count": 1}
+    assert client.get(path).json()["summary"] == {"average": 10.0, "count": 1}
 
 
 def test_only_a_completed_reservation_with_a_proven_email_verifies_a_review(
@@ -80,3 +82,32 @@ def test_only_a_completed_reservation_with_a_proven_email_verifies_a_review(
     assert not client.put(f"{path}/mine", headers=headers, json={"score": 4}).json()["review"][
         "verified"
     ]
+
+
+def test_legacy_reviews_are_scaled_once(session, organiser):
+    restaurant = venue(session, organiser, "Tagus Terrace", "tagus")
+    account = make_account(session, "alice@example.com")
+    review_table = RestaurantReview.__table__
+    with db.get_engine().begin() as connection:
+        review_table.drop(connection)
+        ddl = str(CreateTable(review_table).compile(dialect=connection.dialect))
+        connection.exec_driver_sql(
+            ddl.replace("ck_restaurant_review_score_10", "ck_restaurant_review_score").replace(
+                "BETWEEN 0 AND 10", "BETWEEN 0 AND 5"
+            )
+        )
+        for index in review_table.indexes:
+            index.create(connection)
+        connection.execute(
+            review_table.insert().values(
+                venue_id=restaurant.id,
+                account_id=account.id,
+                public_id="old-review",
+                score=4,
+                comment="Original comment",
+            )
+        )
+    assert any("Converted restaurant review" in line for line in db.create_all())
+    assert not any("Converted restaurant review" in line for line in db.create_all())
+    review = session.get(RestaurantReview, (restaurant.id, account.id))
+    assert (review.public_id, review.score, review.comment) == ("old-review", 8, "Original comment")

@@ -10,7 +10,7 @@ import { useLoad } from "../restaurant/useLoad";
 import { ReviewRating } from "./ReviewRating";
 
 const PAGE = 20;
-const SCORES = Array.from({ length: 6 }, (_, n) => ({ value: String(n), label: `${n} ${n === 1 ? "table" : "tables"}` }));
+const SCORES = Array.from({ length: 11 }, (_, n) => ({ value: String(n), label: `${n}/10` }));
 const ORDERS = [
   { value: "recent", label: "Most recent" },
   { value: "highest", label: "Highest rating" },
@@ -54,11 +54,11 @@ export function RestaurantReviews({ slug, summary }: { slug: string; summary?: R
       {signedIn && own.state.status === "error" &&
         <Button variant="ghost" onClick={() => own.reload()}>Retry loading your review</Button>}
       <div className="reviews-filters" role="group" aria-label="Filter reviews">
-        <Select label="Sort by" options={ORDERS} value={filters.sort}
+        <Select className="select-themed" label="Sort by" options={ORDERS} value={filters.sort}
           onChange={event => changeFilters({ sort: event.target.value })} />
-        <Select label="Rating" options={[{ value: "", label: "Any rating" }, ...SCORES]} value={filters.score}
+        <Select className="select-themed" label="Rating" options={[{ value: "", label: "Any rating" }, ...SCORES]} value={filters.score}
           onChange={event => changeFilters({ score: event.target.value })} />
-        <Select label="Table type" options={[{ value: "", label: "Any table" }, ...REVIEW_TABLES]} value={filters.table_type}
+        <Select className="select-themed" label="Table type" options={[{ value: "", label: "Any table" }, ...REVIEW_TABLES]} value={filters.table_type}
           onChange={event => changeFilters({ table_type: event.target.value })} />
         <label className="reviews-verified"><input type="checkbox" checked={filters.verified}
           onChange={event => changeFilters({ verified: event.target.checked })} /> Verified visits only</label>
@@ -71,7 +71,7 @@ export function RestaurantReviews({ slug, summary }: { slug: string; summary?: R
           <li key={review.id}>
             <div className="reviews-item-head">
               <strong>{review.author}</strong>
-              <span>{review.score}/5 tables</span>
+              <span>{review.score}/10</span>
               {review.verified && <span className="reviews-verified-badge">Verified visit</span>}
             </div>
             <div className="reviews-item-meta">
@@ -120,9 +120,9 @@ function ReviewEditor({ slug, review, onClose, onSave }: {
   return (
     <Dialog open title={review ? "Edit your review" : "Write a review"} onClose={onClose}>
       <form className="review-editor" onSubmit={event => { event.preventDefault(); if (score !== "") void save(); }}>
-        <Select label="Your rating" value={score} required onChange={event => setScore(event.target.value)}
-          options={[{ value: "", label: "Choose from 0 to 5 tables" }, ...SCORES]} />
-        <Select label="Your table type (optional)" value={table} onChange={event => setTable(event.target.value)}
+        <Select className="select-themed" label="Your rating" value={score} required onChange={event => setScore(event.target.value)}
+          options={[{ value: "", label: "Choose a rating from 0 to 10" }, ...SCORES]} />
+        <Select className="select-themed" label="Your table type (optional)" value={table} onChange={event => setTable(event.target.value)}
           options={[{ value: "", label: "Choose a table type" }, ...REVIEW_TABLES]} />
         <label className="field">Comment (optional)
           <textarea className="field-input" rows={4} maxLength={1500} value={comment}

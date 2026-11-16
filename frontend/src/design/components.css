@@ -272,6 +272,23 @@
   background-repeat: no-repeat;
 }
 
+@supports (appearance:base-select) {
+  :is(select.select-themed,.select-themed select) { appearance:base-select;cursor:pointer; }
+  .select-themed .select-input { background-image:none;padding-inline-end:var(--space-3); }
+  :is(select.select-themed,.select-themed select)::picker(select) {
+    appearance:base-select;max-height:min(18rem,50vh);overflow-y:auto;margin-block:.375rem;padding:.375rem;
+    min-inline-size:max(anchor-size(self-inline),8.5rem);border:1px solid var(--c-border);
+    border-radius:var(--radius-md);background:var(--c-surface);color:var(--c-text);
+    box-shadow:var(--shadow-lg);font:.875rem/1.3 var(--font-body);overscroll-behavior:contain;
+  }
+  :is(select.select-themed,.select-themed select)::picker-icon { color:var(--c-primary); }
+  :is(select.select-themed,.select-themed select) option {
+    min-height:2.25rem;gap:.5rem;padding:.375rem .5rem;border-radius:var(--radius-sm);
+  }
+  :is(select.select-themed,.select-themed select) option:checked { color:var(--c-primary);font-weight:700; }
+  :is(select.select-themed,.select-themed select) option:is(:focus,:hover) { background:var(--c-primary-soft); }
+}
+
 /* ---------- Checkbox ---------- */
 
 .checkbox {

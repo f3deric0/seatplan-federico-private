@@ -155,7 +155,7 @@ def seed(session: Session) -> tuple[int, int]:
                     {
                         "venue_id": venue.id,
                         "account_id": account.id,
-                        "score": score,
+                        "score": score * 2,
                         "comment": comment,
                         "table_type": table_type,
                         "verified": False,
