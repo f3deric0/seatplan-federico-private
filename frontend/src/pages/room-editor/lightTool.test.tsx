@@ -128,10 +128,11 @@ describe("Light tool", () => {
     expect(screen.getByText("View of the river")).toBeTruthy();
   });
 
-  it("explains that nothing can be shown while north is not set", async () => {
-    fakeServer({ north: null, light: () => answer({ rooms: [{ id: 12, sun_patches: [], night: false }] }) });
+  it("shows the sun with north at the top, even for a room saved without a north", async () => {
+    fakeServer({ north: null });
     await openLight();
-    expect(await screen.findByText(/Set north with the compass at the top right of the plan to see sunlight in this room/)).toBeTruthy();
+    await screen.findByText(/the sun is in the south/);
+    expect(screen.queryByText(/North is not set/)).toBeNull();
   });
 
   it("says when the picture is of the saved rooms and the plan has unsaved changes", async () => {

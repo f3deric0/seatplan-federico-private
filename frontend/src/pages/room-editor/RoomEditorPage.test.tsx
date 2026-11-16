@@ -7,7 +7,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 it("creates a second room and restores the previous layout with undo", async () => {
   const room = {
-    id: null, key: "implicit-main", name: "Main room", is_outdoor: false, north_deg: null, position: 0,
+    id: null, key: "implicit-main", name: "Main room", is_outdoor: false, north_deg: 0, position: 0,
     outline: { points: [{ x: 0, y: 0, curve: 0 }, { x: 1000, y: 0, curve: 0 }, { x: 1000, y: 700, curve: 0 }, { x: 0, y: 700, curve: 0 }] },
     openings: [], fixtures: [], zones: [], tables: [],
   };

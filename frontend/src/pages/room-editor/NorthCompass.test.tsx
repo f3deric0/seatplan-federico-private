@@ -1,59 +1,25 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { expect, it } from "vitest";
 import { NorthCompass } from "./NorthCompass";
+import { createRoom, withNorthUp } from "./roomModel";
+import type { RoomLayout } from "./roomModel";
 
-const compass = (north: number | null) => {
-  const onChange = vi.fn();
-  render(<NorthCompass north={north} onChange={onChange} />);
-  return { onChange, slider: screen.getByRole("slider", { name: "North direction" }) };
-};
-
-it("lets the owner confirm zero degrees when north has not been set", () => {
-  const { onChange, slider } = compass(null);
-  fireEvent.keyDown(slider, { key: "Home" });
-  expect(onChange).toHaveBeenCalledWith(0);
+it("is a fixed mark that says north is at the top of the plan, with nothing to turn", () => {
+  render(<NorthCompass />);
+  expect(screen.getByRole("img", { name: "North is at the top of the plan" })).toBeTruthy();
+  expect(screen.queryByRole("slider")).toBeNull();
+  expect(screen.queryByRole("button")).toBeNull();
 });
 
-it("says where north is, or that it is not set", () => {
-  const { slider } = compass(90);
-  expect(slider.getAttribute("aria-valuenow")).toBe("90");
-  expect(slider.getAttribute("aria-valuetext")).toBe("North is at 90°");
+it("gives a new room north 0, so zero degrees is the value rather than 'not set'", () => {
+  expect(createRoom("Room 1", 1000, 700).north_deg).toBe(0);
 });
 
-it("says north is not set when it has no value", () => {
-  const { slider } = compass(null);
-  expect(slider.getAttribute("aria-valuenow")).toBeNull();
-  expect(slider.getAttribute("aria-valuetext")).toBe("North is not set");
-});
-
-it("turns north with the arrow keys, 15 degrees with Shift or Page Up and Down, wrapping around", () => {
-  const { onChange, slider } = compass(359);
-  fireEvent.keyDown(slider, { key: "ArrowRight" });
-  expect(onChange).toHaveBeenLastCalledWith(0);
-  fireEvent.keyDown(slider, { key: "ArrowLeft", shiftKey: true });
-  expect(onChange).toHaveBeenLastCalledWith(344);
-  fireEvent.keyDown(slider, { key: "PageUp" });
-  expect(onChange).toHaveBeenLastCalledWith(14);
-  fireEvent.keyDown(slider, { key: "PageDown" });
-  expect(onChange).toHaveBeenLastCalledWith(344);
-});
-
-it("clears north with Delete and ignores other keys", () => {
-  const { onChange, slider } = compass(120);
-  fireEvent.keyDown(slider, { key: "Delete" });
-  expect(onChange).toHaveBeenLastCalledWith(null);
-  onChange.mockClear();
-  fireEvent.keyDown(slider, { key: "a" });
-  expect(onChange).not.toHaveBeenCalled();
-});
-
-it("commits the angle once, when the drag is released", () => {
-  const { onChange } = compass(null);
-  const svg = document.querySelector(".room-compass svg")!;
-  fireEvent.pointerDown(svg, { clientX: 0, clientY: -100, pointerId: 1 });
-  fireEvent.pointerMove(svg, { clientX: 100, clientY: 0, pointerId: 1 });
-  expect(onChange).not.toHaveBeenCalled();
-  fireEvent.pointerUp(svg, { clientX: 100, clientY: 0, pointerId: 1 });
-  expect(onChange).toHaveBeenCalledTimes(1);
-  expect(onChange).toHaveBeenCalledWith(90);
+it("edits every room with north at the top, whatever the server holds", () => {
+  const room = createRoom("Room 1", 1000, 700);
+  const layout: RoomLayout = { base_version: 3, rooms: [{ ...room, north_deg: null }, { ...room, key: "b", north_deg: 200 }, { ...room, key: "c", north_deg: 0 }] };
+  const up = withNorthUp(layout);
+  expect(up.rooms.map(r => r.north_deg)).toEqual([0, 0, 0]);
+  expect(up.base_version).toBe(3);
+  expect(up.rooms[2]).toBe(layout.rooms[2]);
 });

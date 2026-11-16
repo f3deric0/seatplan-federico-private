@@ -14,7 +14,7 @@ function layout(version: number, name = "Dining room") {
     problems: [],
     rooms: [
       {
-        id: 12, key: "r12", name, is_outdoor: false, north_deg: null, position: 0,
+        id: 12, key: "r12", name, is_outdoor: false, north_deg: 0, position: 0,
         outline: { points: [{ x: 0, y: 0, curve: 0 }, { x: 1000, y: 0, curve: 0 }, { x: 1000, y: 700, curve: 0 }, { x: 0, y: 700, curve: 0 }] },
         openings: [], fixtures: [], zones: [],
         tables: [{
@@ -27,7 +27,7 @@ function layout(version: number, name = "Dining room") {
 }
 
 interface Server {
-  puts: { base_version: number; rooms: { name: string; tables: Record<string, unknown>[] }[] }[];
+  puts: { base_version: number; rooms: { name: string; north_deg: number | null; tables: Record<string, unknown>[] }[] }[];
   gets: number;
 }
 
@@ -129,6 +129,18 @@ describe("Room editor persistence", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(server.puts).toHaveLength(1));
     expect(server.puts[0].base_version).toBe(6);
+  });
+
+  it("opens a room the server holds with another north at the top, ready to save that way", async () => {
+    const old = layout(5);
+    old.rooms[0].north_deg = 200;
+    const server = fakeServer(() => old, () => json(layout(6)));
+    open();
+    await screen.findByLabelText("Selected room name");
+    expect(screen.getByRole("status").textContent).toBe("Unsaved");
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Saved"));
+    expect(server.puts[0].rooms[0].north_deg).toBe(0);
   });
 
   it("keeps unsaved work on this device and offers it back after a reload", async () => {

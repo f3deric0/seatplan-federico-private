@@ -10,6 +10,7 @@ import { ApiError } from "../../api/client";
 import { blockedTables, getRooms, layoutOf, putRooms } from "../../api/rooms";
 import type { RoomsAnswer } from "../../api/rooms";
 import { useHistory } from "../editor/useHistory";
+import { withNorthUp } from "./roomModel";
 import type { RoomLayout } from "./roomModel";
 
 const AUTOSAVE_MS = 400;
@@ -71,7 +72,8 @@ function blockedMessage(tables: { label: string }[]): string {
 export type SaveState = "idle" | "saving" | "conflict";
 
 export function useRoomDraft(venueId: string, server: RoomsAnswer) {
-  const history = useHistory<RoomLayout>(layoutOf(server));
+  // The editor shows north at the top, so what the server holds differs (and can be saved) until north is 0 there too.
+  const history = useHistory<RoomLayout>(withNorthUp(layoutOf(server)));
   const [saved, setSaved] = useState<RoomLayout>(layoutOf(server));
   const [state, setState] = useState<SaveState>("idle");
   const [notice, setNotice] = useState("");
@@ -79,7 +81,7 @@ export function useRoomDraft(venueId: string, server: RoomsAnswer) {
   // A copy from an earlier visit, shown as a choice. Until it is decided it is never overwritten.
   const [found, setFound] = useState<StoredDraft | null>(() => {
     const draft = readDraft(venueId);
-    return draft && JSON.stringify(draft.layout.rooms) !== JSON.stringify(layoutOf(server).rooms) ? draft : null;
+    return draft && JSON.stringify(draft.layout.rooms) !== JSON.stringify(withNorthUp(layoutOf(server)).rooms) ? draft : null;
   });
   const dirty = JSON.stringify(history.present.rooms) !== JSON.stringify(saved.rooms);
   const latest = useRef(history.present);
@@ -104,7 +106,7 @@ export function useRoomDraft(venueId: string, server: RoomsAnswer) {
       const layout = layoutOf(answer);
       setSaved(layout);
       publication.current = answer.status ?? publication.current;
-      history.reset(layout);
+      history.reset(withNorthUp(layout));
     },
     [history.reset],
   );

@@ -36,12 +36,7 @@ test("an owner builds a room on a phone, saves, reloads and sees the same", asyn
   await page.getByLabel("Bulge (cm)").fill("80");
   await page.getByLabel("Bulge (cm)").press("Tab");
 
-  // North first, then two windows on two walls.
-  const compass = page.getByRole("slider", { name: "North direction" });
-  await compass.focus();
-  await compass.press("Home");
-  for (let turn = 0; turn < 13; turn += 1) await compass.press("Shift+ArrowRight");
-  for (let turn = 0; turn < 5; turn += 1) await compass.press("ArrowRight");
+  // Two windows on two walls (north is always the top of the plan).
   await page.getByRole("button", { name: "Walls", exact: true }).tap();
   await page.getByRole("button", { name: "Add window", exact: true }).tap();
   await page.getByLabel("Wall for opening").selectOption("1");
@@ -70,7 +65,7 @@ test("an owner builds a room on a phone, saves, reloads and sees the same", asyn
   await expect(page.getByRole("status").filter({ hasText: /Unsaved|Saved/ })).toHaveText("Saved");
   await page.getByLabel("Selected wall", { exact: true }).selectOption("2");
   await expect(page.getByLabel("Bulge (cm)")).toHaveValue("80");
-  await expect(page.getByRole("slider", { name: "North direction" })).toHaveAttribute("aria-valuenow", "200");
+  await expect(page.getByRole("img", { name: "North is at the top of the plan" })).toBeVisible();
   await page.getByRole("button", { name: "Walls", exact: true }).tap();
   await expect(page.getByLabel("Selected opening").locator("option")).toHaveCount(3); // "Choose an opening" and the two windows
   await page.getByRole("button", { name: "Fixed", exact: true }).tap();

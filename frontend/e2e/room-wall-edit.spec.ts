@@ -30,6 +30,7 @@ test(`dragging a wall midpoint curves it in one undo step at ${width}px`, async 
   await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
   await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
   const handle = page.locator('[data-shape-handle="side-0"]');
+  await handle.scrollIntoViewIfNeeded();
   const bounds = (await handle.boundingBox())!;
   await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
   await page.mouse.down();

@@ -65,7 +65,7 @@ it("handles curved walls and actual circle contact with a rectangular fixture", 
   expect(codes(room)).toEqual(["fixture_overlap"]);
 });
 it("keeps publication requirements separate from draft checks and view information", () => {
-  let room = addOpening(createRoom("Main", 1000, 700), 0, "window");
+  let room = addOpening({ ...createRoom("Main", 1000, 700), north_deg: null }, 0, "window"); // a room saved before north was fixed to the top
   expect(codes(room)).toEqual(["window_no_view"]);
   expect(codes(room, true)).toEqual(["no_north", "no_tables", "window_no_view"]);
   room.openings[0].view_text = "Garden"; room.north_deg = 0;

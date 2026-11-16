@@ -33,10 +33,15 @@ export function nextRoomName(rooms: { name: string }[]): string {
   return `Room ${number}`;
 }
 
+/** North is always the top of the plan, so every room is edited with `north_deg` 0. */
+export function withNorthUp(layout: RoomLayout): RoomLayout {
+  return { ...layout, rooms: layout.rooms.map(room => room.north_deg === 0 ? room : { ...room, north_deg: 0 }) };
+}
+
 export function createRoom(name: string, width: number, height: number, outdoor = false): Room {
   if (![width, height].every(n => Number.isFinite(n) && n > 0)) throw new Error("Room dimensions must be positive.");
   return {
-    id: null, key: newRoomKey("r"), name, is_outdoor: outdoor, north_deg: null, position: 0,
+    id: null, key: newRoomKey("r"), name, is_outdoor: outdoor, north_deg: 0, position: 0,
     outline: { points: [{ x: 0, y: 0, curve: 0 }, { x: width, y: 0, curve: 0 }, { x: width, y: height, curve: 0 }, { x: 0, y: height, curve: 0 }] },
     openings: [], fixtures: [], zones: [], tables: [],
   };

@@ -6,6 +6,7 @@ test("a touch hold enables multiple selection, with accessible table choices", a
   await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
   await page.getByRole("button", { name: "Tables", exact: true }).tap();
   const body = page.locator("[data-room-table]").filter({ has: page.locator(".room-table-label").filter({ hasText: /^W3$/ }) }).locator(".room-table");
+  await body.scrollIntoViewIfNeeded();
   const box = (await body.boundingBox())!;
   const touch = await context.newCDPSession(page);
   await touch.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: box.x + box.width / 2, y: box.y + box.height / 2 }] });

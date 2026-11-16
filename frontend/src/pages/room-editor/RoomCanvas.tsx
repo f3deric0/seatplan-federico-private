@@ -88,7 +88,7 @@ export function RoomCanvas({ room, drawing, grid, onPoint, onCloseShape, selecti
         </g>
       </svg>
     </div>
-    <NorthCompass north={room.north_deg} onChange={north_deg => onChange({ ...room, north_deg })} />
+    <NorthCompass />
     <div className="room-zoom"><Button variant="secondary" aria-label="Zoom out" onClick={() => pan.zoomBy(0.8)}>−</Button><Button variant="secondary" onClick={pan.fit}>Fit room</Button><Button variant="secondary" aria-label="Zoom in" onClick={() => pan.zoomBy(1.25)}>+</Button></div>
   </div>;
 }

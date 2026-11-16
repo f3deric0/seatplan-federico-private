@@ -52,7 +52,7 @@ a second tab saved before you, SeatPlan tells you and keeps your work so you can
 | **Tables** | Add tables (round or rectangular), set how many people they seat, which are accessible, which suit a high chair, which can be joined, and place the **chairs**. Select several tables to move, align or duplicate them together. |
 | **Light** | Pick a date and a time to see where the sun falls in the room, when it gets dark, and what each table is like at that moment, as a diner will see it. |
 
-The **compass** in the top right corner of the plan shows which way north points. Without it the app cannot say anything about the sun, and it will not guess. Drag the needle to turn it, or focus it and use the arrow keys (1°), Shift+arrows (15°), Home (north up) and Delete (clear).
+North is always the **top of the plan**, and a small compass in the top right corner reminds you of it. Draw your rooms with north at the top: the sun, the way each window faces and what diners read about the light all follow from that. A room you saved with another north is opened with north at the top, and keeps its old direction until you press **Save**.
 
 You can have several rooms (for example **Main room** and **Terrace**); an outdoor room is marked as such. The editor warns you as
 you draw: a table outside the walls, two tables overlapping, a window with no wall under it, windows but no north. Warnings do

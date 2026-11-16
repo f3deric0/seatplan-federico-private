@@ -5,25 +5,21 @@ import { demoLinks, expect, lastPart, test } from "./fixtures";
 import { openOwnerRoom } from "./room-session";
 
 for (const width of [1440, 390]) {
-  test(`owner adds windows and sets north at ${width}px`, async ({ page, request }) => {
+  test(`owner adds windows with north at the top at ${width}px`, async ({ page, request }) => {
     const links = await demoLinks(request);
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
     await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
     await page.getByRole("button", { name: "Walls", exact: true }).click();
     await page.getByRole("button", { name: "Add window", exact: true }).click();
-    await expect(page.getByText("Set north first", { exact: true })).toBeVisible();
+    await expect(page.getByText(/^Faces /).first()).toBeVisible();
     await page.getByLabel("Opening offset (cm)").fill("100");
     await page.getByLabel("Opening offset (cm)").press("Tab");
     await page.getByLabel("View", { exact: true }).fill("Tagus river");
     await page.getByLabel("river", { exact: true }).check();
-    const compass = page.getByRole("slider", { name: "North direction" });
-    await compass.focus();
-    await compass.press("Home");
-    for (let turn = 0; turn < 6; turn += 1) await compass.press("Shift+ArrowRight");
-    await expect(compass).toHaveAttribute("aria-valuenow", "90");
+    await expect(page.getByRole("img", { name: "North is at the top of the plan" })).toBeVisible();
     await page.screenshot({ path: join(tmpdir(), `seatplan-room-north-${width}.png`), fullPage: true });
     await page.getByRole("button", { name: "Walls", exact: true }).click();
-    await expect(page.getByText("Faces west (270°)", { exact: true })).toBeVisible();
+    await expect(page.getByText("Faces north (0°)", { exact: true })).toBeVisible();
     await expect(page.getByLabel("View", { exact: true })).toHaveValue("Tagus river");
     await page.getByRole("button", { name: "Add door", exact: true }).click();
     await page.getByLabel("This door is the main entrance").check();
@@ -38,7 +34,7 @@ for (const width of [1440, 390]) {
   });
 }
 
-test("opening gestures resize and move in single undo steps, and the north dial rotates", async ({ page, request }) => {
+test("opening gestures resize and move in single undo steps, and the north compass is a fixed mark", async ({ page, request }) => {
   const links = await demoLinks(request);
   await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
   await page.getByRole("button", { name: "Walls", exact: true }).click();
@@ -59,12 +55,6 @@ test("opening gestures resize and move in single undo steps, and the north dial 
   await expect(page.getByLabel("Opening width (cm)")).toHaveValue("120");
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(page.getByLabel("Opening offset (cm)")).toHaveValue("0");
-  const dial = (await page.locator(".room-compass svg").boundingBox())!;
-  await page.mouse.move(dial.x + dial.width / 2, dial.y + 15);
-  await page.mouse.down();
-  await page.mouse.move(dial.x + dial.width - 15, dial.y + dial.height / 2, { steps: 5 });
-  await page.mouse.up();
-  await expect(page.getByRole("slider", { name: "North direction" })).toHaveAttribute("aria-valuenow", "90");
-  await page.getByRole("button", { name: "Undo", exact: true }).click();
-  await expect(page.getByRole("slider", { name: "North direction" })).toHaveAttribute("aria-valuetext", "North is not set");
+  await expect(page.getByRole("img", { name: "North is at the top of the plan" })).toBeVisible();
+  await expect(page.getByRole("slider", { name: "North direction" })).toHaveCount(0);
 });

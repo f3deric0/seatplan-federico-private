@@ -50,11 +50,12 @@ length edits. Shape changes which would strand a window beyond the wall are
 refused. Opening ids/keys survive edits. Photo attachment joins the upload
 and saved-room endpoints in tasks 13/17, after an opening has a database id.
 
-NorthCompass is the small circle in the top right of the plan, like the one on a map: the needle (its tip marked N)
-shows where north is. Drag it to turn north (previewed, committed on release) or use the keys: arrows turn 1 degree,
-Shift+arrows and Page Up/Down 15, Home points north up, Delete clears it. It is a slider for screen readers. The needle
-uses clockwise screen degrees. There is no North tab, no numeric field and no phone-compass button any more;
-northModel.compassNorth is kept for a future one.
+North is always the top of the plan. NorthCompass is a small fixed mark (outlined circle, arrow, N) in the top right
+corner of the plan; it is transparent, takes no clicks and never turns, and there is no North tab or field. New rooms
+get north_deg 0, and the editor opens every room through withNorthUp, so a room the server holds with another north
+(or none) shows as Unsaved until it is saved with north 0. Save replaces north with 0 for every room. The window
+directions, the Light tool and the publish check all use that 0. northModel.compassNorth is kept for a future phone
+compass, and validation still reports no_north for a room that reaches it without one.
 The phone must lie flat and align with the plan; the owner checks the result.
 Manual controls remain available when no sensor reading arrives. API reference:
 https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent and
