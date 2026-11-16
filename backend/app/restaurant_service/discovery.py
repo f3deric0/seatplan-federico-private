@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, defer
 
 from app.models import Room, Venue, VenuePhoto
-from app.restaurant_service import photos
+from app.restaurant_service import photos, reviews
 from app.restaurant_service.availability import PartyNeeds, max_party, slot_statuses
 from app.restaurant_service.schedule_edit import read_schedule
 from app.seed.lisbon_data import DEMO_ID_PREFIX, cover_credit
@@ -129,7 +129,11 @@ def _covers(session: Session, venue_ids: list[int]) -> dict[int, VenuePhoto]:
 
 
 def _card(
-    venue: Venue, cover: VenuePhoto | None, meters: float | None, times: list[str]
+    venue: Venue,
+    cover: VenuePhoto | None,
+    meters: float | None,
+    times: list[str],
+    review_summary: reviews.Summary,
 ) -> dict[str, Any]:
     return {
         "slug": venue.slug,
@@ -145,6 +149,7 @@ def _card(
         "distance_m": None if meters is None else round(meters),
         "features": {name: bool((venue.features or {}).get(name)) for name in FEATURES},
         "next_times": times,
+        "reviews": review_summary,
         "demo_booking": venue.is_demo and venue.public_id.startswith(DEMO_ID_PREFIX),
     }
 
@@ -173,12 +178,22 @@ def search_restaurants(session: Session, search: Search) -> dict[str, Any]:
                 kept.append((venue, meters))
         found = kept
     page = found[search.offset : search.offset + search.limit]
-    covers = _covers(session, [venue.id for venue, _ in page])
+    ids = [venue.id for venue, _ in page]
+    covers = _covers(session, ids)
+    ratings = reviews.summaries(session, ids)
     items = []
     for venue, meters in page:
         if venue.id not in times:
             times[venue.id] = next_times(session, venue, search)
-        items.append(_card(venue, covers.get(venue.id), meters, times[venue.id]))
+        items.append(
+            _card(
+                venue,
+                covers.get(venue.id),
+                meters,
+                times[venue.id],
+                ratings.get(venue.id, reviews.empty_summary()),
+            )
+        )
     return {"items": items, "total": len(found)}
 
 
@@ -215,6 +230,7 @@ def public_page(session: Session, venue: Venue, *, preview: bool) -> dict[str, A
         "timezone": venue.timezone,
         "features": {name: bool((venue.features or {}).get(name)) for name in FEATURES},
         "rooms_summary": [room.name for room in rooms],
+        "reviews": reviews.summaries(session, [venue.id]).get(venue.id, reviews.empty_summary()),
         "photos": [
             {
                 "url": f"/api/photos/{p.public_id}",

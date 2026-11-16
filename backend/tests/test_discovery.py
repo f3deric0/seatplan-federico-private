@@ -88,6 +88,7 @@ def test_only_published_restaurants_are_listed_and_private_data_stays_private(
         "distance_m",
         "features",
         "next_times",
+        "reviews",
         "demo_booking",
     }
     assert (

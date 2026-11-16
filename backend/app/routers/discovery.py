@@ -9,17 +9,25 @@ import datetime as dt
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Header, Query, Request
+from pydantic import Field
 
 from app import db
 from app.core.errors import ApiError
-from app.models import Organiser
-from app.restaurant_service import discovery
+from app.core.text import PlainText
+from app.models import Organiser, RestaurantReview, Venue
+from app.restaurant_service import discovery, reviews
 from app.restaurant_service.availability import MAX_ONLINE_PARTY
 from app.restaurant_service.profiles import CUISINES
-from app.routers.restaurants import READ_LIMIT
-from app.security import _bearer, client_ip, rate_limit, verify_session_token
+from app.routers.restaurants import READ_LIMIT, Strict
+from app.security import CurrentGuestAccount, _bearer, client_ip, rate_limit, verify_session_token
 
 router = APIRouter(tags=["discovery"])
+
+
+class ReviewIn(Strict):
+    score: int = Field(ge=0, le=5, strict=True)
+    comment: PlainText = Field(default="", max_length=1500)
+    table_type: reviews.TableType | None = None
 
 
 def _read_limit(session: db.SessionDep, request: Request) -> None:
@@ -104,3 +112,76 @@ def restaurant_page(
     if venue is None:
         raise ApiError(404, "not_found", "Restaurant not found.")
     return discovery.public_page(session, venue, preview=preview)
+
+
+def _review_venue(session: db.SessionDep, slug: str) -> Venue:
+    venue = discovery.find_by_slug(session, slug)
+    if venue is None or venue.status != "published":
+        raise ApiError(404, "not_found", "Restaurant not found.")
+    return venue
+
+
+@router.get("/restaurants/{slug}/reviews")
+def restaurant_reviews(
+    slug: str,
+    request: Request,
+    session: db.SessionDep,
+    sort: reviews.ReviewSort = "recent",
+    score: Annotated[int | None, Query(ge=0, le=5)] = None,
+    table_type: reviews.TableType | None = None,
+    verified: bool = False,
+    limit: Annotated[int, Query(ge=1, le=50)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> dict[str, Any]:
+    _read_limit(session, request)
+    venue = _review_venue(session, slug)
+    return reviews.list_reviews(
+        session,
+        venue.id,
+        sort=sort,
+        score=score,
+        table_type=table_type,
+        verified=verified,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get("/restaurants/{slug}/reviews/mine")
+def my_review(
+    slug: str, request: Request, session: db.SessionDep, account: CurrentGuestAccount
+) -> dict[str, Any]:
+    _read_limit(session, request)
+    venue = _review_venue(session, slug)
+    review = session.get(RestaurantReview, (venue.id, account.id))
+    return {"review": reviews.payload(review, account) if review else None}
+
+
+@router.put("/restaurants/{slug}/reviews/mine")
+def save_review(
+    slug: str, body: ReviewIn, session: db.SessionDep, account: CurrentGuestAccount
+) -> dict[str, Any]:
+    rate_limit(session, f"review-write:{account.id}", 10, 60)
+    venue = _review_venue(session, slug)
+    review = reviews.save(
+        session,
+        venue.id,
+        account,
+        score=body.score,
+        comment=body.comment,
+        table_type=body.table_type,
+    )
+    answer = reviews.payload(review, account)
+    session.commit()
+    return {"review": answer}
+
+
+@router.delete("/restaurants/{slug}/reviews/mine")
+def delete_review(
+    slug: str, session: db.SessionDep, account: CurrentGuestAccount
+) -> dict[str, bool]:
+    rate_limit(session, f"review-write:{account.id}", 10, 60)
+    venue = _review_venue(session, slug)
+    reviews.remove(session, venue.id, account.id)
+    session.commit()
+    return {"deleted": True}

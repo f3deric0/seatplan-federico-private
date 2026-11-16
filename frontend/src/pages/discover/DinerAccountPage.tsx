@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getGuestToken } from "../../api/client";
 import { guestLogout } from "../../api/guest";
 import { Button, PageShell, useToast } from "../../design/components";
@@ -10,6 +10,8 @@ export default function DinerAccountPage() {
   const [signedIn, setSignedIn] = useState(() => Boolean(getGuestToken()));
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const reviewSlug = typeof state?.reviewSlug === "string" ? state.reviewSlug : "";
   const toast = useToast();
 
   async function signOut() {
@@ -35,7 +37,7 @@ export default function DinerAccountPage() {
           <SignInForm
             onSignedIn={({ account }) => {
               toast.show(`Welcome back, ${account.name}.`, "success");
-              navigate("/", { replace: true });
+              navigate(reviewSlug ? `/restaurants/${encodeURIComponent(reviewSlug)}#reviews` : "/", { replace: true });
             }}
             links={<Link to="/my/forgot">Forgot your password?</Link>}
           />

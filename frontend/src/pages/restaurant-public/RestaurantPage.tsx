@@ -16,6 +16,7 @@ import { BookingEmbed } from "../restaurant/BookingPage";
 import { errorMessage } from "../restaurant/format";
 import { useLoad } from "../restaurant/useLoad";
 import { Gallery } from "./Gallery";
+import { RestaurantReviews } from "./RestaurantReviews";
 import { instagramHref, metersBetween, shortDate, telHref, websiteHref } from "./pageModel";
 import { weeklyRows } from "./scheduleText";
 import "../restaurant/restaurant.css";
@@ -49,13 +50,18 @@ function LoadError({ error, onRetry }: { error: unknown; onRetry: () => void }) 
 }
 
 function Page({ data }: { data: PublicRestaurant }) {
-  const { search } = useLocation();
+  const { pathname, search, hash } = useLocation();
   const book = useRef<HTMLElement>(null);
+  const reviewSection = useRef<HTMLElement>(null);
+  const showReviews = !data.preview && hash === "#reviews";
   const linked = new URLSearchParams(search).has("date");
   // Coming from a search with a time chosen: take the diner to the booking.
   useEffect(() => {
     if (linked && !data.preview) book.current?.scrollIntoView?.({ block: "start" });
   }, [linked, data.preview]);
+  useEffect(() => {
+    if (showReviews) reviewSection.current?.scrollIntoView?.();
+  }, [showReviews]);
 
   // The button moves keyboard focus with the page, so the next Tab lands in the booking, not back at the top.
   const goToBooking = (event: MouseEvent<HTMLAnchorElement>): void => {
@@ -127,7 +133,14 @@ function Page({ data }: { data: PublicRestaurant }) {
       </section>
 
       </div>
-      <div className="rp-columns">
+      {!data.preview && <nav className="rp-section-nav" aria-label="Restaurant sections">
+        <Link to={{ pathname, search, hash: "#details" }} aria-current={!showReviews ? "page" : undefined}>Details</Link>
+        <Link to={{ pathname, search, hash: "#reviews" }} aria-current={showReviews ? "page" : undefined}>Reviews</Link>
+      </nav>}
+      {showReviews && data.slug && <section id="reviews" ref={reviewSection} aria-label="Restaurant reviews">
+        <RestaurantReviews key={data.slug} slug={data.slug} summary={data.reviews} />
+      </section>}
+      <div id="details" className="rp-columns" hidden={showReviews}>
         <div>
           {data.description && (
             <section aria-labelledby="rp-about">

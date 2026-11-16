@@ -2,6 +2,7 @@ import {Link} from "react-router-dom";
 import {useState} from "react";
 import type {FeatureKey,RestaurantCard as Card,SearchWhen} from "../../api/discovery";
 import {DISCOVERY_FEATURE_LABELS,cuisineLabel,formatDistance,priceText,restaurantHref} from "./discoverModel";
+import { ReviewRating } from "../restaurant-public/ReviewRating";
 interface Props {card:Card;when:SearchWhen|null;navigationWhen?:SearchWhen|null;highlighted:boolean;onHighlight:(id:string|null)=>void;number?:number;onSelect?:()=>void;pending?:boolean;priorityFeatures?:FeatureKey[];selected?:boolean;compact?:boolean}
 export function RestaurantCard({card,when,highlighted,onHighlight,number,pending=false,priorityFeatures=[],selected=false,compact=false,onSelect}:Props){
  const [failed,setFailed]=useState(false);
@@ -13,7 +14,12 @@ export function RestaurantCard({card,when,highlighted,onHighlight,number,pending
   <div className="discover-card-body" onClick={event => {
    if (event.target instanceof Element && !event.target.closest("a,button")) onSelect?.();
   }}>
-   <h3 id={`${compact?"pin-name":"name"}-${card.public_id}`}>{number!==undefined&&<span className="discover-card-number" aria-hidden="true">{number}</span>}<Link to={restaurantHref(card,null)}>{card.name}</Link></h3>
+   <div className="discover-card-heading">
+    <h3 id={`${compact?"pin-name":"name"}-${card.public_id}`}>{number!==undefined&&<span className="discover-card-number" aria-hidden="true">{number}</span>}<Link to={restaurantHref(card,null)}>{card.name}</Link></h3>
+    {card.reviews && <Link className="discover-card-rating" to={`${restaurantHref(card,null)}#reviews`}>
+      <ReviewRating summary={card.reviews} />
+    </Link>}
+   </div>
    <p className="discover-card-line">{card.cuisines.map(cuisineLabel).join(", ")}{price&&<> · <span aria-hidden="true">{price}</span><span className="visually-hidden">Price level {card.price_level} of 4</span></>}{distance&&` · ${distance}`}</p>
    {card.demo_booking ? <p className="discover-ambience">Demo booking</p> : attribute && <p className="discover-ambience">{DISCOVERY_FEATURE_LABELS[attribute]}</p>}
    {when?<div className="discover-times" aria-label={`Available near ${when.time} for ${when.party}`}>

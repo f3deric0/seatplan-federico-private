@@ -900,3 +900,17 @@ os percursos de zoom e arrasto no Chromium com dados de teste passaram.
 
 O botão «Show more» tem 20 px de separação do último cartão da lista.
 Build, 513 testes Vitest e a medição no Chromium a 390 e 1440 px passaram.
+
+## Reviews de Restaurantes
+
+Cada conta de cliente pode publicar uma avaliação por restaurante numa escala
+de 0 a 5 mesas, com comentário e tipo de mesa opcionais. A nota visível nos
+cartões é a média com uma decimal e uma cadeira roxa. A aba Reviews liga as
+avaliações públicas a filtros por nota, tipo de mesa e visita verificada.
+Uma visita fica verificada se a conta tem email validado e esse email consta
+de uma reserva concluída no restaurante. A roda do rato volta a controlar
+o zoom no mapa.
+
+Build, 513 testes Vitest e os testes de API de reviews e pesquisa passaram
+em SQLite. O SQLite local cria a tabela ao reiniciar o backend. O Postgres
+usa o comando de migração já existente.
