@@ -15,6 +15,10 @@ const turn = (p: Point, degrees: number): Point => { const a = degrees * Math.PI
 
 export function ObjectLayer({ room, kind, editing, selected, grid, zoom, toWorld, onSelect, onChange, onDragStart }: Props) {
   const drag = useRef<{ key: string; base: Room; start: Point; at: Point; last: Point; started: boolean } | null>(null);
+  // A grip answers only when the cursor is right on its small square, so the rest of the element stays free to drag.
+  // A finger is less exact, so a touch screen gets a larger target.
+  const touch = typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
+  const reach = (touch ? 22 : 6) / zoom;
   const resize = useRef<Resize | null>(null);
   const turning = useRef<{ key: string; base: Room; item: RoomFixture; started: boolean } | null>(null);
   // The grips belong to an element the owner has clicked on the plan, not to one that was merely added or picked from a list.
@@ -77,13 +81,13 @@ export function ObjectLayer({ room, kind, editing, selected, grid, zoom, toWorld
         </g>
         {kind === "fixture" && editing && selected === item.key && gripped === item.key && "shape" in item && GRIPS.map(([sx, sy, cursor]) => <g key={`${sx}${sy}`} data-fixture-grip={`${sx},${sy}`} transform={`translate(${sx * item.w / 2} ${sy * item.h / 2})`} style={{ cursor }}
           onPointerDown={event => { event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); onSelect(item.key); resize.current = { key: item.key, base: room, item, sx, sy, started: false }; }}>
-          <circle r={22 / zoom} className="room-handle-hit" /><rect x={-6 / zoom} y={-6 / zoom} width={12 / zoom} height={12 / zoom} className="room-handle" />
+          <circle r={reach} className="room-handle-hit" /><rect x={-4 / zoom} y={-4 / zoom} width={8 / zoom} height={8 / zoom} className="room-handle" />
         </g>)}
         {kind === "fixture" && editing && selected === item.key && gripped === item.key && "shape" in item && <g data-fixture-rotate="" style={{ cursor: "grab" }}
           onPointerDown={event => { event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); onSelect(item.key); turning.current = { key: item.key, base: room, item, started: false }; }}>
           <line x1={0} y1={-item.h / 2} x2={0} y2={-item.h / 2 - 28 / zoom} className="room-rotate-stem" />
-          <circle cx={0} cy={-item.h / 2 - 28 / zoom} r={22 / zoom} className="room-handle-hit" />
-          <circle cx={0} cy={-item.h / 2 - 28 / zoom} r={7 / zoom} className="room-handle" />
+          <circle cx={0} cy={-item.h / 2 - 28 / zoom} r={reach} className="room-handle-hit" />
+          <circle cx={0} cy={-item.h / 2 - 28 / zoom} r={5 / zoom} className="room-handle" />
         </g>}
       </g>;
     })}

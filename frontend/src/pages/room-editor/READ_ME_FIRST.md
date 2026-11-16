@@ -195,3 +195,4 @@ face the pointer, in 15 degree steps unless placement is free, and it stops at t
 The Fixed panel has a Rotate 90 degrees button (an inline error says when the turn does not fit) and the rotation field stays as the
 keyboard alternative. The icon and name are drawn upright whatever the angle.
 
+The grips are small (8 px squares) and answer only right on the square (6 px reach with a mouse; 22 px on a touch screen, `pointer: coarse`), so the rest of the element, including its corners, still drags it.

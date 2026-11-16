@@ -145,3 +145,23 @@ test("a fixed element is turned with its rotation grip or the Rotate 90 button",
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(rotation).toHaveValue("90");
 });
+
+test("a grip answers only right on its square, so the rest of the element still drags it", async ({ page, request }) => {
+  const links = await demoLinks(request);
+  await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
+  await page.getByRole("button", { name: "Fixed", exact: true }).click();
+  await page.getByRole("button", { name: "Place Bar", exact: true }).click();
+  const body = (await page.locator(".room-fixture > rect").last().boundingBox())!;
+  await page.mouse.click(body.x + body.width / 2, body.y + body.height / 2);
+  await expect(page.locator("[data-fixture-grip]")).toHaveCount(8);
+  const square = (await page.locator('[data-fixture-grip="-1,-1"] rect').boundingBox())!;
+  expect(square.width).toBeLessThanOrEqual(9); // small squares
+  const width = page.getByLabel("Object width (cm)"), x = page.getByLabel("Object x (cm)");
+  const [w0, x0] = [await width.inputValue(), Number(await x.inputValue())];
+  await page.mouse.move(body.x + 16, body.y + 16); // inside the corner, but not on the square
+  await page.mouse.down();
+  await page.mouse.move(body.x + 16 + 80, body.y + 16, { steps: 6 });
+  await page.mouse.up();
+  await expect(width).toHaveValue(w0); // not resized
+  expect(Number(await x.inputValue())).toBeGreaterThan(x0); // moved
+});
