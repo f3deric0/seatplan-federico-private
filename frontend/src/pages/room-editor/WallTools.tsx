@@ -5,6 +5,7 @@ import { sideLength } from "./geometry";
 import type { Room, RoomOpening } from "./roomModel";
 import { RoomNumberField } from "./ShapeTools";
 import type { ShapeSelection } from "./ShapeTools";
+import { AroundRoom } from "./AroundRoom";
 import { addOpening, mainEntrance, markMainEntrance, openingBearing, setMainEntrance, updateOpening, VIEW_TAGS } from "./wallModel";
 
 interface Props { room: Room; selection: ShapeSelection; selected: string | null; onSelect: (key: string | null) => void; onSide: (selection: ShapeSelection) => void; onChange: (room: Room) => void; onError: (message: string) => void }
@@ -25,6 +26,7 @@ export function WallTools({ room, selection, selected, onSelect, onSide, onChang
       }}>{entrance ? "Move main entrance here" : "Set main entrance"}</Button>
       {entranceError && <p role="alert" className="room-error">{entranceError}</p>}
     </section>
+    <AroundRoom room={room} onChange={onChange} />
     <Select label="Wall for opening" value={String(side)} options={room.outline.points.map((_, i) => ({ value: String(i), label: `Wall ${i + 1}` }))} onChange={e => onSide({ kind: "side", index: Number(e.target.value) })} />
     <h3>Add on this wall</h3>
     {(["window", "door"] as const).map(kind => <Button key={kind} variant="secondary" onClick={() => apply(() => { const next = addOpening(room, side, kind); onSelect(next.openings.at(-1)!.key); return next; })}>{kind === "window" ? "Add window" : "Add door"}</Button>)}

@@ -1,3 +1,6 @@
+/** The tile server the maps read from (OpenFreeMap vector tiles). */
+export const TILE_URL = "https://tiles.openfreemap.org/planet/latest";
+
 export interface TileCoords { x: number; y: number; z: number }
 export interface TileSource { z: number; x: number; y: number; scale: number; offsetX: number; offsetY: number }
 

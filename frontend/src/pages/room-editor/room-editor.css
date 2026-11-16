@@ -16,6 +16,18 @@
 .room-zoom .btn { background: transparent; color: var(--c-primary); border-color: var(--c-primary); }
 .room-zoom .btn:hover:not(:disabled) { background: var(--c-primary-soft); }
 .room-zoom .btn { min-width: 44px; min-height: 44px; padding: var(--space-2) var(--space-3); white-space: nowrap; }
+.room-canvas { --room-view-water: #e7f0f6; --room-view-green: #e6f0e4; }
+.room-view polygon:first-of-type { stroke: var(--c-border-strong); stroke-width: 2; stroke-dasharray: 10 6; vector-effect: non-scaling-stroke; }
+.room-view-water polygon:first-of-type { fill: var(--room-view-water); }
+.room-view-green polygon:first-of-type { fill: var(--room-view-green); }
+.room-view-other polygon:first-of-type { fill: var(--c-surface-sunk); }
+.room-view text { fill: var(--c-text-muted); font-weight: 600; }
+.room-view-wave { fill: none; stroke: var(--c-info); stroke-width: 2; opacity: .45; }
+.room-view-tree { fill: var(--c-border-strong); opacity: .55; }
+.room-entrance, .room-around { display: grid; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--c-border-strong); border-radius: var(--radius-md); background: var(--c-surface-sunk); }
+.room-around h3, .room-around p { margin: 0; }
+.room-around-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+.room-around-list li { display: grid; gap: var(--space-2); }
 .room-grid-line { stroke: var(--c-border); stroke-width: 1; fill: none; }
 .room-outline { fill: var(--c-surface); fill-opacity: .7; stroke: var(--c-text); stroke-width: 7; }
 .room-drawing { fill: none; stroke: var(--c-primary); stroke-width: 5; stroke-dasharray: 10 6; }

@@ -1,8 +1,9 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { Button } from "../../design/components";
 import { usePanZoom } from "../../seatmap/usePanZoom";
 import { outlinePath, outlineToPolygon, sidePath } from "./geometry";
+import { surroundingBands } from "./surroundings";
 import type { Point } from "./geometry";
 import { snappedPoint } from "./shapeModel";
 import type { Room } from "./roomModel";
@@ -38,7 +39,9 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
   try { if (points.length >= 3) boundsPoints = outlineToPolygon(room.outline); } catch { /* Keep invalid drafts repairable. */ }
   const maxX = Math.max(drawing || !points.length ? 1000 : 100, ...boundsPoints.map(p => p.x));
   const maxY = Math.max(drawing || !points.length ? 700 : 100, ...boundsPoints.map(p => p.y));
-  const pan = usePanZoom(viewport, { minX: Math.min(0, ...boundsPoints.map(p => p.x)) - 100, minY: Math.min(0, ...boundsPoints.map(p => p.y)) - 100, maxX: maxX + 100, maxY: maxY + 100 });
+  const bands = useMemo(() => surroundingBands(room), [room]);
+  const margin = bands.length ? 260 : 100; // room outside the walls for what is around the room
+  const pan = usePanZoom(viewport, { minX: Math.min(0, ...boundsPoints.map(p => p.x)) - margin, minY: Math.min(0, ...boundsPoints.map(p => p.y)) - margin, maxX: maxX + margin, maxY: maxY + margin });
   useEffect(() => { if (focusTarget?.roomKey === room.key) { pan.focusOn(focusTarget.point.x, focusTarget.point.y, 0.75); viewport.current?.scrollIntoView({ block: "center" }); } }, [focusTarget, room.key, pan.focusOn]);
   const toWorld = (event: { clientX: number; clientY: number }): Point => {
     const bounds = viewport.current!.getBoundingClientRect();
@@ -69,12 +72,19 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
         <defs>
           <pattern id={patternId} width="50" height="50" patternUnits="userSpaceOnUse"><path d="M 50 0 L 0 0 0 50" className="room-grid-line" /></pattern>
           <pattern id={`${patternId}-check`} width="100" height="100" patternUnits="userSpaceOnUse"><rect width="50" height="50" className="room-checker-cell" /><rect x="50" y="50" width="50" height="50" className="room-checker-cell" /></pattern>
+          <pattern id={`${patternId}-water`} width="40" height="20" patternUnits="userSpaceOnUse"><path d="M 0 10 Q 10 0 20 10 T 40 10" className="room-view-wave" /></pattern>
+          <pattern id={`${patternId}-green`} width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="9" cy="9" r="4" className="room-view-tree" /><circle cx="27" cy="27" r="4" className="room-view-tree" /></pattern>
           {points.length >= 3 && <clipPath id={`${patternId}-room`}><path d={outlinePath(room.outline)} /></clipPath>}
         </defs>
         <g transform={`translate(${pan.view.x} ${pan.view.y}) scale(${pan.view.k})`}>
           <rect x="-10000" y="-10000" width="20000" height="20000" fill={grid ? `url(#${patternId})` : "transparent"} />
           {Array.from({ length: Math.floor(maxX / 100) + 1 }, (_, i) => <text key={`x${i}`} x={i * 100} y={-35 / pan.view.k} textAnchor="middle" fontSize={11 / pan.view.k} className="room-ruler">{i} m</text>)}
           {Array.from({ length: Math.floor(maxY / 100) + 1 }, (_, i) => <text key={`y${i}`} x={-30 / pan.view.k} y={i * 100} textAnchor="end" fontSize={11 / pan.view.k} className="room-ruler">{i} m</text>)}
+          {!drawing && bands.map(b => <g key={`view${b.side}`} className={`room-view room-view-${b.surrounding.group}`} data-room-view={b.surrounding.kind} pointerEvents="none">
+            <polygon points={b.quad.map(p => `${p.x},${p.y}`).join(" ")} />
+            {b.surrounding.group !== "other" && <polygon points={b.quad.map(p => `${p.x},${p.y}`).join(" ")} fill={`url(#${patternId}-${b.surrounding.group})`} />}
+            <text x={b.label.x} y={b.label.y} textAnchor="middle" dominantBaseline="central" fontSize={Math.max(13 / pan.view.k, 15)}>{b.surrounding.label}</text>
+          </g>)}
           {!drawing && points.length >= 3 && <path d={outlinePath(room.outline)} className={problems.some(p => p.code === "outline_invalid") ? "room-outline room-outline-invalid" : "room-outline"} />}
           {!drawing && points.length >= 3 && <rect x="-10000" y="-10000" width="20000" height="20000" fill={`url(#${patternId}-check)`} clipPath={`url(#${patternId}-room)`} pointerEvents="none" data-room-checker />}
           {drawing && <polyline points={[...points, ...(cursor ? [cursor] : [])].map(p => `${p.x},${p.y}`).join(" ")} className="room-drawing" />}

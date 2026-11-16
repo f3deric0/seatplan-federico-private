@@ -1,8 +1,7 @@
 import { GridLayer, type Coords, type DoneCallback } from "leaflet";
-import { sourceTile, strokeGrowth } from "./tileSource";
+import { sourceTile, strokeGrowth, TILE_URL } from "./tileSource";
 import { readMapLayers, traceGeometry } from "./vectorTile";
 
-const TILE_URL = "https://tiles.openfreemap.org/planet/latest";
 /** The finest zoom the tile server stores. Closer than this the same tile is redrawn larger, so the map stays sharp. */
 const NATIVE_ZOOM = 14;
 const LAND = "#dfedf2";

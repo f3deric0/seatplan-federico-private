@@ -155,3 +155,5 @@ There is no Light tool: the owner does not choose or preview the sun. A diner se
 
 The room's name is shown, not edited, in Room properties (`Room: <name>`); it is set when the room is created in the Add a room dialog.
 
+Around the room (AroundRoom.tsx, surroundings.ts), at the top of the Walls tab: for a chosen wall the owner says what is outside it (Sea, River, Park, Street, City, Hills). No API field was added: it is stored as the view of a window on that wall (`view_tags` sea/river/garden/street/city/hills and a few words), which setSurrounding adds when the wall has none. The diner's plan already reads those views, so water and parks are drawn there too. The editor draws a labelled strip outside each such wall (RoomCanvas, `data-room-view`, surroundingBands). "Suggest from my location" reads the restaurant's pin (getOwnerProfile) and the OpenFreeMap tiles around it (maps/nearbyFeatures.ts: water, waterways and parks within 600 m, with the direction of each), then offers the wall that faces each one (wallFacing). The tile server is the one the discovery map already uses; nothing is sent but the tile addresses.
+

@@ -58,3 +58,29 @@ test("opening gestures resize and move in single undo steps, and the north compa
   await expect(page.getByRole("img", { name: "North is at the top of the plan" })).toBeVisible();
   await expect(page.getByRole("slider", { name: "North direction" })).toHaveCount(0);
 });
+
+test("the owner says what is outside a wall, it is drawn and saved, and suggestions need the location", async ({ page, request }) => {
+  const links = await demoLinks(request);
+  await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
+  await page.getByRole("button", { name: "Walls", exact: true }).click();
+  await expect(page.locator("[data-room-view]")).toHaveCount(0);
+  await page.getByLabel("Wall", { exact: true }).selectOption("2");
+  await page.getByLabel("What is outside").selectOption("sea");
+  await expect(page.locator('[data-room-view="sea"]')).toHaveCount(1);
+  await page.getByLabel("Wall", { exact: true }).selectOption("1");
+  await page.getByLabel("What is outside").selectOption("park");
+  await expect(page.locator("[data-room-view]")).toHaveCount(2);
+  await page.getByLabel("What is outside").selectOption("");
+  await expect(page.locator("[data-room-view]")).toHaveCount(1);
+  // Saved with the room: it comes back after a reload.
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: /Unsaved|Saved/ })).toHaveText("Saved");
+  await page.reload();
+  await page.getByRole("button", { name: "Walls", exact: true }).click();
+  await expect(page.locator('[data-room-view="sea"]')).toHaveCount(1);
+  // The suggestion reads the map around the restaurant; with the map unreachable it says so and the owner can still choose.
+  await page.route("https://tiles.openfreemap.org/**", route => route.abort());
+  await page.getByRole("button", { name: "Suggest from my location" }).click();
+  await expect(page.getByText(/Could not look around your location/)).toBeVisible();
+});
+
