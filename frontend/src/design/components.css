@@ -93,24 +93,14 @@
   text-decoration: none;
 }
 
-.wordmark-restaurants {
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 0;
-}
-.wordmark-restaurants .wordmark-logo { height: 38px; }
-.wordmark-restaurants .restaurant-brand-label { margin: -1px 0 0 43px; } /* under the name, clear of the pin */
-@media (max-width: 30rem) {
-  .wordmark-restaurants .wordmark-logo { height: 32px; }
-  .wordmark-restaurants .restaurant-brand-label { margin-left: 36px; }
-}
-
 .wordmark-logo {
   flex: none;
   display: block;
   height: 40px;
   width: auto;
+}
+@media (max-width: 30rem) {
+  .wordmark-logo { height: 34px; }
 }
 @media (prefers-color-scheme: dark) {
   /* The logo is dark purple: on a dark page it sits on a light plate so it stays readable. */

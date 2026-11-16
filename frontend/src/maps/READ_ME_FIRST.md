@@ -48,6 +48,6 @@ bounding box, so redrawing a tile skips decoding and every shape that is off scr
 detail, where many canvas tiles are cut from one parent). Tiles for the in-between zoom steps are not drawn (updateWhenZooming:
 false) and more tiles are kept around the view (keepBuffer 3). Names are worked out once per stored tile and zoom.
 
-Wheel zoom (wheelZoom.ts): ResultsMap turns Leaflet's own wheel zoom off. A trackpad sends a stream of wheel events for a second or
-more and Leaflet turned each burst into another zoom step (one swipe zoomed four levels). WheelGesture makes one stream one level,
-zoomed around the pointer, and a clearly bigger push in the middle of a stream (a fast wheel) starts a new gesture.
+Wheel zoom: ResultsMap uses Leaflet's own wheel zoom with zoomSnap 0 (the zoom follows how far the wheel or trackpad moves, like other
+maps; with whole-level snapping a trackpad swipe jumped several levels). The map can therefore sit at a part-way zoom: the basemap
+scales its tiles, and DiscoveryLabels picks names for the nearest whole zoom and places them at the real scale.

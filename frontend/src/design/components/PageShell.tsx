@@ -35,7 +35,6 @@ export function Wordmark({ restaurantBrand = false }: { restaurantBrand?: boolea
     <Link to="/" className={restaurantBrand ? "wordmark wordmark-restaurants" : "wordmark"}
       aria-label={restaurantBrand ? "SeatPlan Restaurantes, home" : "SeatPlan, home"}>
       <img className="wordmark-logo" src={seatPlanLogo} alt="" width={132} height={40} />
-      {restaurantBrand && <span className="restaurant-brand-label" lang="pt">Restaurantes</span>}
     </Link>
   );
 }

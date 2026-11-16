@@ -67,14 +67,15 @@ export class DiscoveryLabels extends Layer {
   private async draw(): Promise<void> {
     const map = this._map as LeafletMap | undefined, canvas = this.canvas;
     if (!map || !canvas) return;
-    const run = ++this.run, zoom = Math.round(map.getZoom()), size = map.getSize();
+    // The map can be at a part-way zoom; names are chosen for the nearest whole zoom and placed at the real scale.
+    const run = ++this.run, exact = map.getZoom(), zoom = Math.round(exact), scale = 2 ** (exact - zoom), size = map.getSize();
     const min = map.containerPointToLayerPoint(size.multiplyBy(-PADDING)).round();
     const width = Math.round(size.x * (1 + PADDING * 2)), height = Math.round(size.y * (1 + PADDING * 2));
     const origin = map.getPixelOrigin(), left = min.x + origin.x, top = min.y + origin.y; // the canvas's corner in world pixels
-    // Which stored tiles cover it.
+    // Which stored tiles cover it (in the pixels of the whole zoom).
     const sz = Math.min(zoom, NATIVE_ZOOM), span = 256 * 2 ** (zoom - sz), last = 2 ** sz - 1;
-    const x0 = Math.max(0, Math.floor(left / span)), x1 = Math.min(last, Math.floor((left + width) / span));
-    const y0 = Math.max(0, Math.floor(top / span)), y1 = Math.min(last, Math.floor((top + height) / span));
+    const x0 = Math.max(0, Math.floor(left / scale / span)), x1 = Math.min(last, Math.floor((left + width) / scale / span));
+    const y0 = Math.max(0, Math.floor(top / scale / span)), y1 = Math.min(last, Math.floor((top + height) / scale / span));
     if ((x1 - x0 + 1) * (y1 - y0 + 1) > MAX_TILES) return;
     const wanted: { x: number; y: number }[] = [];
     for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) wanted.push({ x, y });
@@ -91,7 +92,7 @@ export class DiscoveryLabels extends Layer {
     DomUtil.setPosition(canvas, min);
     context.setTransform(density, 0, 0, density, 0, 0);
     // To canvas pixels.
-    const here: Candidate[] = loaded.flat().map(c => ({ ...c, lines: c.lines.map(line => line.map(p => ({ x: p.x - left, y: p.y - top }))) }));
+    const here: Candidate[] = loaded.flat().map(c => ({ ...c, lines: c.lines.map(line => line.map(p => ({ x: p.x * scale - left, y: p.y * scale - top }))) }));
     const spaced = "letterSpacing" in context; // letter-spacing on the canvas, where the browser has it
     const setSpacing = (px: number) => { if (spaced) (context as CanvasRenderingContext2D & { letterSpacing: string }).letterSpacing = `${px}px`; };
     const measure = (text: string, style: { font: string; spacing?: number }) => { context.font = style.font; setSpacing(style.spacing ?? 0); return context.measureText(text).width; };
