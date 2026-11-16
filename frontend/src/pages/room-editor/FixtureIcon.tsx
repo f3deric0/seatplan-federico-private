@@ -1,10 +1,14 @@
 import type { FixtureKind } from "./roomModel";
 
 /** Everything that can wear an icon: a fixed element, or one of the two zones the owner can add. */
-export type IconKind = FixtureKind | "terrace" | "quiet";
+export type IconKind = FixtureKind | "terrace" | "quiet" | "round_table" | "square_table" | "long_table" | "counter_table";
 
 /** Line icons on a 24 x 24 grid, one per kind of fixed element (older plans can hold all of them). */
 const PATHS: Record<IconKind, string> = {
+  round_table: "M12 8a4 4 0 1 0 0.01 0z M12 2v2 M12 20v2 M2 12h2 M20 12h2",
+  square_table: "M7 7h10v10H7z M10 3h4 M10 21h4 M3 10v4 M21 10v4",
+  long_table: "M4 8h16v8H4z M7 4h3 M14 4h3 M7 20h3 M14 20h3",
+  counter_table: "M3 9h18v5H3z M6 19v-3 M12 19v-3 M18 19v-3",
   terrace: "M3 11a9 9 0 0 1 18 0z M12 11v10 M9 21h6",
   quiet: "M20 14a8 8 0 1 1-10-10 6.5 6.5 0 0 0 10 10z",
   bar: "M4 5h16l-8 9z M12 14v6 M8 20h8",

@@ -48,7 +48,6 @@ test("an owner builds a room on a phone, saves, reloads and sees the same", asyn
   await page.getByRole("button", { name: "Tables", exact: true }).tap();
   for (let table = 0; table < 8; table++) {
     await page.getByRole("button", { name: "Place Round table", exact: true }).tap();
-    await page.getByRole("button", { name: "Place selected in room", exact: true }).tap();
   }
   await expect(page.getByText("Tables: 8")).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: /Unsaved|Saved/ })).toHaveText("Unsaved");

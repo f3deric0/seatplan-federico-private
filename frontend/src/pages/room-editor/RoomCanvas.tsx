@@ -60,9 +60,9 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
     }} onPointerUp={event => {
       if (areaDrag.current) { onArea(tablesInBox(room, areaDrag.current.start, toWorld(event))); areaDrag.current = null; setAreaBox(null); suppressClick.current = true; }
       else pan.pointerHandlers.onPointerUp(event);
-    }} onPointerCancel={event => { areaDrag.current = null; setAreaBox(null); pan.pointerHandlers.onPointerCancel(event); }} onPointerMove={move} onDragOver={event => { if (event.dataTransfer.types.includes(OBJECT_DRAG_TYPE)) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } }} onDrop={event => { const kind = event.dataTransfer.getData(OBJECT_DRAG_TYPE); if (kind) { event.preventDefault(); onPlace(kind.startsWith("fixture:") || kind.startsWith("zone:") ? toWorld(event) : snappedPoint(toWorld(event), null, grid, false), kind); } }} onClick={event => {
+    }} onPointerCancel={event => { areaDrag.current = null; setAreaBox(null); pan.pointerHandlers.onPointerCancel(event); }} onPointerMove={move} onDragOver={event => { if (event.dataTransfer.types.includes(OBJECT_DRAG_TYPE)) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } }} onDrop={event => { const kind = event.dataTransfer.getData(OBJECT_DRAG_TYPE); if (kind) { event.preventDefault(); onPlace(/^(fixture|zone|table):/.test(kind) ? toWorld(event) : snappedPoint(toWorld(event), null, grid, false), kind); } }} onClick={event => {
       if (suppressClick.current) { suppressClick.current = false; return; }
-      if (placement && !pan.wasDragged()) { onPlace(placement.startsWith("fixture:") || placement.startsWith("zone:") ? toWorld(event) : snappedPoint(toWorld(event), null, grid, false), placement); return; }
+      if (placement && !pan.wasDragged()) { onPlace(/^(fixture|zone|table):/.test(placement) ? toWorld(event) : snappedPoint(toWorld(event), null, grid, false), placement); return; }
       if (!drawing && !pan.wasDragged() && tool === "Fixed") { onObject(null); return; } // a click on empty floor lets go of the element
       if (!drawing || pan.wasDragged()) return;
       const point = screenPoint(event);

@@ -24,7 +24,7 @@ import { WallTools } from "./WallTools";
 import { FixtureTools } from "./FixtureTools";
 import { addFixture, addZone, FIXTURE_KINDS, fixtureSize, removeZone, ZONE_KINDS, ZONE_SIZE } from "./roomObjects";
 import { snappedPoint } from "./shapeModel";
-import { addTable, TABLE_KINDS } from "./tableModel";
+import { addTable, defaultChairs, TABLE_KINDS, tableSize } from "./tableModel";
 import { TableTools } from "./TableTools";
 import { SelectionTools } from "./SelectionTools";
 import { deleteTables, duplicateTables, moveTables, rotateTables } from "./selection";
@@ -110,13 +110,14 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
       const next = addZone(room, zone, free ? { x: Math.round(top.x), y: Math.round(top.y) } : snappedPoint(top, null, true, false)); changeRoom(next); setObject(next.zones.at(-1)!.key); setTool("Fixed");
     } else if (category === "table") {
       const table = TABLE_KINDS.find(k => k === kind); if (!table) return;
-      const next = addTable(room, table, point); changeRoom(next); updateKeys([next.tables.at(-1)!.key]); setTool("Tables");
+      // Centred on the point, on the grid, at the real size for its starting chairs.
+      const size = tableSize(table, defaultChairs(table)), top = { x: point.x - size.w / 2, y: point.y - size.h / 2 };
+      const next = addTable(room, table, snappedPoint(top, null, true, false)); changeRoom(next); updateKeys([next.tables.at(-1)!.key]); setTool("Tables");
     } else return;
     setPlacement(null);
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not place this object."); }
   };
   const centreOfRoom = (): Point => { const points = room.outline.points; return { x: (Math.min(...points.map(p => p.x)) + Math.max(...points.map(p => p.x))) / 2, y: (Math.min(...points.map(p => p.y)) + Math.max(...points.map(p => p.y))) / 2 }; };
-  const placeCentre = () => { if (placement) placeObject(centreOfRoom(), placement); };
   let area = 0;
   try { if (room.outline.points.length >= 3) area = Math.abs(polygonArea(outlineToPolygon(room.outline))) / 10000; } catch { /* Invalid drafts still open for repair. */ }
   const selectProblem = (problem: RoomProblem) => {
@@ -179,7 +180,7 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
         {!drawing && tool === "Walls" && <WallTools room={room} selection={selection} selected={opening} onSelect={setOpening} onSide={setSelection} onChange={changeRoom} onError={setError} />}
         {!drawing && tool === "Light" && <LightTools room={room} unsaved={dirty} date={lightDate} time={lightTime} onDate={setLightDate} onTime={setLightTime} answer={light.answer} failed={light.failed} />}
         {!drawing && tool === "Fixed" && <FixtureTools room={room} selected={object} free={free} onFree={setFree} onSelect={setObject} onPlace={value => placeObject(centreOfRoom(), value)} onChange={changeRoom} onError={setError} />}
-        {!drawing && tool === "Tables" && <div className="room-form" ref={palette}><TableTools room={room} selected={object} chair={chair} placement={placement} onSelect={key => updateKeys(key ? [key] : [])} onChair={setChair} onArm={setPlacement} onCentre={placeCentre} onChange={changeRoom} onError={setError} /><SelectionTools room={room} keys={tableKeys} multiple={multiple} area={areaMode} onMultiple={setMultiple} onArea={setAreaMode} onKeys={updateKeys} onChange={changeRoom} onError={setError} /></div>}
+        {!drawing && tool === "Tables" && <div className="room-form" ref={palette}><TableTools room={room} selected={object} chair={chair} onSelect={key => updateKeys(key ? [key] : [])} onChair={setChair} onPlace={value => placeObject(centreOfRoom(), value)} onChange={changeRoom} onError={setError} /><SelectionTools room={room} keys={tableKeys} multiple={multiple} area={areaMode} onMultiple={setMultiple} onArea={setAreaMode} onKeys={updateKeys} onChange={changeRoom} onError={setError} /></div>}
       </div></aside>
     </div><footer className="room-status">{area.toLocaleString("pt-PT", { maximumFractionDigits: 1 })} m² · Grid on<ProblemList problems={problems} onSelect={selectProblem} /></footer>
     {adding && <NewRoomDialog defaultName={nextRoomName(history.present.rooms)} onClose={() => setAdding(false)} onCreate={(created, draw) => { history.commit(addRoom(history.present, created)); setSelectedRoom(created.key); setDrawingRoom(draw ? created.key : null); setSelection(null); setTool("Shape"); setAdding(false); }} />}

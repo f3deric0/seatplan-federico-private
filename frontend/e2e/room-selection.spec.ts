@@ -11,7 +11,7 @@ test("owner aligns, duplicates and deletes a table selection with keyboard undo"
   const keys: string[] = [];
   for (let i = 0; i < 3; i++) {
     await page.getByRole("button", { name: "Place Square table", exact: true }).click();
-    await page.getByRole("button", { name: "Place selected in room", exact: true }).click();
+    await page.getByText("Size and position", { exact: true }).click();
     keys.push(await page.getByLabel("Selected table", { exact: true }).inputValue());
     await page.getByLabel("Object x (cm)").fill(String(100 + i * 300));
     await page.getByLabel("Object x (cm)").press("Tab");
@@ -51,7 +51,7 @@ test("shift and area selection, rotation and resize gestures have form equivalen
   const keys: string[] = [];
   for (const x of [100, 400]) {
     await page.getByRole("button", { name: "Place Square table", exact: true }).click();
-    await page.getByRole("button", { name: "Place selected in room", exact: true }).click();
+    await page.getByText("Size and position", { exact: true }).click();
     keys.push(await page.getByLabel("Selected table").inputValue());
     await page.getByLabel("Object x (cm)").fill(String(x)); await page.getByLabel("Object x (cm)").press("Tab");
     await page.getByLabel("Object y (cm)").fill("100"); await page.getByLabel("Object y (cm)").press("Tab");

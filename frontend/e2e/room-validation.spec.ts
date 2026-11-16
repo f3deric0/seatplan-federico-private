@@ -17,7 +17,7 @@ test("an outside table is marked and its problem selects and centres the table",
   await page.getByRole("button", { name: "Create room", exact: true }).click();
   await page.getByRole("button", { name: "Tables", exact: true }).click();
   await page.getByRole("button", { name: "Place Round table", exact: true }).click();
-  await page.getByRole("button", { name: "Place selected in room", exact: true }).click();
+  await page.getByText("Size and position", { exact: true }).click();
   await page.getByLabel("Object x (cm)").fill("1500");
   await page.getByLabel("Object x (cm)").press("Tab");
   await expect(page.locator(".room-invalid-table")).toHaveCount(1);

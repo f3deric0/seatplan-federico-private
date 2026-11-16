@@ -7,6 +7,34 @@ export type TableKind = "round" | "square" | "long" | "counter";
 export const TABLE_KINDS: readonly TableKind[] = ["round", "square", "long", "counter"];
 export const TABLE_NAMES: Record<TableKind, string> = { round: "Round table", square: "Square table", long: "Long table", counter: "Counter" };
 
+/*
+ * Real table sizes, in cm, from restaurant furniture guides and manufacturer charts (about 60 cm of table edge for each
+ * diner; a 90 cm round for four, 150 cm for eight; 76 x 183 cm rectangles for six; 60-76 cm per stool at a counter).
+ * A table grows with its chairs: eight seats are longer than six.
+ */
+const ROUND_DIAMETER: Record<number, number> = { 1: 60, 2: 70, 3: 80, 4: 90, 5: 105, 6: 130, 7: 140, 8: 150, 9: 165, 10: 180 };
+const SQUARE_SIDE: Record<number, number> = { 1: 60, 2: 70, 3: 75, 4: 80, 5: 90, 6: 105, 7: 120, 8: 130 };
+export const CHAIR_DIAMETER = 40;
+
+/** How many chairs a new table of this kind starts with. */
+export function defaultChairs(kind: TableKind): number { return kind === "counter" ? 5 : kind === "long" ? 6 : 4; }
+
+/** The width and height of a table of this kind with this many chairs. */
+export function tableSize(kind: TableKind, chairs: number): { w: number; h: number } {
+  const n = Math.max(1, Math.round(chairs));
+  if (kind === "round") { const d = ROUND_DIAMETER[n] ?? 180 + (n - 10) * 20; return { w: d, h: d }; }
+  if (kind === "square") { const side = SQUARE_SIDE[n] ?? 130 + (n - 8) * 15; return { w: side, h: side }; }
+  if (kind === "counter") return { w: 60 * n, h: 50 };
+  return { w: Math.max(100, 60 * Math.ceil(n / 2)), h: n <= 2 ? 70 : 80 }; // long: chairs along both long sides
+}
+
+/** Which kind a table is: the shape says round or counter; a rectangle that is (nearly) square is a square table. */
+export function tableKind(table: Pick<RoomTable, "shape" | "w" | "h">): TableKind {
+  if (table.shape === "round") return "round";
+  if (table.shape === "row") return "counter";
+  return Math.abs(table.w - table.h) <= 2 ? "square" : "long";
+}
+
 function chairPositions(table: RoomTable, count: number): Point[] {
   return table.shape === "row" ? seatPositions({ ...table, shape: "rect" }, count * 2).slice(0, count) : seatPositions(table, count);
 }
@@ -19,9 +47,9 @@ function generatedChairs(table: RoomTable, count: number): RoomTable["seats"] {
 export function addTable(room: Room, kind: TableKind, at: Point): Room {
   if (room.tables.length >= 200 || !TABLE_KINDS.includes(kind) || ![at.x, at.y].every(Number.isFinite)) throw new Error("Choose a table and a finite position. Rooms allow up to 200 tables.");
   let number = 1; while (room.tables.some(t => t.label === `Table ${number}`)) number++;
-  const count = kind === "counter" ? 5 : kind === "long" ? 6 : 4;
+  const count = defaultChairs(kind), { w, h } = tableSize(kind, count);
   if (room.tables.reduce((sum, table) => sum + table.seats.length, count) > 1000) throw new Error("A room can have at most 1000 chairs.");
-  const table: RoomTable = { id: null, key: newRoomKey("t"), label: `Table ${number}`, shape: kind === "round" ? "round" : kind === "counter" ? "row" : "rect", x: at.x, y: at.y, w: kind === "round" ? 90 : kind === "square" ? 80 : kind === "long" ? 160 : 300, h: kind === "round" ? 90 : kind === "counter" ? 50 : 80, rotation: 0, min_party: 1, max_party: count, is_accessible: false, high_chair_ok: false, combine_group: null, is_active: true, zone_key: null, seats: [] };
+  const table: RoomTable = { id: null, key: newRoomKey("t"), label: `Table ${number}`, shape: kind === "round" ? "round" : kind === "counter" ? "row" : "rect", x: at.x, y: at.y, w, h, rotation: 0, min_party: 1, max_party: count, is_accessible: false, high_chair_ok: false, combine_group: null, is_active: true, zone_key: null, seats: [] };
   table.seats = generatedChairs(table, count);
   return { ...room, tables: [...room.tables, table] };
 }
@@ -56,7 +84,10 @@ export function setChairCount(room: Room, key: string, count: number): Room {
   const next = { ...room, tables: room.tables.map(table => {
     if (table.key !== key) return table;
     const max = table.max_party === table.seats.length ? count : Math.min(table.max_party, count);
-    const changed = { ...table, seats: generatedChairs(table, count), max_party: max, min_party: Math.min(table.min_party, max) };
+    // The table grows or shrinks with its chairs, about its centre, to the real size for that many.
+    const size = tableSize(tableKind(table), count);
+    const resized = { ...table, w: size.w, h: size.h, x: table.x + (table.w - size.w) / 2, y: table.y + (table.h - size.h) / 2 };
+    const changed = { ...resized, seats: generatedChairs(resized, count), max_party: max, min_party: Math.min(table.min_party, max) };
     checkTable(room, changed);
     return changed;
   }) };
