@@ -4,6 +4,8 @@ import { Button } from "../../design/components";
 import { usePanZoom } from "../../seatmap/usePanZoom";
 import { outlinePath, outlineToPolygon, sidePath } from "./geometry";
 import { surroundingBands, TERRACE_DEPTH } from "./surroundings";
+
+const RULER_TOP = 20, RULER_SIDE = 40; // the strip of metre marks, in pixels
 import type { Point } from "./geometry";
 import { snappedPoint } from "./shapeModel";
 import type { Room } from "./roomModel";
@@ -52,6 +54,15 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
     if (areaDrag.current) { areaDrag.current = { ...areaDrag.current, now: toWorld(event) }; setAreaBox(areaDrag.current); return; }
     pan.pointerHandlers.onPointerMove(event); if (drawing) setCursor(screenPoint(event));
   };
+  // The metre marks live on a strip along the top and left edge of the view, not on the plan, so they never lie on a shape.
+  // They are as far apart as the zoom allows: every metre when close, every 2, 5, 10... when far.
+  const rulerStep = [1, 2, 5, 10, 20, 50].find(m => m * 100 * pan.view.k >= 56) ?? 100;
+  const ticks = (length: number, offset: number) => {
+    const out: { m: number; at: number }[] = [], size = rulerStep * 100 * pan.view.k;
+    for (let i = Math.ceil(-offset / size); offset + i * size <= length; i++) out.push({ m: i * rulerStep, at: offset + i * size });
+    return out;
+  };
+  const rulerX = ticks(viewport.current?.clientWidth ?? 1400, pan.view.x).filter(t => t.at >= RULER_SIDE + 14), rulerY = ticks(viewport.current?.clientHeight ?? 900, pan.view.y).filter(t => t.at >= RULER_TOP + 8 && t.at <= (viewport.current?.clientHeight ?? 900) - 72); // keeps clear of the zoom buttons
   return <div className="room-canvas-wrap">
     <div ref={viewport} className="room-canvas" tabIndex={0} role="region" aria-label="Room plan" {...pan.pointerHandlers} onPointerDown={event => {
       if (tool === "Tables" && !placement && (areaMode || event.shiftKey)) { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); const start = toWorld(event); areaDrag.current = { start, now: start }; setAreaBox(areaDrag.current); }
@@ -78,8 +89,6 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
         </defs>
         <g transform={`translate(${pan.view.x} ${pan.view.y}) scale(${pan.view.k})`}>
           <rect x="-10000" y="-10000" width="20000" height="20000" fill={grid ? `url(#${patternId})` : "transparent"} />
-          {Array.from({ length: Math.floor(maxX / 100) + 1 }, (_, i) => <text key={`x${i}`} x={i * 100} y={-35 / pan.view.k} textAnchor="middle" fontSize={11 / pan.view.k} className="room-ruler">{i} m</text>)}
-          {Array.from({ length: Math.floor(maxY / 100) + 1 }, (_, i) => <text key={`y${i}`} x={-30 / pan.view.k} y={i * 100} textAnchor="end" fontSize={11 / pan.view.k} className="room-ruler">{i} m</text>)}
           {!drawing && bands.map(b => <g key={`view${b.side}`} className={`room-view room-view-${b.surrounding.group}`} data-room-view={b.surrounding.kind} pointerEvents="none">
             <polygon points={b.quad.map(p => `${p.x},${p.y}`).join(" ")} />
             {b.surrounding.group !== "other" && <polygon points={b.quad.map(p => `${p.x},${p.y}`).join(" ")} fill={`url(#${patternId}-${b.surrounding.group})`} />}
@@ -96,6 +105,11 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
           {!drawing && points.length >= 3 && tool === "Shape" && <ShapeHandles room={room} zoom={pan.view.k} grid={grid} selection={selection} toWorld={toWorld} onSelect={onSelect} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} onError={onError} />}
           {!drawing && tool === "Walls" && points.map((_, i) => <path key={`select-${i}`} d={sidePath(room.outline, i)} className="room-wall-hit" strokeWidth={44 / pan.view.k} onPointerDown={event => { event.stopPropagation(); onSelect({ kind: "side", index: i }); }} />)}
           {!drawing && <WallLayer room={room} zoom={pan.view.k} editing={tool === "Walls"} selected={opening} toWorld={toWorld} onSelect={onOpening} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} onError={onError} />}
+        </g>
+        <g className="room-rulers" pointerEvents="none" aria-hidden="true">
+          <rect x="0" y="0" width="100%" height={RULER_TOP} className="room-ruler-bg" /><rect x="0" y="0" width={RULER_SIDE} height="100%" className="room-ruler-bg" />
+          {rulerX.map(t => <g key={`x${t.m}`}><line x1={t.at} y1={RULER_TOP - 5} x2={t.at} y2={RULER_TOP} className="room-ruler-tick" /><text x={t.at} y={RULER_TOP - 7} textAnchor="middle" fontSize="11" className="room-ruler">{t.m} m</text></g>)}
+          {rulerY.map(t => <g key={`y${t.m}`}><line x1={RULER_SIDE - 5} y1={t.at} x2={RULER_SIDE} y2={t.at} className="room-ruler-tick" /><text x={RULER_SIDE - 8} y={t.at} textAnchor="end" dominantBaseline="central" fontSize="11" className="room-ruler">{t.m} m</text></g>)}
         </g>
       </svg>
     </div>

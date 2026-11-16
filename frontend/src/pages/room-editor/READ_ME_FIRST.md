@@ -167,3 +167,7 @@ Terrace: a terrace is a zone of kind terrace (so diners can filter for one) crea
 wholly inside a terrace zone even though it is outside the walls (validation.ts), and
 assignTerraceTables (run by changeRoom) puts them in its zone. Terrace is no longer in the Fixed palette;
 an existing terrace zone is still editable there.
+
+Metre marks: RoomCanvas draws them on a strip along the top and left edge of the view (screen space, not plan
+space), so they never lie on a shape. Their spacing follows the zoom (every 1, 2, 5, 10... m, at least 56 px apart),
+and the left ones stay clear of the zoom buttons.
