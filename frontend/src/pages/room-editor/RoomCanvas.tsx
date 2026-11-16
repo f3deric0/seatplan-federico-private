@@ -57,12 +57,14 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
   // The metre marks live on a strip along the top and left edge of the view, not on the plan, so they never lie on a shape.
   // They are as far apart as the zoom allows: every metre when close, every 2, 5, 10... when far.
   const rulerStep = [1, 2, 5, 10, 20, 50].find(m => m * 100 * pan.view.k >= 56) ?? 100;
-  const ticks = (length: number, offset: number) => {
-    const out: { m: number; at: number }[] = [], size = rulerStep * 100 * pan.view.k;
-    for (let i = Math.ceil(-offset / size); offset + i * size <= length; i++) out.push({ m: i * rulerStep, at: offset + i * size });
+  // 0 m is where the room starts (its top-left corner); there are no marks before it.
+  const originX = boundsPoints.length ? Math.min(...boundsPoints.map(p => p.x)) : 0, originY = boundsPoints.length ? Math.min(...boundsPoints.map(p => p.y)) : 0;
+  const ticks = (length: number, offset: number, origin: number) => {
+    const out: { m: number; at: number }[] = [], size = rulerStep * 100;
+    for (let i = 0; offset + (origin + i * size) * pan.view.k <= length; i++) out.push({ m: i * rulerStep, at: offset + (origin + i * size) * pan.view.k });
     return out;
   };
-  const rulerX = ticks(viewport.current?.clientWidth ?? 1400, pan.view.x).filter(t => t.at >= RULER_SIDE + 14), rulerY = ticks(viewport.current?.clientHeight ?? 900, pan.view.y).filter(t => t.at >= RULER_TOP + 8 && t.at <= (viewport.current?.clientHeight ?? 900) - 72); // keeps clear of the zoom buttons
+  const rulerX = ticks(viewport.current?.clientWidth ?? 1400, pan.view.x, originX).filter(t => t.at >= RULER_SIDE + 14), rulerY = ticks(viewport.current?.clientHeight ?? 900, pan.view.y, originY).filter(t => t.at >= RULER_TOP + 8 && t.at <= (viewport.current?.clientHeight ?? 900) - 72); // keeps clear of the zoom buttons
   return <div className="room-canvas-wrap">
     <div ref={viewport} className="room-canvas" tabIndex={0} role="region" aria-label="Room plan" {...pan.pointerHandlers} onPointerDown={event => {
       if (tool === "Tables" && !placement && (areaMode || event.shiftKey)) { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); const start = toWorld(event); areaDrag.current = { start, now: start }; setAreaBox(areaDrag.current); }

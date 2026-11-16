@@ -171,3 +171,8 @@ an existing terrace zone is still editable there.
 Metre marks: RoomCanvas draws them on a strip along the top and left edge of the view (screen space, not plan
 space), so they never lie on a shape. Their spacing follows the zoom (every 1, 2, 5, 10... m, at least 56 px apart),
 and the left ones stay clear of the zoom buttons.
+
+Later changes: the metre marks start at 0 m on the room's top-left corner and never go negative. The tab row is
+Shape, Walls, Fixed, Tables (last); there is no separate "Add table" button, the table palette is the "Add a table"
+section of the Tables tab. The footer shows the area and only layout errors (ProblemList); warnings, tips and the
+"Grid on" text are not shown.

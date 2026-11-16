@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError, getVenue } from "../../api/client";
 import { getRooms } from "../../api/rooms";
@@ -50,13 +50,6 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
   const [drawingRoom, setDrawingRoom] = useState<string | null>(null);
   const [selection, setSelection] = useState<ShapeSelection>(null);
   const [tool, setTool] = useState("Shape");
-  const palette = useRef<HTMLDivElement>(null);
-  const [openPalette, setOpenPalette] = useState(false);
-  useEffect(() => {
-    if (!openPalette) return;
-    palette.current?.querySelector<HTMLElement>(".room-object-palette button")?.focus();
-    setOpenPalette(false);
-  }, [openPalette]);
   const [opening, setOpening] = useState<string | null>(null);
   const [object, setObject] = useState<string | null>(null);
   const [placement, setPlacement] = useState<string | null>(null);
@@ -157,12 +150,8 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
     {error && <p role="alert" className="room-error">{error}</p>}
     <div className="room-workspace">
       <div className="room-tools">
-        <div className="room-table-tools" role="group" aria-label="Table tools">
-          <Button variant="secondary" aria-pressed={tool === "Tables"} disabled={drawing} onClick={() => { setTool("Tables"); setPlacement(null); setError(""); }}>Tables</Button>
-          <Button disabled={drawing} onClick={() => { setTool("Tables"); setPlacement(null); setError(""); setOpenPalette(true); }}>Add table</Button>
-        </div>
         <nav className="room-other-tools" aria-label="Room tools">
-          {["Shape", "Walls", "Fixed"].map(name => <Button variant="ghost" key={name} aria-pressed={tool === name} disabled={drawing && name !== "Shape"} onClick={() => { setTool(name); setPlacement(null); setError(""); }}>{name}</Button>)}
+          {["Shape", "Walls", "Fixed", "Tables"].map(name => <Button variant="ghost" key={name} aria-pressed={tool === name} disabled={drawing && name !== "Shape"} onClick={() => { setTool(name); setPlacement(null); setError(""); }}>{name}</Button>)}
         </nav>
       </div>
       <RoomCanvas room={room} drawing={drawing} grid={grid} fixtureGrid={!free} onPoint={addPoint} onCloseShape={closeShape} selection={selection} onSelect={setSelection} onChange={changeRoom} onDragStart={history.checkpoint} onError={setError} tool={tool} opening={opening} onOpening={setOpening} placement={placement} object={object} onObject={setObject} onPlace={placeObject} chair={chair} onTableSelect={chooseTable} tableKeys={tableKeys} multiple={multiple} areaMode={areaMode} onArea={keys => { updateKeys(keys); setAreaMode(false); }} problems={problems.filter(p => p.room_key === room.key)} focusTarget={focusTarget} />
@@ -174,9 +163,9 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
         {!drawing && tool === "Shape" && room.outline.points.length < 3 && <Button onClick={() => setDrawingRoom(room.key)}>Continue drawing walls</Button>}
         {!drawing && tool === "Walls" && <WallTools room={room} selection={selection} selected={opening} onSelect={setOpening} onSide={setSelection} onChange={changeRoom} onError={setError} />}
         {!drawing && tool === "Fixed" && <FixtureTools room={room} selected={object} free={free} onFree={setFree} onSelect={setObject} onPlace={value => placeObject(centreOfRoom(), value)} onChange={changeRoom} onError={setError} />}
-        {!drawing && tool === "Tables" && <div className="room-form" ref={palette}><TableTools room={room} selected={object} onSelect={key => updateKeys(key ? [key] : [])} onPlace={(value, zoneKey) => { const zone = room.zones.find(z => z.key === zoneKey); placeObject(zone ? { x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 } : centreOfRoom(), value); }} onChange={changeRoom} onError={setError} /></div>}
+        {!drawing && tool === "Tables" && <div className="room-form"><TableTools room={room} selected={object} onSelect={key => updateKeys(key ? [key] : [])} onPlace={(value, zoneKey) => { const zone = room.zones.find(z => z.key === zoneKey); placeObject(zone ? { x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 } : centreOfRoom(), value); }} onChange={changeRoom} onError={setError} /></div>}
       </div></aside>
-    </div><footer className="room-status">{area.toLocaleString("pt-PT", { maximumFractionDigits: 1 })} m² · Grid on<ProblemList problems={problems} onSelect={selectProblem} /></footer>
+    </div><footer className="room-status">{area.toLocaleString("pt-PT", { maximumFractionDigits: 1 })} m²<ProblemList problems={problems} onSelect={selectProblem} /></footer>
     {adding && <NewRoomDialog defaultName={nextRoomName(history.present.rooms)} onClose={() => setAdding(false)} onCreate={(created, draw) => { history.commit(addRoom(history.present, created)); setSelectedRoom(created.key); setDrawingRoom(draw ? created.key : null); setSelection(null); setTool("Shape"); setAdding(false); }} />}
   </section>;
 }

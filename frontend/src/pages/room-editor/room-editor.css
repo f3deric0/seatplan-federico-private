@@ -2,7 +2,7 @@
 .room-header { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-5); margin-bottom: var(--space-4); }
 .room-header h1 { flex: 1 1 20rem; font-size: var(--fs-2xl); margin: 0; }
 .room-actions, .room-tabs { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
-.room-tabs { margin-bottom: var(--space-4); }
+.room-tabs { margin-bottom: var(--space-4); align-items: flex-end; }
 .room-tabs .field { min-width: 12rem; }
 .room-workspace { display: grid; grid-template-columns: 7rem minmax(0, 1fr) 18rem; border: 1px solid var(--c-border); border-radius: var(--radius-lg); overflow: hidden; min-height: 32rem; }
 .room-tools { display: flex; flex-direction: column; background: var(--c-surface); border-right: 1px solid var(--c-border); }

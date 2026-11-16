@@ -21,7 +21,6 @@ test("an outside table is marked and its problem selects and centres the table",
   for (let i = 0; i < 80; i++) await page.keyboard.press("Shift+ArrowRight"); // 8 m to the right: beyond the walls
   await expect(page.locator(".room-invalid-table")).toHaveCount(1);
   await page.getByRole("button", { name: "Shape", exact: true }).click();
-  await page.getByText("1 error · 0 warnings · 0 tips (show)", { exact: true }).click();
   await page.getByRole("button", { name: /Table 1 is outside the walls/ }).click();
   await expect(page.getByRole("button", { name: "Tables", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".room-invalid-table .room-table")).toBeInViewport();

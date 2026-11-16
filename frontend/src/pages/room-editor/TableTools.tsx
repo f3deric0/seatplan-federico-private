@@ -13,7 +13,8 @@ export function TableTools({ room, selected, onSelect, onPlace, onChange, onErro
   const update = (patch: Partial<Omit<RoomTable, "id" | "key" | "seats">>) => { if (table) onChange(editTable(room, table.key, patch)); };
   const safe = (fn: () => void) => { try { fn(); } catch (caught) { onError(caught instanceof Error ? caught.message : "Check the table."); } };
   return <div className="room-form">
-    <p>Tap a table to add it to the room, then drag it where it goes. Its size follows the number of chairs.</p>
+    <h3>Add a table</h3>
+    <p>Tap one to add it to the room, then drag it where it goes. Its size follows the number of chairs.</p>
     <div className="room-object-palette">{TABLE_KINDS.map(kind => <button type="button" draggable key={kind} onDragStart={event => { event.dataTransfer.setData(OBJECT_DRAG_TYPE, `table:${kind}`); event.dataTransfer.effectAllowed = "copy"; }} aria-label={`Place ${TABLE_NAMES[kind]}`} onClick={() => onPlace(`table:${kind}`, target || undefined)}><svg viewBox="-12 -12 24 24" aria-hidden="true"><FixtureIcon kind={`${kind}_table` as IconKind} size={24} /></svg>{TABLE_NAMES[kind]}</button>)}</div>
     {terraces.length > 0 && <Select label="Put new tables" value={target} options={[{ value: "", label: "Inside the room" }, ...terraces.map(z => ({ value: z.key, label: `On ${z.name}` }))]} onChange={e => setWhere(e.target.value)} />}
     <Select label="Selected table" value={table?.key ?? ""} options={[{ value: "", label: "Choose a table" }, ...room.tables.map(t => ({ value: t.key, label: t.label }))]} onChange={event => { onSelect(event.target.value || null); }} />
