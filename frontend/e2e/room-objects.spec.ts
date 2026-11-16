@@ -91,8 +91,11 @@ test("a selected fixed element is resized by pulling its grips, like a picture i
   await page.getByRole("button", { name: "Fixed", exact: true }).click();
   const icons = await page.locator(".room-fixture-icon").count();
   await page.getByRole("button", { name: "Place Bar", exact: true }).click();
-  await expect(page.locator("[data-fixture-grip]")).toHaveCount(8);
   await expect(page.locator(".room-fixture-icon")).toHaveCount(icons + 1); // the new bar wears its icon
+  await expect(page.locator("[data-fixture-grip]")).toHaveCount(0); // added, but not clicked: no grips yet
+  const bar = (await page.locator(".room-fixture > rect").last().boundingBox())!;
+  await page.mouse.click(bar.x + bar.width / 2, bar.y + bar.height / 2);
+  await expect(page.locator("[data-fixture-grip]")).toHaveCount(8); // clicked: grips appear
   const width = page.getByLabel("Object width (cm)"), height = page.getByLabel("Object height (cm)"), x = page.getByLabel("Object x (cm)");
   const [w0, h0, x0] = [Number(await width.inputValue()), Number(await height.inputValue()), Number(await x.inputValue())];
   const grip = page.locator('[data-fixture-grip="1,1"]'); // bottom right corner
@@ -114,4 +117,7 @@ test("a selected fixed element is resized by pulling its grips, like a picture i
   await page.mouse.up();
   expect(Number(await width.inputValue())).toBeGreaterThan(w0);
   await expect(height).toHaveValue(String(h0));
+  const canvas = (await page.locator(".room-canvas").boundingBox())!;
+  await page.mouse.click(canvas.x + 20, canvas.y + 20); // empty space beside the room
+  await expect(page.locator("[data-fixture-grip]")).toHaveCount(0);
 });

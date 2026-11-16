@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import type { Point } from "./geometry";
 import type { Room, RoomFixture } from "./roomModel";
@@ -16,6 +16,9 @@ const turn = (p: Point, degrees: number): Point => { const a = degrees * Math.PI
 export function ObjectLayer({ room, kind, editing, selected, grid, zoom, toWorld, onSelect, onChange, onDragStart }: Props) {
   const drag = useRef<{ key: string; base: Room; start: Point; at: Point; last: Point; started: boolean } | null>(null);
   const resize = useRef<Resize | null>(null);
+  // The grips belong to an element the owner has clicked on the plan, not to one that was merely added or picked from a list.
+  const [gripped, setGripped] = useState<string | null>(null);
+  useEffect(() => { if (selected !== gripped) setGripped(null); }, [selected]); // eslint-disable-line react-hooks/exhaustive-deps
   const items = kind === "fixture" ? room.fixtures : room.zones;
   // Pulling a grip: the opposite side or corner stays put, and the element never leaves the room.
   const stretch = (event: PointerEvent<SVGGElement>) => {
@@ -53,13 +56,13 @@ export function ObjectLayer({ room, kind, editing, selected, grid, zoom, toWorld
       const font = Math.max(13 / zoom, 15), small = Math.min(item.w, item.h), fixture = "label" in item ? item : null, icon = fixture && small >= font * 2.6 ? Math.min(32, small * 0.45) : 0;
       return <g key={item.key} data-room-object={item.key} className={`room-${kind}${selected === item.key ? " selected" : ""}`} transform={`translate(${item.x + item.w / 2} ${item.y + item.h / 2}) rotate(${rotation})`} onPointerDown={event => {
         if (!editing) return;
-        event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); onSelect(item.key);
+        event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); onSelect(item.key); setGripped(item.key);
         drag.current = { key: item.key, base: room, start: toWorld(event), at: item, last: { x: item.x, y: item.y }, started: false };
       }}>
         {"shape" in item && item.shape === "circle" ? <circle r={item.w / 2} /> : <rect x={-item.w / 2} y={-item.h / 2} width={item.w} height={item.h} />}
         {icon > 0 && fixture && <g transform={`translate(0 ${-font * 0.7})`}><FixtureIcon kind={fixture.kind} size={icon} /></g>}
         <text textAnchor="middle" dominantBaseline="middle" y={icon > 0 ? font * 0.8 : 0} fontSize={font}>{label}</text>
-        {kind === "fixture" && editing && selected === item.key && "shape" in item && GRIPS.map(([sx, sy, cursor]) => <g key={`${sx}${sy}`} data-fixture-grip={`${sx},${sy}`} transform={`translate(${sx * item.w / 2} ${sy * item.h / 2})`} style={{ cursor }}
+        {kind === "fixture" && editing && selected === item.key && gripped === item.key && "shape" in item && GRIPS.map(([sx, sy, cursor]) => <g key={`${sx}${sy}`} data-fixture-grip={`${sx},${sy}`} transform={`translate(${sx * item.w / 2} ${sy * item.h / 2})`} style={{ cursor }}
           onPointerDown={event => { event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); onSelect(item.key); resize.current = { key: item.key, base: room, item, sx, sy, started: false }; }}>
           <circle r={22 / zoom} className="room-handle-hit" /><rect x={-6 / zoom} y={-6 / zoom} width={12 / zoom} height={12 / zoom} className="room-handle" />
         </g>)}

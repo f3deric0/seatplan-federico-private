@@ -188,3 +188,4 @@ corner fixed, works in the element's own turned frame, snaps sizes to 10 cm unle
 never goes below 20 cm and stops where the element would leave the room. The width and height fields stay as the keyboard
 alternative.
 
+The grips show only for an element the owner has clicked on the plan (ObjectLayer keeps `gripped`): one just added from the palette, or picked from the list, is selected but has no grips until it is clicked. A click on empty floor in the Fixed or Zones tool lets go of the selection.

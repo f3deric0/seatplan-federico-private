@@ -23,7 +23,7 @@ interface Props {
   selection: ShapeSelection; onSelect: (selection: ShapeSelection) => void;
   onChange: (room: Room, transient?: boolean) => void; onDragStart: () => void; onError: (message: string) => void;
   tool: string; opening: string | null; onOpening: (key: string) => void;
-  placement: string | null; object: string | null; onObject: (key: string) => void; onPlace: (point: Point, kind: string) => void;
+  placement: string | null; object: string | null; onObject: (key: string | null) => void; onPlace: (point: Point, kind: string) => void;
   chair: string | null; onTableSelect: (key: string, chair: string | null, multiple?: boolean, long?: boolean) => void;
   tableKeys: string[]; multiple: boolean; areaMode: boolean; onArea: (keys: string[]) => void;
   problems: RoomProblem[]; focusTarget: { roomKey: string; point: Point; serial: number } | null;
@@ -63,6 +63,7 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
     }} onPointerCancel={event => { areaDrag.current = null; setAreaBox(null); pan.pointerHandlers.onPointerCancel(event); }} onPointerMove={move} onDragOver={event => { if (event.dataTransfer.types.includes(OBJECT_DRAG_TYPE)) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } }} onDrop={event => { const kind = event.dataTransfer.getData(OBJECT_DRAG_TYPE); if (kind) { event.preventDefault(); onPlace(kind.startsWith("fixture:") ? toWorld(event) : snappedPoint(toWorld(event), null, grid, false), kind); } }} onClick={event => {
       if (suppressClick.current) { suppressClick.current = false; return; }
       if (placement && !pan.wasDragged()) { onPlace(placement.startsWith("fixture:") ? toWorld(event) : snappedPoint(toWorld(event), null, grid, false), placement); return; }
+      if (!drawing && !pan.wasDragged() && (tool === "Fixed" || tool === "Zones")) { onObject(null); return; } // a click on empty floor lets go of the element
       if (!drawing || pan.wasDragged()) return;
       const point = screenPoint(event);
       if (points.length >= 3 && Math.hypot(point.x - points[0].x, point.y - points[0].y) * pan.view.k < 24) onCloseShape();
