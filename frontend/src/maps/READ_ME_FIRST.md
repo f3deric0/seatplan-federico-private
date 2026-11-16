@@ -27,3 +27,9 @@ and roads from OpenFreeMap vector tiles. It requests only visible tiles, aborts
 requests when Leaflet unloads them and omits labels. The public page footer
 credits OpenMapTiles and OpenStreetMap. When tiles fail, the numbered diagram
 and the list still give diners access to the results.
+
+DiscoveryBasemap stays sharp at every zoom. The tile server stores nothing finer than zoom 14, so past that each tile is cut
+from its parent (tileSource.sourceTile) and the vector geometry is redrawn larger on the canvas, instead of stretching the
+picture (Leaflet's maxNativeZoom would blur it). Road and water widths grow gently with zoom (strokeGrowth). Parent tiles are
+shared between the tiles cut from them, so one download serves many.
+
