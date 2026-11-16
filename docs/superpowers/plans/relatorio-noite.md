@@ -859,3 +859,72 @@ o rodapé das páginas que mostram o mapa.
 Build, 512 testes Vitest e 182 verificações de contraste passaram. Os testes
 no Chromium com tiles e API de teste verificaram as cores, zoom por teclado e
 rato, seleção de pinos e recuperação sem tiles, incluindo a 320 e 390 px.
+
+## Destaque do restaurante selecionado
+
+Depois de selecionar um resultado, o destaque fica no cartão e no pino desse
+restaurante até selecionar outro. O foco continua visível nas ligações.
+Build, 513 testes Vitest e reprodução em Chromium com dados de teste passaram.
+
+Ao passar o rato sobre outro cartão, o contorno e o pino passam para esse
+restaurante. Ao sair, regressam ao restaurante selecionado. Na ficha pública,
+o mapa e o diagrama mostram um ponto roxo com o nome por cima. Build, 513
+testes Vitest e os dois percursos no Chromium com dados de teste passaram.
+
+Ao passar para outro resultado, a seleção anterior deixa de estar ativa.
+O destaque deixa de saltar para o primeiro cartão entre resultados. Build,
+513 testes Vitest e o percurso de scroll no Chromium passaram.
+
+## Seletores da pesquisa
+
+Os menus de cidade, hora e pessoas usam a tipografia e as cores de
+Restaurantes nos browsers com suporte para a personalização de select.
+A data usa um calendário do SeatPlan com navegação por mês e entrada por
+teclado. Build, 513 testes Vitest e 182 verificações de contraste passaram.
+Testámos os menus, a escolha da data e o regresso do foco no Chromium a
+1440, 390 e 320 px com dados de teste.
+
+## Logótipo partilhado
+
+A imagem aprovada da mesa e da cadeira roxa é usada pela marca partilhada
+nos cabeçalhos de Restaurantes e Eventos e na área de equipa. Build e 513
+testes Vitest passaram. No Chromium verificámos o carregamento na pesquisa,
+na ficha pública, na entrada do dono e em Eventos, incluindo o modo escuro.
+
+## Recentrar o mapa
+
+Cada clique num cartão centra o mapa no restaurante, mesmo ao repetir a
+seleção. Ao voltar de uma vista afastada, o mapa aproxima para a zona do
+restaurante. Um zoom mais próximo é mantido. Build, 513 testes Vitest e
+os percursos de zoom e arrasto no Chromium com dados de teste passaram.
+
+O botão «Show more» tem 20 px de separação do último cartão da lista.
+Build, 513 testes Vitest e a medição no Chromium a 390 e 1440 px passaram.
+
+## Reviews de Restaurantes
+
+Cada conta de cliente pode publicar uma avaliação por restaurante numa escala
+de 0 a 5 mesas, com comentário e tipo de mesa opcionais. A nota visível nos
+cartões é a média com uma decimal e uma cadeira roxa. A aba Reviews liga as
+avaliações públicas a filtros por nota, tipo de mesa e visita verificada.
+Uma visita fica verificada se a conta tem email validado e esse email consta
+de uma reserva concluída no restaurante. A roda do rato volta a controlar
+o zoom no mapa.
+
+Build, 513 testes Vitest e os testes de API de reviews e pesquisa passaram
+em SQLite. O SQLite local cria a tabela ao reiniciar o backend. O Postgres
+usa o comando de migração já existente.
+
+O comando `python -m app.seed.demo_reviews` preenche a demonstração SQLite
+com avaliações identificadas como «Demo review». Numa cópia do catálogo
+local, adicionou 340 avaliações aos 25 restaurantes. Uma segunda execução
+adicionou zero, e as médias e a ordenação foram verificadas na API.
+
+Nos cartões, a nota e a cadeira foram ampliadas e centradas no lado
+direito. Verificámos a apresentação e a ligação às reviews no Chromium
+a 320, 390 e 1440 px. O build e os 513 testes Vitest passaram.
+
+A escala das reviews passou de 0–5 para 0–10. A migração duplica uma única
+vez as notas antigas. Os cartões apresentam grupos de uma a quatro cadeiras,
+com o grupo completo a partir de 8,5. Os filtros de reviews e pesquisa usam
+o mesmo estilo e os créditos das fotos estão no rodapé da ficha.

@@ -10,9 +10,8 @@ What it does, in one transaction (db.create_all):
 1. creates every missing table;
 2. adds each column in NEW_COLUMNS that the table does not have yet;
 3. creates each index in NEW_INDEXES that does not exist yet.
-Nothing else: there is no general migration tool, so a change to an existing
-column is not applied (see the README). No data is rewritten; the new columns
-get their defaults.
+The explicitly versioned review scale migration also converts existing review
+scores. New columns get their defaults.
 
 Every step checks the database first, so running it twice changes nothing
 the second time, on SQLite and on Postgres alike.
@@ -25,6 +24,7 @@ from sqlalchemy import Connection, inspect, text
 
 from app import db
 from app.config import get_settings
+from app.models import RestaurantReview
 
 # (table, column, the column's type and rules as ALTER TABLE wants them).
 # Each server default must match the one in models.py word for word, so a new
@@ -106,6 +106,35 @@ def _add_missing_columns(connection: Connection) -> list[str]:
     return changes
 
 
+def _upgrade_review_scale(connection: Connection) -> list[str]:
+    constraints = inspect(connection).get_check_constraints("restaurant_reviews")
+    if not any(check["name"] == "ck_restaurant_review_score" for check in constraints):
+        return []
+    if connection.dialect.name == "postgresql":
+        connection.exec_driver_sql(
+            "ALTER TABLE restaurant_reviews DROP CONSTRAINT ck_restaurant_review_score"
+        )
+        connection.exec_driver_sql("UPDATE restaurant_reviews SET score = score * 2")
+        connection.exec_driver_sql(
+            "ALTER TABLE restaurant_reviews ADD CONSTRAINT ck_restaurant_review_score_10 "
+            "CHECK (score BETWEEN 0 AND 10)"
+        )
+    else:
+        connection.exec_driver_sql(
+            "ALTER TABLE restaurant_reviews RENAME TO restaurant_reviews_legacy"
+        )
+        connection.exec_driver_sql("DROP INDEX IF EXISTS ix_restaurant_reviews_account_id")
+        RestaurantReview.__table__.create(connection)
+        connection.exec_driver_sql(
+            "INSERT INTO restaurant_reviews "
+            "(venue_id, account_id, public_id, score, comment, table_type, verified, created_at) "
+            "SELECT venue_id, account_id, public_id, score * 2, comment, table_type, verified, created_at "
+            "FROM restaurant_reviews_legacy"
+        )
+        connection.exec_driver_sql("DROP TABLE restaurant_reviews_legacy")
+    return ["Converted restaurant review scores to a 0–10 scale"]
+
+
 def upgrade_schema(connection: Connection) -> list[str]:
     """Steps 2 and 3 of the module docstring. Returns one line per change.
 
@@ -113,6 +142,7 @@ def upgrade_schema(connection: Connection) -> list[str]:
     the guest_accounts table that create_all makes.
     """
     changes = _add_missing_columns(connection)
+    changes.extend(_upgrade_review_scale(connection))
     for name, statement in (*NEW_INDEXES, *RESTAURANT_INDEXES):
         connection.execute(text(statement))
         changes.append(f"Index {name} is ready")

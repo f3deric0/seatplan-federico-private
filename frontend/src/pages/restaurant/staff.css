@@ -217,8 +217,7 @@
 .st-page .st-sidebar .st-home-link,
 .st-page .st-sidebar .st-workspace-label,
 .st-page .st-sidebar .st-tab { color: inherit; }
-.st-page .st-sidebar .wordmark-table,
-.st-page .st-sidebar .wordmark-seat:not(.wordmark-seat-mine) { fill: currentColor; }
+.st-page .st-sidebar .wordmark-mark { mix-blend-mode: normal; border-radius: var(--radius-sm); }
 .st-page .st-sidebar :focus-visible { outline-color: var(--c-ops-nav-text, var(--c-focus)); }
 .st-page .st-sidebar .st-tab:hover,
 .st-page .st-sidebar .st-tab[aria-selected="true"] { background: var(--c-primary-soft); color: var(--c-primary); }

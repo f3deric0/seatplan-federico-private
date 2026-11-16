@@ -72,6 +72,38 @@ test("the public restaurant page has no accessibility problems and opens a photo
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Open in Google Maps/ })).toBeVisible();
 });
+test("clicking the same restaurant again brings the map back after zooming and panning", async ({ page }) => {
+  await page.route("https://tiles.openfreemap.org/**", route => route.fulfill({
+    body: Buffer.alloc(0),
+    headers: { "access-control-allow-origin": "*" },
+  }));
+  await page.goto("/");
+  const card = page.getByRole("article", { name: "Tagus Terrace" }).locator(".discover-card-line");
+  const map = page.getByRole("region", { name: "Map of the restaurants found" });
+  const canvas = map.locator(".discover-map");
+  const pin = map.getByRole("button", { name: "Tagus Terrace", exact: true });
+  const offset = async () => {
+    const bounds = await canvas.boundingBox();
+    const marker = await pin.boundingBox();
+    if (!bounds || !marker) return Infinity;
+    return Math.hypot(marker.x + marker.width / 2 - bounds.x - bounds.width / 2,
+      marker.y + marker.height / 2 - bounds.y - bounds.height / 2);
+  };
+
+  await card.click();
+  await expect.poll(offset).toBeLessThan(3);
+  const zoomOut = map.getByRole("button", { name: "Zoom out" });
+  for (let step = 0; step < 5; step++) await zoomOut.click();
+  const bounds = (await canvas.boundingBox())!;
+  await page.mouse.move(bounds.x + 90, bounds.y + 110);
+  await page.mouse.down();
+  await page.mouse.move(bounds.x + 280, bounds.y + 170, { steps: 10 });
+  await page.mouse.up();
+  await expect.poll(offset).toBeGreaterThan(100);
+
+  await card.click();
+  await expect.poll(offset).toBeLessThan(3);
+});
 test("when the map tiles cannot load, a numbered diagram takes the map's place and the cards wear the same numbers", async ({ page }) => {
   await page.route("https://tiles.openfreemap.org/**", (route) => route.abort());
   await page.goto("/");
@@ -83,7 +115,8 @@ test("when the map tiles cannot load, a numbered diagram takes the map's place a
   await expect(page.locator(".discover-card-number")).toHaveCount(5);
   // A pin and its card are linked: pointing at the card lights the pin, and the pin takes you to its card.
   await diagram.getByRole("button", { name: /^2\./ }).click();
-  await expect(page.locator(".discover-card.is-highlighted")).toHaveCount(1);
+  await expect(page.locator(".discover-card.is-selected")).toHaveCount(1);
+  await expect(page.locator(".discover-card.is-highlighted")).toHaveCount(0);
   const found = await new AxeBuilder({ page }).withTags(TAGS).analyze();
   expect(found.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
 });

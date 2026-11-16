@@ -81,6 +81,7 @@ export default function DiscoverPage() {
   const [view, setView] = useState<"list" | "map">(saved.view);
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [pinned, setPinned] = useState<string | null>(saved.pinned ?? null);
+  const [mapFocus, setMapFocus] = useState<{ id: string } | null>(null);
   // True while the numbered diagram stands in for a map whose tiles failed.
   const [, setDiagram] = useState(false);
   const [results, setResults] = useState<Results>({ status: "loading" });
@@ -185,6 +186,14 @@ export default function DiscoverPage() {
   );
   // The diagram numbers its pins in list order; cards wear the same numbers.
   const pinNumbers = useMemo(() => new Map(items.map((card, index) => [card.public_id, index + 1])), [items]);
+  const previewCard = (id: string | null): void => {
+    setHighlighted(id);
+    if (id !== null) setPinned(current => current === id ? current : null);
+  };
+  const selectCard = (id: string): void => {
+    setPinned(id);
+    setMapFocus({ id });
+  };
   const selectPin = (id: string): void => {
     setPinned(id);
     const card = document.getElementById(`card-${id}`);
@@ -213,6 +222,8 @@ export default function DiscoverPage() {
   }, [results,saved.scroll]);
   const showMap = wide || view === "map";
   const selectedCard = items.find(card => card.public_id === pinned);
+  // Hover and selection share one outline, including when the pointer is over the selected card.
+  const previewId = highlighted === pinned ? null : highlighted;
   return <div className={`discover-route${!wide && view === "map" ? " is-map-view" : ""}`}><PageShell title="Find a table you will love" width="wide" restaurantBrand headerActions={<PublicHeaderActions />} footerContent={showMap && <MapCredits />}>
     <section className={`discover-top${!wide && view === "map" ? " discover-top-compact" : ""}`} aria-labelledby="discover-heading">
       <h1 id="discover-heading" aria-label={wide || headline !== FIRST_HEADLINE ? headline : "Find your table."}><span className="discover-desktop-title">{headline}</span><span className="discover-mobile-title">{headline === FIRST_HEADLINE ? "Find your table." : headline}</span></h1><p>See the room and choose where you’ll sit.</p>
@@ -239,12 +250,12 @@ export default function DiscoverPage() {
         {results.status==="loading"&&<Skeleton label="Finding restaurants" lines={6}/>}
         {results.status==="error"&&<ErrorState message={results.message} onRetry={search}/>}
         {results.status==="ready"&&<>
-          {!items.length?<EmptyState title={text?`No restaurants match “${text}”`:when?"Nothing available near this time":"No restaurants match"} action={<><Button onClick={()=>{if(text){setText("");setQ("");}else openFilters();}}>{text?"Clear search term":when?"Change time":"Edit filters"}</Button>{text&&<Button variant="secondary" onClick={openFilters}>Edit filters</Button>}</>}><p>{text?"Try a different name or clear the search term.":when?"Try another time or adjust the availability filter.":"Try another cuisine or room feature."}</p></EmptyState>:<div className="discover-cards">{items.map(card=><RestaurantCard key={card.public_id} card={card} when={results.when} navigationWhen={when} pending={updating} priorityFeatures={features} selected={pinned===card.public_id} highlighted={highlighted===card.public_id} onHighlight={setHighlighted} onSelect={() => setPinned(card.public_id)} number={pinNumbers.get(card.public_id)}/>)}</div>}
+          {!items.length?<EmptyState title={text?`No restaurants match “${text}”`:when?"Nothing available near this time":"No restaurants match"} action={<><Button onClick={()=>{if(text){setText("");setQ("");}else openFilters();}}>{text?"Clear search term":when?"Change time":"Edit filters"}</Button>{text&&<Button variant="secondary" onClick={openFilters}>Edit filters</Button>}</>}><p>{text?"Try a different name or clear the search term.":when?"Try another time or adjust the availability filter.":"Try another cuisine or room feature."}</p></EmptyState>:<div className="discover-cards">{items.map(card=><RestaurantCard key={card.public_id} card={card} when={results.when} navigationWhen={when} pending={updating} priorityFeatures={features} selected={!previewId&&pinned===card.public_id} highlighted={previewId===card.public_id} onHighlight={previewCard} onSelect={() => selectCard(card.public_id)} number={pinNumbers.get(card.public_id)}/>)}</div>}
           {moreError&&<p role="alert">{moreError}</p>}
-          {items.length<results.total&&<Button variant="secondary" busy={loadingMore} disabled={updating} onClick={()=>void showMore()}>Show more</Button>}
+          {items.length<results.total&&<Button className="discover-load-more" variant="secondary" busy={loadingMore} disabled={updating} onClick={()=>void showMore()}>Show more</Button>}
         </>}
       </section>
-      {showMap&&<div className="discover-map-column"><Suspense fallback={<Skeleton label="Loading the map" lines={4}/>}><ResultsMap pins={pins} highlightedId={highlighted} selectedId={pinned} onSelect={selectPin} center={place} onFallback={setDiagram}/></Suspense>
+      {showMap&&<div className="discover-map-column"><Suspense fallback={<Skeleton label="Loading the map" lines={4}/>}><ResultsMap pins={pins} highlightedId={previewId} selectedId={previewId ? null : pinned} centerRequest={mapFocus?.id === pinned ? mapFocus : null} onSelect={selectPin} center={place} onFallback={setDiagram}/></Suspense>
         {!wide&&selectedCard&&<div id="discover-selected-result" className="discover-pin-summary" aria-live="polite"><RestaurantCard card={selectedCard} when={updating?null:when} navigationWhen={when} pending={updating} highlighted={false} selected onHighlight={()=>{}} number={pinNumbers.get(selectedCard.public_id)} compact/><button type="button" className="discover-map-close" aria-label="Close summary" onClick={closePinSummary}>×</button></div>}
       </div>}
     </div>

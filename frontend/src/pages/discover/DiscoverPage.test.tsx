@@ -5,8 +5,8 @@ import type { RestaurantCard } from "../../api/discovery";
 import DiscoverPage from "./DiscoverPage";
 // Leaflet needs a real browser layout; the map has its own browser test.
 vi.mock("../../maps/ResultsMap", () => ({
-  default: ({ pins, onFallback }: { pins: unknown[]; onFallback?: (on: boolean) => void }) => (
-    <div data-testid="map">
+  default: ({ pins, onFallback, highlightedId, selectedId }: { pins: unknown[]; onFallback?: (on: boolean) => void; highlightedId: string | null; selectedId: string | null }) => (
+    <div data-testid="map" data-preview={highlightedId} data-selection={selectedId}>
       {pins.length} pins
       <button type="button" onClick={() => onFallback?.(true)}>
         simulate failed tiles
@@ -101,6 +101,37 @@ describe("DiscoverPage: the command bar", () => {
     expect(screen.getByRole("link", { name: "For restaurant owners" }).getAttribute("href")).toBe("/owner/sign-in");
     expect(screen.getByRole("link", { name: "Plan an event" }).getAttribute("href")).toBe("/demo");
     await screen.findByText("No restaurants match");
+  });
+  it("moves the only card and pin highlight to the hovered result without restoring a prior selection", async () => {
+    server(() => ({ items: [card(1), card(2)], total: 2 }));
+    renderPage();
+    const first = await screen.findByRole("article", { name: "Casa 1" });
+    const second = screen.getByRole("article", { name: "Casa 2" });
+    const map = await screen.findByTestId("map");
+
+    fireEvent.mouseEnter(first);
+    expect(first.classList.contains("is-highlighted")).toBe(true);
+    expect(map.getAttribute("data-preview")).toBe("pid1");
+
+    fireEvent.click(within(first).getByText("Terrace"));
+    fireEvent.mouseLeave(first);
+    fireEvent.mouseEnter(second);
+    expect(first.getAttribute("aria-current")).toBeNull();
+    expect(second.classList.contains("is-highlighted")).toBe(true);
+    expect(map.getAttribute("data-selection")).toBeNull();
+    expect(map.getAttribute("data-preview")).toBe("pid2");
+
+    fireEvent.mouseLeave(second);
+    expect(first.getAttribute("aria-current")).toBeNull();
+    expect(second.classList.contains("is-highlighted")).toBe(false);
+    expect(map.getAttribute("data-selection")).toBeNull();
+    expect(map.getAttribute("data-preview")).toBeNull();
+
+    fireEvent.mouseEnter(second);
+    fireEvent.click(within(second).getByText("Terrace"));
+    expect(first.getAttribute("aria-current")).toBeNull();
+    expect(second.getAttribute("aria-current")).toBe("true");
+    expect(map.getAttribute("data-selection")).toBe("pid2");
   });
   it("asks the server after a pause in typing, not on every key", async () => {
     const asked = server(() => ({ items: [card(1)], total: 1 }));

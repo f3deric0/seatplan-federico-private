@@ -15,7 +15,8 @@ import { FEATURE_KEYS, FEATURE_LABELS, cuisineLabel, formatDistance, loadPlace, 
 import { BookingEmbed } from "../restaurant/BookingPage";
 import { errorMessage } from "../restaurant/format";
 import { useLoad } from "../restaurant/useLoad";
-import { Gallery } from "./Gallery";
+import { Gallery, GalleryCredits } from "./Gallery";
+import { RestaurantReviews } from "./RestaurantReviews";
 import { instagramHref, metersBetween, shortDate, telHref, websiteHref } from "./pageModel";
 import { weeklyRows } from "./scheduleText";
 import "../restaurant/restaurant.css";
@@ -29,7 +30,8 @@ export default function RestaurantPage() {
   const title = state.status === "ready" ? state.data.name : "Restaurant";
   const hasMap = state.status === "ready" && state.data.lat !== null && state.data.lng !== null;
   return (
-    <PageShell title={title} width="wide" restaurantBrand headerActions={<PublicHeaderActions />} footerContent={hasMap && <MapCredits />}>
+    <PageShell title={title} width="wide" restaurantBrand headerActions={<PublicHeaderActions />}
+      footerContent={<>{hasMap && <MapCredits />}{state.status === "ready" && <GalleryCredits photos={state.data.photos} />}</>}>
       {state.status === "loading" && <Skeleton lines={6} label="Loading the restaurant" />}
       {state.status === "error" && <LoadError error={state.error} onRetry={() => reload()} />}
       {state.status === "ready" && <Page data={state.data} />}
@@ -49,13 +51,18 @@ function LoadError({ error, onRetry }: { error: unknown; onRetry: () => void }) 
 }
 
 function Page({ data }: { data: PublicRestaurant }) {
-  const { search } = useLocation();
+  const { pathname, search, hash } = useLocation();
   const book = useRef<HTMLElement>(null);
+  const reviewSection = useRef<HTMLElement>(null);
+  const showReviews = !data.preview && hash === "#reviews";
   const linked = new URLSearchParams(search).has("date");
   // Coming from a search with a time chosen: take the diner to the booking.
   useEffect(() => {
     if (linked && !data.preview) book.current?.scrollIntoView?.({ block: "start" });
   }, [linked, data.preview]);
+  useEffect(() => {
+    if (showReviews) reviewSection.current?.scrollIntoView?.();
+  }, [showReviews]);
 
   // The button moves keyboard focus with the page, so the next Tab lands in the booking, not back at the top.
   const goToBooking = (event: MouseEvent<HTMLAnchorElement>): void => {
@@ -127,7 +134,14 @@ function Page({ data }: { data: PublicRestaurant }) {
       </section>
 
       </div>
-      <div className="rp-columns">
+      {!data.preview && <nav className="rp-section-nav" aria-label="Restaurant sections">
+        <Link to={{ pathname, search, hash: "#details" }} aria-current={!showReviews ? "page" : undefined}>Details</Link>
+        <Link to={{ pathname, search, hash: "#reviews" }} aria-current={showReviews ? "page" : undefined}>Reviews</Link>
+      </nav>}
+      {showReviews && data.slug && <section id="reviews" ref={reviewSection} aria-label="Restaurant reviews">
+        <RestaurantReviews key={data.slug} slug={data.slug} summary={data.reviews} />
+      </section>}
+      <div id="details" className="rp-columns" hidden={showReviews}>
         <div>
           {data.description && (
             <section aria-labelledby="rp-about">
@@ -168,7 +182,7 @@ function Page({ data }: { data: PublicRestaurant }) {
           {data.lat !== null && data.lng !== null && (
             <div className="rp-map">
               <Suspense fallback={<Skeleton label="Loading the map" lines={3} />}>
-                <ResultsMap pins={[{ id: data.public_id, name: data.name, lat: data.lat, lng: data.lng }]} highlightedId={data.public_id} onSelect={() => undefined} />
+                <ResultsMap pins={[{ id: data.public_id, name: data.name, lat: data.lat, lng: data.lng }]} showNames />
               </Suspense>
             </div>
           )}

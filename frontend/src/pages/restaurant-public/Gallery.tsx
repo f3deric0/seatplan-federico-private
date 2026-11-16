@@ -2,7 +2,7 @@
 // a full-screen view with arrows, swipe, and Esc to close (the Dialog handles
 // Esc, focus and returning focus). Every photo has its alt text.
 import { useEffect, useRef, useState } from "react";
-import type { PhotoCredit, PublicPhoto } from "../../api/discovery";
+import type { PublicPhoto } from "../../api/discovery";
 import { Button, Dialog } from "../../design/components";
 import { PhotoImg } from "./PhotoImg";
 
@@ -12,11 +12,16 @@ export function coverFirst(photos: PublicPhoto[]): PublicPhoto[] {
   return cover <= 0 ? photos : [photos[cover], ...photos.filter((_, i) => i !== cover)];
 }
 
-function Credit({ credit }: { credit: PhotoCredit }) {
+export function GalleryCredits({ photos }: { photos: PublicPhoto[] }) {
+  const credited = photos.filter(photo => photo.credit);
+  if (credited.length === 0) return null;
   return (
-    <span className="rp-photo-credit">
-      Photo by <a href={credit.file}>{credit.author}</a> · <a href={credit.license_url}>{credit.license}</a>
-    </span>
+    <section className="rp-photo-credits" aria-label="Photo credits">
+      {credited.map(({ credit, url, alt }) => credit && <p key={url}>
+        Photo credit: <a href={credit.file}>{alt || "Source image"}</a> by {credit.author}
+        {" · "}<a href={credit.license_url}>{credit.license}</a>
+      </p>)}
+    </section>
   );
 }
 
@@ -51,7 +56,6 @@ export function Gallery({ photos, name, preview = false }: { photos: PublicPhoto
       <button type="button" className="rp-cover" onClick={() => setOpen(0)} aria-label={`Open photo 1 of ${ordered.length}: ${ordered[0].alt || name}`}>
         <PhotoImg url={ordered[0].url} alt={ordered[0].alt} preview={preview} />
       </button>
-      {ordered[0].credit && <Credit credit={ordered[0].credit} />}
       {ordered.length > 1 && (
         <ul className="rp-thumbs" aria-label="More photos">
           {ordered.slice(1).map((photo, index) => (
@@ -100,7 +104,6 @@ export function Gallery({ photos, name, preview = false }: { photos: PublicPhoto
             <figcaption role="status">
               Photo {(open ?? 0) + 1} of {ordered.length}
               {current.alt ? `: ${current.alt}` : ""}
-              {current.credit && <><br /><Credit credit={current.credit} /></>}
             </figcaption>
           </figure>
         )}

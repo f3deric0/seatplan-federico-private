@@ -5,6 +5,7 @@ import type { ClockTime, IsoDate, ServerSchedule } from "./restaurant";
 
 export type FeatureKey = "sun" | "view" | "accessible" | "terrace";
 export type Features = Record<FeatureKey, boolean>;
+export interface ReviewSummary { average: number | null; count: number }
 
 /** One restaurant on a search card or a map pin. */
 export interface RestaurantCard {
@@ -16,6 +17,7 @@ export interface RestaurantCard {
   cover_url: string | null;
   cover_alt: string | null;
   demo_booking?: boolean;
+  reviews?: ReviewSummary;
   address: string;
   lat: number | null;
   lng: number | null;
@@ -99,6 +101,7 @@ export interface PublicRestaurant {
   /** True when the owner is looking at a restaurant that is not published yet. */
   preview: boolean;
   demo_booking?: boolean;
+  reviews?: ReviewSummary;
   description: string;
   cuisines: string[];
   price_level: number | null;

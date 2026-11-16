@@ -12,6 +12,7 @@ from typing import Any
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     Date,
     DateTime,
     Float,
@@ -499,6 +500,28 @@ class Booking(Base):
 
     chosen_seat_id: Mapped[int | None] = mapped_column(ForeignKey("seats.id"))
     prefs: Mapped[list[str]] = mapped_column(JSON, default=list, server_default=text("'[]'"))
+
+
+class RestaurantReview(Base):
+    """One public review per customer and restaurant."""
+
+    __tablename__ = "restaurant_reviews"
+    __table_args__ = (
+        CheckConstraint("score BETWEEN 0 AND 10", name="ck_restaurant_review_score_10"),
+    )
+
+    venue_id: Mapped[int] = mapped_column(
+        ForeignKey("venues.id", ondelete="CASCADE"), primary_key=True
+    )
+    account_id: Mapped[int] = mapped_column(
+        ForeignKey("guest_accounts.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+    public_id: Mapped[str] = mapped_column(String(32), unique=True, default=new_public_id)
+    score: Mapped[int] = mapped_column(Integer)
+    comment: Mapped[str] = mapped_column(Text)
+    table_type: Mapped[str | None] = mapped_column(String(16))
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utc_now)
 
 
 class TableSlot(Base):
