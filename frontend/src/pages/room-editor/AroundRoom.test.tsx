@@ -11,16 +11,17 @@ const nearby = vi.hoisted(() => vi.fn());
 vi.mock("../../api/owner", () => ({ getOwnerProfile: profile }));
 vi.mock("../../maps/nearbyFeatures", () => ({ findNearby: nearby }));
 
-const show = (room: Room = createRoom("Room 1", 1000, 700)) => {
-  const onChange = vi.fn();
-  render(<MemoryRouter><AroundRoom room={room} onChange={onChange} /></MemoryRouter>);
-  return { onChange };
+const show = (room: Room = createRoom("Room 1", 1000, 700), side = 0) => {
+  const onChange = vi.fn(), onSide = vi.fn();
+  render(<MemoryRouter><AroundRoom room={room} side={side} onSide={onSide} onChange={onChange} /></MemoryRouter>);
+  return { onChange, onSide };
 };
 beforeEach(() => { profile.mockReset(); nearby.mockReset(); });
 
 it("lets the owner say what is outside a wall, and clear it", () => {
-  const { onChange } = show();
-  fireEvent.change(screen.getByLabelText("Wall"), { target: { value: "2" } });
+  const { onChange, onSide } = show(undefined, 2);
+  fireEvent.change(screen.getByLabelText("Wall"), { target: { value: "1" } });
+  expect(onSide).toHaveBeenCalledWith(1);
   fireEvent.change(screen.getByLabelText("What is outside"), { target: { value: "sea" } });
   const next = onChange.mock.calls[0][0] as Room;
   expect(surroundingOf(next, 2)?.kind).toBe("sea");
@@ -37,11 +38,12 @@ it("shows what is already outside the chosen wall", () => {
 it("suggests walls from the restaurant's location and applies one with a tap", async () => {
   profile.mockResolvedValue({ lat: 38.7, lng: -9.1 });
   nearby.mockResolvedValue([{ kind: "sea", metres: 120, bearing: 180 }, { kind: "park", metres: 300, bearing: 270 }]);
-  const { onChange } = show();
+  const { onChange, onSide } = show();
   fireEvent.click(screen.getByRole("button", { name: "Suggest from my location" }));
   expect(await screen.findByText("The sea, about 120 m to the south.")).toBeTruthy();
   expect(screen.getByText("A park, about 300 m to the west.")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Put it on Wall 3" })); // the wall facing south
+  expect(onSide).toHaveBeenCalledWith(2);
   const next = onChange.mock.calls[0][0] as Room;
   expect(surroundingOf(next, 2)?.kind).toBe("sea");
   expect(screen.getByRole("button", { name: "Put it on Wall 4" })).toBeTruthy(); // west
@@ -73,4 +75,17 @@ it("says so beside the choice when the wall has no space for a window", () => {
   fireEvent.change(screen.getByLabelText("What is outside"), { target: { value: "sea" } });
   expect(onChange).not.toHaveBeenCalled();
   expect(screen.getByRole("alert").textContent).toContain("no room on this wall");
+});
+
+it("adds a terrace against the chosen wall, and offers its width, depth and removal once it is there", () => {
+  const first = show(undefined, 2);
+  fireEvent.click(screen.getByRole("button", { name: "Add terrace" }));
+  const withTerrace = first.onChange.mock.calls[0][0] as Room;
+  expect(withTerrace.zones[0]).toMatchObject({ kind: "terrace", x: 0, y: 700, w: 1000 });
+  document.body.innerHTML = "";
+  const second = show(withTerrace, 2);
+  expect((screen.getByLabelText("Terrace width (m)") as HTMLInputElement).value).toMatch(/^10/);
+  expect((screen.getByLabelText("Terrace depth (m)") as HTMLInputElement).value).toMatch(/^2[,.]5/);
+  fireEvent.click(screen.getByRole("button", { name: "Remove terrace" }));
+  expect((second.onChange.mock.calls[0][0] as Room).zones).toHaveLength(0);
 });

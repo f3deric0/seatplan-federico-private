@@ -34,7 +34,7 @@ test("an owner builds a room on a phone, saves, reloads and sees the same", asyn
   // Two windows on two walls (north is always the top of the plan).
   await page.getByRole("button", { name: "Walls", exact: true }).tap();
   await page.getByRole("button", { name: "Add window", exact: true }).tap();
-  await page.getByLabel("Wall for opening").selectOption("1");
+  await page.getByLabel("Wall", { exact: true }).selectOption("1");
   await page.getByRole("button", { name: "Add window", exact: true }).tap();
 
   // A bar and eight tables.

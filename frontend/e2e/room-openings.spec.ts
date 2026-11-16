@@ -12,8 +12,6 @@ for (const width of [1440, 390]) {
     await page.getByRole("button", { name: "Walls", exact: true }).click();
     await page.getByRole("button", { name: "Add window", exact: true }).click();
     await expect(page.getByText(/^Faces /).first()).toBeVisible();
-    await page.getByLabel("Opening offset (cm)").fill("100");
-    await page.getByLabel("Opening offset (cm)").press("Tab");
     await page.getByLabel("View", { exact: true }).fill("Tagus river");
     await page.getByLabel("river", { exact: true }).check();
     await expect(page.getByRole("img", { name: "North is at the top of the plan" })).toBeVisible();
@@ -23,9 +21,6 @@ for (const width of [1440, 390]) {
     await expect(page.getByLabel("View", { exact: true })).toHaveValue("Tagus river");
     await page.getByRole("button", { name: "Add door", exact: true }).click();
     await page.getByLabel("This door is the main entrance").check();
-    await page.getByLabel("Opening offset (cm)").fill("110");
-    await page.getByLabel("Opening offset (cm)").press("Tab");
-    await expect(page.getByRole("alert")).toContainText("overlap");
     await page.getByRole("button", { name: "Undo", exact: true }).click();
     await expect(page.getByLabel("This door is the main entrance")).not.toBeChecked();
     await page.screenshot({ path: join(tmpdir(), `seatplan-room-openings-${width}.png`), fullPage: true });
@@ -44,7 +39,8 @@ test("opening gestures resize and move in single undo steps, and the north compa
   await page.mouse.down();
   await page.mouse.move(body.x + body.width / 2 + 100, body.y + body.height / 2, { steps: 5 });
   await page.mouse.up();
-  expect(Number(await page.getByLabel("Opening offset (cm)").inputValue())).toBeGreaterThan(0);
+  expect((await page.locator("[data-opening-body]").boundingBox())!.x).toBeGreaterThan(body.x + 20); // it moved along the wall
+  await expect(page.getByLabel("Opening offset (cm)")).toHaveCount(0); // the position is set on the plan, not in a field
   const end = (await page.locator('[data-opening-handle="end"]').boundingBox())!;
   await page.mouse.move(end.x + end.width / 2, end.y + end.height / 2);
   await page.mouse.down();
@@ -54,7 +50,7 @@ test("opening gestures resize and move in single undo steps, and the north compa
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(page.getByLabel("Opening width (cm)")).toHaveValue("120");
   await page.getByRole("button", { name: "Undo", exact: true }).click();
-  await expect(page.getByLabel("Opening offset (cm)")).toHaveValue("0");
+  expect(Math.abs((await page.locator("[data-opening-body]").boundingBox())!.x - body.x)).toBeLessThan(1);
   await expect(page.getByRole("img", { name: "North is at the top of the plan" })).toBeVisible();
   await expect(page.getByRole("slider", { name: "North direction" })).toHaveCount(0);
 });
@@ -96,8 +92,20 @@ test("a terrace is chosen on a wall, tables can stand on it, and it is saved", a
   await page.getByRole("button", { name: "Walls", exact: true }).click();
   await expect(page.locator("[data-room-object]")).toHaveCount(0);
   await page.getByLabel("Wall", { exact: true }).selectOption("2");
-  await page.getByLabel("Terrace outside this wall").check();
+  await page.getByRole("button", { name: "Add terrace", exact: true }).click();
   await expect(page.locator(".room-zone")).toHaveCount(1);
+  await expect(page.getByLabel("Terrace depth (m)")).toHaveValue(/2[,.]5/);
+  // Its walls are changed on the plan, like the room's: click the terrace, then pull a side.
+  const area = (await page.locator(".room-zone-terrace > rect").boundingBox())!;
+  await page.mouse.click(area.x + area.width / 2, area.y + area.height / 2);
+  const grip = (await page.locator('[data-fixture-grip="0,1"]').boundingBox())!;
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2 + 40, { steps: 5 });
+  await page.mouse.up();
+  const depth = Number((await page.getByLabel("Terrace depth (m)").inputValue()).replace(",", "."));
+  expect(depth).toBeGreaterThan(2.6);
+  await page.screenshot({ path: join(tmpdir(), "seatplan-room-terrace.png"), fullPage: true });
   await page.getByRole("button", { name: "Tables", exact: true }).click();
   await page.getByLabel("Put new tables").selectOption({ label: "On Terrace" });
   await page.getByRole("button", { name: "Place Round table", exact: true }).click();
@@ -108,5 +116,5 @@ test("a terrace is chosen on a wall, tables can stand on it, and it is saved", a
   await page.getByLabel("Room", { exact: true }).selectOption({ label: "Terrace room" });
   await page.getByRole("button", { name: "Walls", exact: true }).click();
   await page.getByLabel("Wall", { exact: true }).selectOption("2");
-  await expect(page.getByLabel("Terrace outside this wall")).toBeChecked();
+  await expect(page.getByRole("button", { name: "Remove terrace", exact: true })).toBeVisible();
 });

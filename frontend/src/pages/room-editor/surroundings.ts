@@ -102,8 +102,9 @@ export function setTerrace(room: Room, side: number, on: boolean): Room {
   const existing = terraceOn(room, side);
   if (!on) return existing ? removeZone(room, existing.key) : room;
   if (existing) return room;
-  const quad = strip(room, side, 0, TERRACE_DEPTH);
-  if (!quad) throw new Error("Choose a wall first.");
+  const quad = strip(room, side, 0, TERRACE_DEPTH), o = outward(room, side);
+  if (!quad || !o) throw new Error("Choose a wall first.");
+  if (Math.abs(o.normal.x) < 0.99 && Math.abs(o.normal.y) < 0.99) throw new Error("A terrace goes against a straight wall that runs across or up and down the plan.");
   const xs = quad.map(p => p.x), ys = quad.map(p => p.y), x = Math.round(Math.min(...xs)), y = Math.round(Math.min(...ys));
   const added = addZone(room, "terrace", { x, y });
   return editZone(added, added.zones.at(-1)!.key, { w: Math.max(100, Math.round(Math.max(...xs)) - x), h: Math.max(100, Math.round(Math.max(...ys)) - y) });
@@ -136,4 +137,22 @@ export function surroundingBands(room: Room, depth = 140): Band[] {
     bands.push({ side, surrounding, quad, label: { x: o.mid.x + o.normal.x * (inset + depth / 2), y: o.mid.y + o.normal.y * (inset + depth / 2) } });
   });
   return bands;
+}
+
+/** A terrace's length along its wall and how far it reaches out from it, in cm. */
+export function terraceSize(room: Room, side: number, zone: RoomZone): { along: number; depth: number } {
+  const o = outward(room, side);
+  return o && Math.abs(o.normal.y) > 0.5 ? { along: zone.w, depth: zone.h } : { along: zone.h, depth: zone.w };
+}
+
+/** Sets a terrace's length along its wall (kept centred) or its depth (the side against the wall stays put). */
+export function setTerraceSize(room: Room, side: number, patch: { along?: number; depth?: number }): Room {
+  const zone = terraceOn(room, side), o = outward(room, side);
+  if (!zone || !o) throw new Error("There is no terrace on this wall.");
+  const horizontal = Math.abs(o.normal.y) > 0.5, now = terraceSize(room, side, zone), along = patch.along ?? now.along, depth = patch.depth ?? now.depth;
+  if (!(along >= 50) || !(depth >= 50)) throw new Error("A terrace is at least 50 cm each way.");
+  const change: Partial<RoomZone> = horizontal
+    ? { w: along, x: zone.x + (zone.w - along) / 2, h: depth, y: o.normal.y > 0 ? zone.y : zone.y + zone.h - depth }
+    : { h: along, y: zone.y + (zone.h - along) / 2, w: depth, x: o.normal.x > 0 ? zone.x : zone.x + zone.w - depth };
+  return editZone(room, zone.key, Object.fromEntries(Object.entries(change).map(([k, v]) => [k, Math.round(v as number)])));
 }

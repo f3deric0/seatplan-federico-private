@@ -91,6 +91,7 @@
 .room-object-palette button[aria-pressed="true"] { background: var(--c-primary-soft); border-color: var(--c-primary); }
 .room-fixture > rect, .room-fixture > circle { fill: var(--c-surface-strong); stroke: var(--c-border-strong); stroke-width: 2; }
 .room-zone > rect { fill: var(--c-info-soft); fill-opacity: .4; stroke: var(--c-info); stroke-width: 2; stroke-dasharray: 10 6; }
+.room-zone-terrace > rect { fill: var(--c-accent-soft); fill-opacity: .8; stroke: var(--c-accent-bright); }
 .room-fixture.selected > rect, .room-fixture.selected > circle, .room-zone.selected > rect { stroke: var(--c-primary); stroke-width: 4; }
 .room-fixture text, .room-zone text { fill: var(--c-text); pointer-events: none; }
 .room-selected-table .room-table { stroke: var(--c-primary); stroke-width: 4; }

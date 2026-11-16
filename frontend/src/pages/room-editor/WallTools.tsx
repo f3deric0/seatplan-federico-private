@@ -25,9 +25,8 @@ export function WallTools({ room, selection, selected, onSelect, onSide, onChang
       }}>{entrance ? "Move main entrance here" : "Set main entrance"}</Button>
       {entranceError && <p role="alert" className="room-error">{entranceError}</p>}
     </section>
-    <AroundRoom room={room} onChange={onChange} />
-    <Select label="Wall for opening" value={String(side)} options={room.outline.points.map((_, i) => ({ value: String(i), label: `Wall ${i + 1}` }))} onChange={e => onSide({ kind: "side", index: Number(e.target.value) })} />
-    <h3>Add on this wall</h3>
+    <AroundRoom room={room} side={side} onSide={index => onSide({ kind: "side", index })} onChange={onChange} />
+    <h3>Add on Wall {side + 1}</h3>
     {(["window", "door"] as const).map(kind => <Button key={kind} variant="secondary" onClick={() => apply(() => { const next = addOpening(room, side, kind); onSelect(next.openings.at(-1)!.key); return next; })}>{kind === "window" ? "Add window" : "Add door"}</Button>)}
     <Select label="Selected opening" value={opening?.key ?? ""} options={[{ value: "", label: "Choose an opening" }, ...room.openings.map((o, i) => ({ value: o.key, label: `${o.kind === "glass_wall" ? "Glass wall" : o.kind === "door" ? "Door" : "Window"} ${i + 1} · Wall ${o.side + 1}${o.is_main_entrance ? " · Main entrance" : ""}` }))]} onChange={e => onSelect(e.target.value || null)} />
     {opening && <OpeningFields key={opening.key} room={room} opening={opening} onMainEntrance={on => apply(() => on ? markMainEntrance(room, opening.key) : updateOpening(room, opening.key, { is_main_entrance: false }))} onUpdate={change => apply(() => updateOpening(room, opening.key, change))} onNumberUpdate={change => { try { onChange(updateOpening(room, opening.key, change)); } catch (caught) { onError(caught instanceof Error ? caught.message : "Check the opening."); throw caught; } }} />}
@@ -43,7 +42,6 @@ function OpeningFields({ room, opening: o, onMainEntrance, onUpdate, onNumberUpd
   return <>
     <h3>{o.kind === "door" ? "Door" : o.kind === "glass_wall" ? "Glass wall" : "Window"} properties</h3>
     {o.kind !== "glass_wall" && <>
-      <RoomNumberField label="Opening offset (cm)" value={o.offset} min={0} max={sideLength(room.outline, o.side) - o.width} onCommit={offset => onNumberUpdate({ offset })} />
       <RoomNumberField label="Opening width (cm)" value={o.width} min={40} max={sideLength(room.outline, o.side) - o.offset} onCommit={width => onNumberUpdate({ width })} />
     </>}
     {o.kind === "glass_wall" && <p>Width: {Math.round(o.width)} cm · Entire wall</p>}

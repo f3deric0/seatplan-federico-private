@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { createRoom } from "./roomModel";
-import { assignTerraceTables, directionWord, setSurrounding, setTerrace, terraceOn, TERRACE_DEPTH, surroundingBands, surroundingOf, wallBearing, wallFacing } from "./surroundings";
+import { assignTerraceTables, directionWord, setSurrounding, setTerrace, setTerraceSize, terraceOn, terraceSize, TERRACE_DEPTH, surroundingBands, surroundingOf, wallBearing, wallFacing } from "./surroundings";
 import { addOpening } from "./wallModel";
 import { addTable } from "./tableModel";
 import { validateRooms } from "./validation";
@@ -84,4 +84,18 @@ it("draws the view beyond the terrace", () => {
   const r = setSurrounding(setTerrace(room(), 2, true), 2, "sea");
   const band = surroundingBands(r).find(b => b.side === 2)!;
   expect(Math.min(...band.quad.map(p => p.y))).toBe(700 + TERRACE_DEPTH);
+});
+
+it("sizes a terrace by its length along the wall and its depth, keeping the wall side fixed", () => {
+  const bottom = setTerrace(room(), 2, true); // below the room, y 700..950
+  const deeper = setTerraceSize(bottom, 2, { depth: 400 });
+  expect(deeper.zones[0]).toMatchObject({ y: 700, h: 400 });
+  const shorter = setTerraceSize(bottom, 2, { along: 600 });
+  expect(shorter.zones[0]).toMatchObject({ x: 200, w: 600 });
+  expect(terraceSize(shorter, 2, shorter.zones[0])).toEqual({ along: 600, depth: TERRACE_DEPTH });
+  const top = setTerrace(room(), 0, true); // above the room
+  expect(setTerraceSize(top, 0, { depth: 400 }).zones[0]).toMatchObject({ y: -400, h: 400 }); // still against the wall
+  const side = setTerrace(room(), 1, true); // right of the room
+  expect(setTerraceSize(side, 1, { depth: 400 }).zones[0]).toMatchObject({ x: 1000, w: 400 });
+  expect(() => setTerraceSize(bottom, 2, { depth: 10 })).toThrow("at least 50");
 });

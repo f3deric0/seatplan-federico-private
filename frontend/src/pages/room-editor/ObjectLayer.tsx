@@ -7,14 +7,14 @@ import type { IconKind } from "./FixtureIcon";
 import { editFixture, editZone, FIXTURE_NAMES } from "./roomObjects";
 import { snappedPoint } from "./shapeModel";
 
-interface Props { room: Room; kind: "fixture" | "zone"; editing: boolean; selected: string | null; grid: boolean; zoom: number; toWorld: (event: { clientX: number; clientY: number }) => Point; onSelect: (key: string) => void; onChange: (room: Room, transient?: boolean) => void; onDragStart: () => void }
+interface Props { room: Room; kind: "fixture" | "zone"; only?: (item: RoomFixture | RoomZone) => boolean; editing: boolean; selected: string | null; grid: boolean; zoom: number; toWorld: (event: { clientX: number; clientY: number }) => Point; onSelect: (key: string) => void; onChange: (room: Room, transient?: boolean) => void; onDragStart: () => void }
 interface Resize { key: string; base: Room; item: RoomFixture | RoomZone; sx: number; sy: number; started: boolean }
 const MIN_SIZE = 20;
 // The eight grips of a selected element: the corners and the middle of each side.
 const GRIPS: [number, number, string][] = [[-1, -1, "nwse-resize"], [0, -1, "ns-resize"], [1, -1, "nesw-resize"], [1, 0, "ew-resize"], [1, 1, "nwse-resize"], [0, 1, "ns-resize"], [-1, 1, "nesw-resize"], [-1, 0, "ew-resize"]];
 const turn = (p: Point, degrees: number): Point => { const a = degrees * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return { x: p.x * c - p.y * s, y: p.x * s + p.y * c }; };
 
-export function ObjectLayer({ room, kind, editing, selected, grid, zoom, toWorld, onSelect, onChange, onDragStart }: Props) {
+export function ObjectLayer({ room, kind, only, editing, selected, grid, zoom, toWorld, onSelect, onChange, onDragStart }: Props) {
   const drag = useRef<{ key: string; base: Room; start: Point; at: Point; last: Point; started: boolean } | null>(null);
   // A grip answers only when the cursor is right on its small square, so the rest of the element stays free to drag.
   // A finger is less exact, so a touch screen gets a larger target.
@@ -25,7 +25,7 @@ export function ObjectLayer({ room, kind, editing, selected, grid, zoom, toWorld
   // The grips belong to an element the owner has clicked on the plan, not to one that was merely added or picked from a list.
   const [gripped, setGripped] = useState<string | null>(null);
   useEffect(() => { if (selected !== gripped) setGripped(null); }, [selected]); // eslint-disable-line react-hooks/exhaustive-deps
-  const items = kind === "fixture" ? room.fixtures : room.zones;
+  const items = (kind === "fixture" ? room.fixtures : room.zones).filter(item => !only || only(item));
   // Pulling a grip: the opposite side or corner stays put, and a fixed element never leaves the room.
   const stretch = (event: PointerEvent<SVGGElement>) => {
     const r = resize.current!, f = r.item;
@@ -75,7 +75,7 @@ export function ObjectLayer({ room, kind, editing, selected, grid, zoom, toWorld
       const font = Math.max(13 / zoom, 15), small = Math.min(item.w, item.h);
       // Fixed elements and the two zones an owner can add wear an icon.
       const iconKind: IconKind | null = "label" in item ? item.kind : item.kind === "terrace" || item.kind === "quiet" ? item.kind : null, icon = iconKind && small >= font * 2.6 ? Math.min(32, small * 0.45) : 0;
-      return <g key={item.key} data-room-object={item.key} className={`room-${kind}${selected === item.key ? " selected" : ""}`} transform={`translate(${item.x + item.w / 2} ${item.y + item.h / 2}) rotate(${rotation})`} onPointerDown={event => {
+      return <g key={item.key} data-room-object={item.key} className={`room-${kind}${"kind" in item && kind === "zone" ? ` room-zone-${item.kind}` : ""}${selected === item.key ? " selected" : ""}`} transform={`translate(${item.x + item.w / 2} ${item.y + item.h / 2}) rotate(${rotation})`} onPointerDown={event => {
         if (!editing) return;
         event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); onSelect(item.key); setGripped(item.key);
         drag.current = { key: item.key, base: room, start: toWorld(event), at: item, last: { x: item.x, y: item.y }, started: false };

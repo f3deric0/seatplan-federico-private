@@ -181,3 +181,9 @@ Less text, fewer controls: the panels carry almost no instructions (only where a
 "Selected corner" list, "Bulge" field or "Make straight" button: corners are chosen on the plan and a wall is bent by dragging its
 midpoint (under 12 cm of bulge snaps to straight; a double tap also straightens). The Fixed panel has no "Rename label" or
 "Rotate 90°": elements turn with the grip on the plan.
+
+Walls tab: one "Wall" chooser (in Around the room) drives the terrace and the Add window / Add door buttons; there is no separate
+"Wall for opening". Openings have a width field but no offset field (drag along the wall). The terrace is an "Add terrace" button
+(a rectangular terrace zone flush against a straight wall, 250 cm deep; surroundings.ts setTerrace / setTerraceSize / terraceSize);
+in the Walls tab terrace zones are selectable and show the zone grips so their sides can be pulled, and the panel has Terrace
+width / Terrace depth fields and Remove terrace. A terrace needs an axis-aligned wall; curved or slanted walls refuse one.
