@@ -121,3 +121,27 @@ test("a selected fixed element is resized by pulling its grips, like a picture i
   await page.mouse.click(canvas.x + 20, canvas.y + 20); // empty space beside the room
   await expect(page.locator("[data-fixture-grip]")).toHaveCount(0);
 });
+
+test("a fixed element is turned with its rotation grip or the Rotate 90 button", async ({ page, request }) => {
+  const links = await demoLinks(request);
+  await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
+  await page.getByRole("button", { name: "Fixed", exact: true }).click();
+  await page.getByRole("button", { name: "Place TV", exact: true }).click();
+  await expect(page.locator("[data-fixture-rotate]")).toHaveCount(0); // not clicked yet
+  const tv = (await page.locator(".room-fixture > rect").last().boundingBox())!;
+  await page.mouse.click(tv.x + tv.width / 2, tv.y + tv.height / 2);
+  await expect(page.locator("[data-fixture-rotate]")).toHaveCount(1);
+  const rotation = page.getByLabel("Object rotation (degrees)");
+  await expect(rotation).toHaveValue("0");
+  const grip = (await page.locator("[data-fixture-rotate] circle").last().boundingBox())!;
+  const centre = { x: tv.x + tv.width / 2, y: tv.y + tv.height / 2 };
+  await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(centre.x + 120, centre.y, { steps: 8 }); // swing it to the right of the centre
+  await page.mouse.up();
+  await expect(rotation).toHaveValue("90");
+  await page.getByRole("button", { name: "Rotate 90°", exact: true }).click();
+  await expect(rotation).toHaveValue("180");
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(rotation).toHaveValue("90");
+});

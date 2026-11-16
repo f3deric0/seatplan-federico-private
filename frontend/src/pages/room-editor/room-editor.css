@@ -49,6 +49,7 @@
 .room-object-palette button { display: flex; align-items: center; justify-content: center; gap: var(--space-2); }
 .room-object-palette svg { width: 22px; height: 22px; flex: none; }
 .room-object-palette svg path { fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.room-rotate-stem { stroke: var(--c-primary); stroke-width: 1.5; vector-effect: non-scaling-stroke; pointer-events: none; }
 .room-handle-hit { fill: transparent; cursor: grab; }
 .room-handle { fill: var(--c-surface); stroke: var(--c-primary); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; }
 .room-handle.selected { fill: var(--c-primary); stroke: var(--c-text); }

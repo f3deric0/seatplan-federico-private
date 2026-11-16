@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { FixtureTools } from "./FixtureTools";
 import { createRoom } from "./roomModel";
-import { addFixture } from "./roomObjects";
+import { addFixture, editFixture } from "./roomObjects";
 import type { Room } from "./roomModel";
 
 const show = (room: Room, selected: string | null = null, free = false) => {
@@ -65,4 +65,20 @@ it("names the field Rename label", () => {
   show(room, room.fixtures[0].key);
   expect(screen.getByLabelText("Rename label")).toBeTruthy();
   expect(screen.queryByLabelText("Fixture label")).toBeNull();
+});
+
+it("turns the chosen element a quarter at a time", () => {
+  const room = addFixture(empty(), "bar", { x: 100, y: 100 });
+  const { onChange } = show(room, room.fixtures[0].key);
+  fireEvent.click(screen.getByRole("button", { name: "Rotate 90°" }));
+  expect((onChange.mock.calls[0][0] as Room).fixtures[0].rotation).toBe(90);
+});
+
+it("says so beside the button when a turn would take the element out of the room", () => {
+  const added = addFixture(createRoom("Narrow", 400, 100), "bar", { x: 50, y: 20 });
+  const room = editFixture(added, added.fixtures[0].key, { w: 300, h: 60 }); // fits lying down, not standing up
+  const { onChange } = show(room, room.fixtures[0].key);
+  fireEvent.click(screen.getByRole("button", { name: "Rotate 90°" }));
+  expect(onChange).not.toHaveBeenCalled();
+  expect(screen.getByRole("alert").textContent).toContain("inside the room");
 });

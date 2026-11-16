@@ -189,3 +189,9 @@ never goes below 20 cm and stops where the element would leave the room. The wid
 alternative.
 
 The grips show only for an element the owner has clicked on the plan (ObjectLayer keeps `gripped`): one just added from the palette, or picked from the list, is selected but has no grips until it is clicked. A click on empty floor in the Fixed or Zones tool lets go of the selection.
+
+A clicked element also shows a rotation grip (data-fixture-rotate) on a stem above its top edge. Dragging it makes the element
+face the pointer, in 15 degree steps unless placement is free, and it stops at the last angle that keeps the element in the room.
+The Fixed panel has a Rotate 90 degrees button (an inline error says when the turn does not fit) and the rotation field stays as the
+keyboard alternative. The icon and name are drawn upright whatever the angle.
+

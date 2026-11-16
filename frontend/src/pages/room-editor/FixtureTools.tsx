@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button, Checkbox, Select } from "../../design/components";
 import { ObjectFields, ObjectTextField, OBJECT_DRAG_TYPE } from "./ObjectFields";
 import { FixtureIcon } from "./FixtureIcon";
@@ -9,6 +10,7 @@ export function FixtureTools({ room, selected, free, onFree, onSelect, onPlace, 
   const item = room.fixtures.find(f => f.key === selected);
   const update = (patch: Partial<RoomFixture>) => { if (item) onChange(editFixture(room, item.key, patch)); };
   const safe = (patch: Partial<RoomFixture>) => { try { update(patch); } catch (caught) { onError(caught instanceof Error ? caught.message : "Check the fixed element."); } };
+  const [turnError, setTurnError] = useState<{ key: string; message: string } | null>(null);
   return <div className="room-form">
     <p>Tap an element to add it to the room, then drag it where it goes.</p>
     <div className="room-object-palette">{FIXTURE_PALETTE.map(kind => <button type="button" draggable key={kind} onDragStart={event => { event.dataTransfer.setData(OBJECT_DRAG_TYPE, `fixture:${kind}`); event.dataTransfer.effectAllowed = "copy"; }} aria-label={`Place ${FIXTURE_NAMES[kind]}`} onClick={() => onPlace(`fixture:${kind}`)}><svg viewBox="-12 -12 24 24" aria-hidden="true"><FixtureIcon kind={kind} size={24} /></svg>{FIXTURE_NAMES[kind]}</button>)}</div>
@@ -16,6 +18,8 @@ export function FixtureTools({ room, selected, free, onFree, onSelect, onPlace, 
     {room.fixtures.length > 1 && <Select label="Selected fixed element" value={item?.key ?? ""} options={[{ value: "", label: "Choose an element" }, ...room.fixtures.map((f, i) => ({ value: f.key, label: f.label || `${FIXTURE_NAMES[f.kind]} ${i + 1}` }))]} onChange={e => onSelect(e.target.value || null)} />}
     {item && <div key={item.key} className="room-form">
       <ObjectTextField label="Rename label" value={item.label} maxLength={40} onCommit={label => update({ label })} />
+      <Button variant="secondary" onClick={() => { try { update({ rotation: (item.rotation + 90) % 360 }); setTurnError(null); } catch (caught) { setTurnError({ key: item.key, message: caught instanceof Error ? caught.message : "It does not fit when turned." }); } }}>Rotate 90°</Button>
+      {turnError?.key === item.key && <p role="alert" className="room-error">{turnError.message}</p>}
       {item.kind === "awning" && <p>Awning shade applies to outdoor rooms.</p>}
       <details className="room-more">
         <summary>Size, position and shape</summary>
