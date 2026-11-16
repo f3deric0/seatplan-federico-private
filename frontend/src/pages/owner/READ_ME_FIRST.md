@@ -24,7 +24,7 @@ The wizard session key follows the loaded profile id, avoiding stale initial
 state when /owner/new changes to the saved URL. Slugs are editable only in drafts.
 The next upload/hours/room/review steps join this flow in their own plan tasks.
 
-ProfileForms contains explicit geolocation and coordinate fields; Leaflet is
+ProfileForms contains the address, coordinate fields and the pin; placing the pin fills an empty address (never one the owner typed); Leaflet is
 lazy loaded. Server validation is authoritative for URLs, cuisines and timezones.
 Client controls prevent over three cuisines and count description characters.
 

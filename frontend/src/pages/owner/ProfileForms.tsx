@@ -1,8 +1,10 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Button, Checkbox, Field, Select, Skeleton } from "../../design/components";
 import { CUISINES } from "../../api/owner";
 import type { OwnerProfile, ProfileChanges } from "../../api/owner";
 import { phoneError } from "../restaurant/validation";
+import { reverseGeocode } from "../../maps/reverseGeocode";
+import type { GeoPoint } from "../../maps/reverseGeocode";
 const LeafletMap = lazy(() => import("../../maps/LeafletMap"));
 
 export const EMPTY_PROFILE: OwnerProfile = { public_id: "", status: "draft", slug: "", name: "", description: "", cuisines: [], price_level: 2, phone: null, website: null, instagram: null, google_maps_url: null, address: "", lat: null, lng: null, timezone: "Europe/Lisbon" };
@@ -34,15 +36,34 @@ export function IdentityForm({ profile, label, onSave }: { profile: OwnerProfile
 export function LocationForm({ profile, label, onSave }: { profile: OwnerProfile; label: string; onSave: (changes: ProfileChanges) => Promise<void> }) {
   const [address, setAddress] = useState(profile.address), [lat, setLat] = useState(profile.lat?.toString() ?? ""), [lng, setLng] = useState(profile.lng?.toString() ?? "");
   const [timezone, setTimezone] = useState(profile.timezone), [busy, setBusy] = useState(false), [error, setError] = useState("");
-  const [locating, setLocating] = useState(false);
+  const [looking, setLooking] = useState(false), [lookupNote, setLookupNote] = useState("");
+  const addressRef = useRef(address), autoFilled = useRef(profile.address), timer = useRef<number>(), request = useRef<AbortController | null>(null);
+  addressRef.current = address;
+  useEffect(() => () => { window.clearTimeout(timer.current); request.current?.abort(); }, []);
+  // Fills the address from a pin. It never overwrites an address the owner typed.
+  const lookup = (at: GeoPoint) => {
+    window.clearTimeout(timer.current); request.current?.abort();
+    timer.current = window.setTimeout(() => {
+      const controller = new AbortController(); request.current = controller;
+      setLooking(true); setLookupNote("");
+      reverseGeocode(at, controller.signal).then(found => {
+        if (controller.signal.aborted) return;
+        if (!found) { setLookupNote("No address found for this pin. Type the address in."); return; }
+        if (!addressRef.current.trim() || addressRef.current === autoFilled.current) { autoFilled.current = found; setAddress(found); setLookupNote("Address filled from the pin. Check it and edit it if needed."); }
+        else setLookupNote("");
+      }).catch(() => { if (!controller.signal.aborted) setLookupNote("Could not look up the address. Type the address in."); })
+        .finally(() => { if (!controller.signal.aborted) setLooking(false); });
+    }, 600);
+  };
   const zones = ["Europe/Lisbon", "Atlantic/Madeira", "Atlantic/Azores"];
   const valid = lat.trim() !== "" && lng.trim() !== "" && Number.isFinite(Number(lat.replace(",", "."))) && Math.abs(Number(lat.replace(",", "."))) <= 90 && Number.isFinite(Number(lng.replace(",", "."))) && Math.abs(Number(lng.replace(",", "."))) <= 180;
   const point = valid ? { lat: Number(lat.replace(",", ".")), lng: Number(lng.replace(",", ".")) } : null;
   return <form className="owner-form" onSubmit={event => { event.preventDefault(); if (!point) { setError("Place the pin or enter valid latitude and longitude."); return; } setBusy(true); setError(""); void onSave({ address, ...point, timezone }).catch(caught => setError(caught instanceof Error ? caught.message : "Could not save the location.")).finally(() => setBusy(false)); }}>
     <Field label="Address" value={address} required maxLength={200} onChange={e => setAddress(e.target.value)} />
-    <Suspense fallback={<Skeleton label="Loading the location map" lines={4} />}><LeafletMap point={point} onChange={p => { setLat(p.lat.toFixed(6)); setLng(p.lng.toFixed(6)); }} /></Suspense>
-    <p>{point ? `Pin at ${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}.` : "Place the pin on your building."} The sun on your tables is worked out from this point, so place it on your building.</p>
-    <Button variant="secondary" busy={locating} onClick={() => { if (!navigator.geolocation) { setError("Location is unavailable. Place the pin manually."); return; } setLocating(true); navigator.geolocation.getCurrentPosition(position => { setLat(position.coords.latitude.toFixed(6)); setLng(position.coords.longitude.toFixed(6)); setLocating(false); setError(""); }, () => { setLocating(false); setError("Could not get your location. Place the pin manually."); }, { timeout: 10000, maximumAge: 0 }); }}>Use my current location</Button>
+    <Suspense fallback={<Skeleton label="Loading the location map" lines={4} />}><LeafletMap point={point} onChange={p => { setLat(p.lat.toFixed(6)); setLng(p.lng.toFixed(6)); setError(""); lookup(p); }} /></Suspense>
+    <p>The sun on your tables is worked out from the pin, so place it on your building.</p>
+    {looking && <p role="status">Looking up the address…</p>}
+    {lookupNote && <p role="status">{lookupNote}</p>}
     <div className="owner-location-fields"><Field label="Latitude" value={lat} inputMode="decimal" required onChange={e => setLat(e.target.value)} /><Field label="Longitude" value={lng} inputMode="decimal" required onChange={e => setLng(e.target.value)} /></div>
     <Select label="Time zone" value={zones.includes(timezone) ? timezone : "other"} options={[...zones.map(value => ({ value, label: value })), { value: "other", label: "Other…" }]} onChange={e => setTimezone(e.target.value === "other" ? "" : e.target.value)} />
     {!zones.includes(timezone) && <Field label="Other time zone" value={timezone} required maxLength={64} onChange={e => setTimezone(e.target.value)} />}

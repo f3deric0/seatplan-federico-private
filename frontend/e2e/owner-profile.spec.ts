@@ -4,7 +4,7 @@ import { demoLinks, expect, lastPart, test } from "./fixtures";
 import { openOwnerRoom } from "./room-session";
 import AxeBuilder from "@axe-core/playwright";
 
-test("owner saves identity and resumes the location step", async ({ page, request, context }) => {
+test("owner saves identity and resumes the location step", async ({ page, request }) => {
   const links = await demoLinks(request);
   await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
   await page.goto("/owner/new");
@@ -26,10 +26,6 @@ test("owner saves identity and resumes the location step", async ({ page, reques
   await expect(page.getByLabel("Latitude", { exact: true })).not.toHaveValue(beforeDrag);
   await page.reload();
   await expect(page.getByRole("heading", { name: "Location", exact: true })).toBeVisible();
-  await context.grantPermissions(["geolocation"]);
-  await context.setGeolocation({ latitude: 38.71, longitude: -9.12 });
-  await page.getByRole("button", { name: "Use my current location", exact: true }).click();
-  await expect(page.getByLabel("Latitude", { exact: true })).toHaveValue("38.710000");
   await page.getByLabel("Address", { exact: true }).fill("Rua do Sol, Lisboa");
   await page.getByLabel("Latitude", { exact: true }).fill("38.7223");
   await page.getByLabel("Longitude", { exact: true }).fill("-9.1393");

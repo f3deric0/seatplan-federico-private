@@ -122,7 +122,7 @@ Números atuais: **110 operações de API**, **30 tabelas** na base de dados, ce
 
 ### 6.2 Assistente "Add a restaurant" (6 passos que gravam um a um; dá para sair e voltar)
 1. **Identity:** nome, descrição (300), 1 a 3 cozinhas, preço, telefone, website, Instagram, link do Google Maps (validados). O **slug** gera-se do nome (sem acentos, `-2`, `-3` se repetido), editável em rascunho e **fixo depois de publicado**.
-2. **Location:** morada + mapa (Leaflet) onde se toca para pôr o pin e se arrasta para afinar; "Use my current location" só ao carregar; campos de latitude e longitude como alternativa por teclado.
+2. **Location:** morada + mapa (Leaflet) onde se toca para pôr o pin e se arrasta para afinar; a morada preenche-se sozinha a partir do pin (OpenStreetMap), sem substituir uma morada escrita à mão; campos de latitude e longitude como alternativa por teclado.
 3. **Photos:** até **10 fotos**, redimensionadas no browser (JPEG/PNG/WebP, ≤ 800 KB), escolher a capa, ordenar, **descrição de cada foto**; uma foto de vista por janela. Validação dos cabeçalhos da imagem no servidor. Privadas enquanto em rascunho.
 4. **Hours:** **modelo inicial** ("Lunch 12:00-15:00 and Dinner 19:00-23:00, Tuesday to Sunday") que só grava quando o dono carrega em "Use this"; serviços por dia, minutos entre horas, **limite de convidados por hora de chegada**, tempos de rotação por tamanho, dias fechados com motivo.
 5. **Rooms:** o editor (secção 7).
