@@ -52,7 +52,7 @@ a second tab saved before you, SeatPlan tells you and keeps your work so you can
 
 North is always the **top of the plan**, and a small compass in the top right corner reminds you of it. Draw your rooms with north at the top: the sun, the way each window faces and what diners read about the light all follow from that. A room you saved with another north is opened with north at the top, and keeps its old direction until you press **Save**.
 
-You can have several rooms (for example **Main room** and **Terrace**); an outdoor room is marked as such. The editor warns you as
+When the floor plan is done, press **Continue to review** at the bottom (it says *Save and continue to review* when something is not saved yet, and saves first). You can have several rooms (for example **Main room** and **Terrace**); an outdoor room is marked as such. The editor warns you as
 you draw: a table outside the walls, two tables overlapping, a window with no wall under it, windows but no north. Warnings do
 not stop you saving a draft; errors stop you publishing.
 

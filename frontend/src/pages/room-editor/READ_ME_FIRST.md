@@ -190,3 +190,6 @@ width / Terrace depth fields and Remove terrace. A terrace on a sloping wall is 
 
 Window properties show only the opening width (no top height, view text, view tags, night view, view photo link or sun setting). The
 view of a window is still set from Around the room; the sun rule keeps its default "auto".
+
+Way forward: the footer has a primary button "Continue to review" (RoomEditorPage). With unsaved changes it reads "Save and continue to
+review", saves, and goes to /owner/:venueId/review only if the save worked (otherwise the notice shows and the page stays).

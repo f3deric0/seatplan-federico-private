@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ApiError, getVenue } from "../../api/client";
 import { getRooms } from "../../api/rooms";
 import type { RoomsAnswer } from "../../api/rooms";
@@ -71,6 +71,13 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
   const dirty = draft.dirty;
   const problems = useMemo(() => validateRooms(history.present.rooms), [history.present]);
   useUnsavedGuard(dirty);
+  // Moving on to the next step: saves first when there is something unsaved, and stays put if the save fails.
+  const navigate = useNavigate(), [advancing, setAdvancing] = useState(false);
+  const next = `/owner/${encodeURIComponent(venueId)}/review`;
+  useEffect(() => {
+    if (!advancing || draft.state === "saving") return;
+    if (!dirty) navigate(next); else setAdvancing(false);
+  }, [advancing, dirty, draft.state, navigate, next]);
   const addPoint = (point: Point) => {
     const changed = appendCorner(room, point);
     if (changed !== room) history.commit(replaceRoom(history.present, changed));
@@ -165,7 +172,7 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
         {!drawing && tool === "Fixed" && <FixtureTools room={room} selected={object} free={free} onFree={setFree} onSelect={setObject} onPlace={value => placeObject(centreOfRoom(), value)} onChange={changeRoom} onError={setError} />}
         {!drawing && tool === "Tables" && <div className="room-form"><TableTools room={room} selected={object} onSelect={key => updateKeys(key ? [key] : [])} onPlace={(value, zoneKey) => { const zone = room.zones.find(z => z.key === zoneKey); placeObject(zone ? { x: zone.x + zone.w / 2, y: zone.y + zone.h / 2 } : centreOfRoom(), value); }} onChange={changeRoom} onError={setError} /></div>}
       </div></aside>
-    </div><footer className="room-status">{area.toLocaleString("pt-PT", { maximumFractionDigits: 1 })} m²<ProblemList problems={problems} onSelect={selectProblem} /></footer>
+    </div><footer className="room-status">{area.toLocaleString("pt-PT", { maximumFractionDigits: 1 })} m²<ProblemList problems={problems} onSelect={selectProblem} /><Button className="room-continue" disabled={drawing || draft.state === "saving"} busy={advancing} onClick={() => { if (!dirty) navigate(next); else { setAdvancing(true); void draft.save(); } }}>{dirty ? "Save and continue to review" : "Continue to review"}</Button></footer>
     {adding && <NewRoomDialog defaultName={nextRoomName(history.present.rooms)} onClose={() => setAdding(false)} onCreate={(created, draw) => { history.commit(addRoom(history.present, created)); setSelectedRoom(created.key); setDrawingRoom(draw ? created.key : null); setSelection(null); setTool("Shape"); setAdding(false); }} />}
   </section>;
 }

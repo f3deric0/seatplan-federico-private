@@ -196,3 +196,5 @@
   .room-table-tools, .room-other-tools { flex: 0 0 auto; flex-wrap: nowrap; gap: 0; }
   .room-table-tools .btn-primary { margin-inline: var(--space-1); }
 }
+
+.room-continue { margin-left: auto; align-self: center; }
