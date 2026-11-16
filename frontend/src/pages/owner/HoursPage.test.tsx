@@ -55,7 +55,7 @@ describe("Opening hours step", () => {
     open();
     expect(await screen.findByText(/Lunch 12:00-15:00 and Dinner 19:00-23:00, Tuesday to Sunday/)).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Use this" }));
-    expect(await screen.findByRole("link", { name: /Next: rooms/ })).toBeTruthy();
+    expect(await screen.findByRole("link", { name: /Continue to rooms/ })).toBeTruthy();
     expect(puts).toHaveLength(1);
     expect((puts[0] as { service_periods: unknown[] }).service_periods).toHaveLength(12);
     expect(screen.queryByRole("button", { name: "Use this" })).toBeNull(); // saved: the proposal is gone
@@ -70,7 +70,7 @@ describe("Opening hours step", () => {
     open();
     expect(await screen.findByRole("button", { name: "Save schedule" })).toBeTruthy();
     expect(screen.queryByText(/Tuesday to Sunday/)).toBeNull();
-    expect(screen.getByRole("link", { name: /Next: rooms/ }).getAttribute("href")).toBe(`/owner/${VID}/rooms`);
+    expect(screen.getByRole("link", { name: /Continue to rooms/ }).getAttribute("href")).toBe(`/owner/${VID}/rooms`);
   });
 
   it("edits matching weekdays together and keeps a service with different booking rules", async () => {

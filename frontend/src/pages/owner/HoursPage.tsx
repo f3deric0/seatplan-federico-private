@@ -32,10 +32,10 @@ export default function HoursPage() {
         />
       )}
       {state.status === "ready" && (state.data.services.length > 0 || custom) && <ScheduleEditor key={venueId} venueId={venueId} saved={state.data} onSaved={(next) => { setCustom(true); setData(next); }} servicesEditor={WeeklyServices} heading={false} />}
-      <nav className="owner-card-links" aria-label="Setup steps">
-        <Link to={`/owner/${encodeURIComponent(venueId)}/photos`}>← Photos</Link>
-        <Link to={`/owner/${encodeURIComponent(venueId)}/rooms`}>Next: rooms →</Link>
-        <Link to={`/owner/${encodeURIComponent(venueId)}/review`}>Review and publish</Link>
+      <nav className="ow-page-next" aria-label="Setup steps">
+        <Link className="btn btn-secondary" to={`/owner/${encodeURIComponent(venueId)}/photos`}>Back to photos</Link>
+        <Link className="btn btn-secondary" to={`/owner/${encodeURIComponent(venueId)}/review`}>Review and publish</Link>
+        <Link className="btn btn-primary" to={`/owner/${encodeURIComponent(venueId)}/rooms`}>Continue to rooms</Link>
       </nav>
     </OwnerShell>
   );

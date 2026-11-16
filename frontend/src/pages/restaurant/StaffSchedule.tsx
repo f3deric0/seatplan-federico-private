@@ -201,7 +201,7 @@ function TurnTimesEditor({ draft, onChange }: { draft: Schedule; onChange: (s: S
           </li>
         ))}
       </ul>
-      <Button variant="secondary" onClick={() => set([...turns, { max_party: 8, minutes: 150 }])}>
+      <Button variant="secondary" onClick={() => set([...turns, { max_party: 8, minutes: 90 }])}>
         Add a turn time
       </Button>
     </section>

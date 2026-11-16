@@ -15,9 +15,9 @@ export const TEMPLATE_SCHEDULE: ServerSchedule = {
   ]),
   turn_times: [
     { max_party: 2, minutes: 90 },
-    { max_party: 4, minutes: 105 },
-    { max_party: 6, minutes: 120 },
-    { max_party: 10, minutes: 150 },
+    { max_party: 4, minutes: 90 },
+    { max_party: 6, minutes: 90 },
+    { max_party: 10, minutes: 90 },
   ],
   blackout_dates: [],
 };

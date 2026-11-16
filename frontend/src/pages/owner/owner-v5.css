@@ -264,7 +264,7 @@
 .ow-preview h3, .ow-preview p { margin: 0; }
 .ow-preview-cover { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-md); }
 .ow-preview-empty { display: grid; place-items: center; background: var(--c-surface-sunk); color: var(--c-text-muted); padding: var(--space-3); }
-.ow-page-next { display: flex; justify-content: flex-end; margin-top: var(--space-4); }
+.ow-page-next { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-4); }
 .ow-services { list-style: none; margin: 0; padding: 0; }
 .ow-services li { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--c-border); }
 .ow-services p { margin: var(--space-1) 0 0; }
