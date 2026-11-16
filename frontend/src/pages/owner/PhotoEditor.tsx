@@ -28,12 +28,16 @@ function Gallery({ venueId, openingKey, initial }: { venueId: string; openingKey
   const [photos, setPhotos] = useState(initial), [busy, setBusy] = useState(false), [error, setError] = useState("");
   const items = openingKey ? photos.filter(p => p.kind === "view" && String(p.opening_id) === openingKey.replace(/^o/, "")) : photos.filter(p => p.kind === "gallery");
   const maximum = openingKey ? 1 : 10;
+  // A lone gallery photo is the cover by definition. The cover never shows a description field or reorder buttons.
+  const sole = !openingKey && items.length === 1 ? items[0] : null;
+  const isCover = (photo: OwnerPhoto) => !openingKey && (photo.is_cover || photo.id === sole?.id);
   const perform = async (change: () => Promise<unknown>) => {
     setBusy(true); setError("");
     try { await change(); setPhotos(await listPhotos(venueId)); }
     catch (caught) { setError(caught instanceof Error ? caught.message : "Could not change the gallery."); setPhotos(await listPhotos(venueId).catch(() => photos)); }
     finally { setBusy(false); }
   };
+  useEffect(() => { if (sole && !sole.is_cover && !busy) void perform(() => orderPhotos(venueId, [sole.id], sole.id)); }, [sole?.id, sole?.is_cover]); // eslint-disable-line react-hooks/exhaustive-deps
   const add = (files: File[]) => {
     if (!files.length || busy) return;
     if (items.length + files.length > maximum) { setError(`You can have at most ${maximum} ${openingKey ? "view photo" : "gallery photos"}.`); return; }
@@ -52,10 +56,10 @@ function Gallery({ venueId, openingKey, initial }: { venueId: string; openingKey
     <p role="status">{busy ? "Saving photos…" : `${items.length} of ${maximum} photos`}</p>
     {error && <p role="alert" className="owner-error">{error}</p>}
     <div className="owner-photo-grid">{items.map((photo, index) => <article key={photo.id} className="owner-photo-card" draggable={!openingKey && !busy} onDragStart={event => { event.dataTransfer.setData("application/x-seatplan-photo", String(index)); event.dataTransfer.effectAllowed = "move"; }} onDragOver={event => { if (!busy && !openingKey && event.dataTransfer.types.includes("application/x-seatplan-photo")) event.preventDefault(); }} onDrop={event => { if (!busy && !openingKey) { const from = event.dataTransfer.getData("application/x-seatplan-photo"); if (from !== "") { event.preventDefault(); move(Number(from), index); } } }}>
-      <PhotoPreview url={photo.url} alt={photo.alt_text} className="owner-photo-thumbnail" />
-      {photo.is_cover && <p><Badge tone="success">Cover photo</Badge></p>}
-      <PhotoDescription photo={photo} number={index + 1} disabled={busy} onSave={text => perform(() => describePhoto(venueId, photo.id, text))} />
-      {!openingKey && <div className="owner-photo-actions"><Button variant="secondary" disabled={busy || photo.is_cover} aria-label={`Set photo ${index + 1} as cover`} onClick={() => void perform(() => orderPhotos(venueId, items.map(p => p.id), photo.id))}>Set as cover</Button>
+      <PhotoPreview url={photo.url} alt={photo.alt_text || (isCover(photo) ? "Cover photo" : "")} className="owner-photo-thumbnail" />
+      {isCover(photo) && <p><Badge tone="success">Cover photo</Badge></p>}
+      {!isCover(photo) && <PhotoDescription photo={photo} number={index + 1} disabled={busy} onSave={text => perform(() => describePhoto(venueId, photo.id, text))} />}
+      {!openingKey && !isCover(photo) && <div className="owner-photo-actions"><Button variant="secondary" disabled={busy || photo.is_cover} aria-label={`Set photo ${index + 1} as cover`} onClick={() => void perform(() => orderPhotos(venueId, items.map(p => p.id), photo.id))}>Set as cover</Button>
         <Button variant="secondary" disabled={busy || index === 0} aria-label={`Move photo ${index + 1} left`} onClick={() => move(index, index - 1)}>Move left</Button><Button variant="secondary" disabled={busy || index === items.length - 1} aria-label={`Move photo ${index + 1} right`} onClick={() => move(index, index + 1)}>Move right</Button></div>}
       <Button variant="danger" disabled={busy} aria-label={`Remove photo ${index + 1}`} onClick={() => void perform(() => deletePhoto(venueId, photo.id))}>Remove</Button>
     </article>)}</div>
