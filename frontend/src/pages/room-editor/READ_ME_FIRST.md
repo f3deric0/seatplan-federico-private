@@ -160,3 +160,10 @@ sun patches clipped to the room, the dark-blue veil after sunset and the sun on 
 it never catches a tap. `LightTools.tsx` is the panel, with a "Describe table" list that shows the
 same sentences diners get. It says why nothing is shown (no location, north not set, unsaved
 changes) instead of guessing.
+
+The Walls tab starts with the Main entrance block: the owner picks the wall and presses Set main entrance (or Move main
+entrance here). setMainEntrance reuses a door already on that wall or adds one where it fits, and markMainEntrance keeps
+exactly one door per room flagged. The old main door stays as an ordinary door after a move. WallLayer draws a purple
+"Main entrance" tag beside the flagged door, away from its swing. The diner's plan (pages/restaurant/FloorPlan.tsx) draws
+the same tag and a purple door; floorPlanScene.entranceTags gives its place and planLayout makes room for it.
+

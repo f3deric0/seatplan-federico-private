@@ -32,6 +32,27 @@ export function addOpening(room: Room, side: number, kind: RoomOpening["kind"]):
   return next;
 }
 
+export function mainEntrance(room: Room): RoomOpening | undefined {
+  return room.openings.find(o => o.kind === "door" && o.is_main_entrance);
+}
+
+/** Makes the door `key` the room's one main entrance and clears the flag on every other door. */
+export function markMainEntrance(room: Room, key: string): Room {
+  const next = { ...room, openings: room.openings.map(o => o.kind === "door" ? { ...o, is_main_entrance: o.key === key } : o) };
+  checkOpenings(next);
+  return next;
+}
+
+/** Puts the main entrance on `side`: reuses a door already on that wall, or adds one where it fits. */
+export function setMainEntrance(room: Room, side: number): Room {
+  const existing = room.openings.find(o => o.kind === "door" && o.side === side);
+  if (existing) return markMainEntrance(room, existing.key);
+  let added: Room;
+  try { added = addOpening(room, side, "door"); }
+  catch { throw new Error("There is no room for a door on this wall. Choose another wall."); }
+  return markMainEntrance(added, added.openings.at(-1)!.key);
+}
+
 export function updateOpening(room: Room, key: string, change: Partial<RoomOpening>): Room {
   const next = { ...room, openings: room.openings.map(o => o.key === key ? { ...o, ...change, key: o.key, id: o.id } : o) };
   checkOpenings(next);

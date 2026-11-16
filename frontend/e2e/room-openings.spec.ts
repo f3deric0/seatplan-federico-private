@@ -25,12 +25,12 @@ for (const width of [1440, 390]) {
     await expect(page.getByText("Faces west (270°)", { exact: true })).toBeVisible();
     await expect(page.getByLabel("View", { exact: true })).toHaveValue("Tagus river");
     await page.getByRole("button", { name: "Add door", exact: true }).click();
-    await page.getByLabel("Main entrance").check();
+    await page.getByLabel("This door is the main entrance").check();
     await page.getByLabel("Opening offset (cm)").fill("110");
     await page.getByLabel("Opening offset (cm)").press("Tab");
     await expect(page.getByRole("alert")).toContainText("overlap");
     await page.getByRole("button", { name: "Undo", exact: true }).click();
-    await expect(page.getByLabel("Main entrance")).not.toBeChecked();
+    await expect(page.getByLabel("This door is the main entrance")).not.toBeChecked();
     await page.screenshot({ path: join(tmpdir(), `seatplan-room-openings-${width}.png`), fullPage: true });
     expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

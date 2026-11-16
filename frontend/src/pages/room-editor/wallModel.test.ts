@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { createRoom } from "./roomModel";
-import { addOpening, updateOpening, openingBearing, wallOffset } from "./wallModel";
+import { addOpening, mainEntrance, setMainEntrance, updateOpening, openingBearing, wallOffset } from "./wallModel";
 import { setSideCurve, setSideLength } from "./shapeEditing";
 
 it("adds immutable openings into free wall space and rejects overlap", () => {
@@ -42,4 +42,26 @@ it("validates view and sun fields and measures dragging along the curve", () => 
   expect(() => updateOpening(room, key, { view_tags: ["river", "sea", "city", "hills"] })).toThrow();
   expect(() => updateOpening(room, key, { sun_rule: "between", sun_from: "15:00", sun_until: "10:00" })).toThrow();
   expect(updateOpening(room, key, { sun_rule: "between", sun_from: "10:00", sun_until: "15:00" }).openings[0].sun_until).toBe("15:00");
+});
+
+it("keeps one main entrance per room and moves it between walls", () => {
+  const base = createRoom("Room 1", 1000, 700);
+  const first = setMainEntrance(base, 0);
+  expect(first.openings).toHaveLength(1);
+  expect(mainEntrance(first)).toMatchObject({ kind: "door", side: 0, is_main_entrance: true });
+  const moved = setMainEntrance(first, 2);
+  expect(moved.openings.filter(o => o.is_main_entrance)).toHaveLength(1);
+  expect(mainEntrance(moved)?.side).toBe(2);
+  expect(moved.openings).toHaveLength(2);
+  const back = setMainEntrance(moved, 0);
+  expect(back.openings).toHaveLength(2);
+  expect(mainEntrance(back)?.side).toBe(0);
+});
+
+it("reuses a door already on the wall and refuses a wall with no space", () => {
+  const withDoor = addOpening(createRoom("Room 1", 1000, 700), 1, "door");
+  expect(setMainEntrance(withDoor, 1).openings).toHaveLength(1);
+  const window = addOpening(createRoom("Room 1", 1000, 700), 0, "window");
+  const fullWindow = updateOpening(window, window.openings[0].key, { width: 1000 });
+  expect(() => setMainEntrance(fullWindow, 0)).toThrow("no room for a door");
 });

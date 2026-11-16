@@ -5,24 +5,36 @@ import { sideLength } from "./geometry";
 import type { Room, RoomOpening } from "./roomModel";
 import { RoomNumberField } from "./ShapeTools";
 import type { ShapeSelection } from "./ShapeTools";
-import { addOpening, openingBearing, updateOpening, VIEW_TAGS } from "./wallModel";
+import { addOpening, mainEntrance, markMainEntrance, openingBearing, setMainEntrance, updateOpening, VIEW_TAGS } from "./wallModel";
 
 interface Props { room: Room; selection: ShapeSelection; selected: string | null; onSelect: (key: string | null) => void; onSide: (selection: ShapeSelection) => void; onChange: (room: Room) => void; onError: (message: string) => void }
 export function WallTools({ room, selection, selected, onSelect, onSide, onChange, onError }: Props) {
   const side = selection?.kind === "side" && selection.index < room.outline.points.length ? selection.index : 0;
   const opening = room.openings.find(o => o.key === selected);
   const apply = (change: () => Room) => { try { onChange(change()); } catch (caught) { onError(caught instanceof Error ? caught.message : "Check the opening."); } };
+  const entrance = mainEntrance(room);
+  const [entranceWall, setEntranceWall] = useState(String(entrance?.side ?? side)), [entranceError, setEntranceError] = useState("");
   return <div className="room-form">
+    <section className="room-entrance" aria-labelledby="room-entrance-title">
+      <h3 id="room-entrance-title">Main entrance</h3>
+      <p>{entrance ? `Guests come in on Wall ${entrance.side + 1}. Tables near it are shown as "Near the entrance".` : "Start here: choose the wall where guests come in. Tables near it are shown as \"Near the entrance\"."}</p>
+      <Select label="Wall of the main entrance" value={entranceWall} options={room.outline.points.map((_, i) => ({ value: String(i), label: `Wall ${i + 1}` }))} onChange={e => { setEntranceWall(e.target.value); setEntranceError(""); }} />
+      <Button variant={entrance ? "secondary" : "primary"} disabled={entrance?.side === Number(entranceWall)} onClick={() => {
+        try { const next = setMainEntrance(room, Number(entranceWall)); setEntranceError(""); onChange(next); onSelect(mainEntrance(next)!.key); }
+        catch (caught) { setEntranceError(caught instanceof Error ? caught.message : "Check the wall."); }
+      }}>{entrance ? "Move main entrance here" : "Set main entrance"}</Button>
+      {entranceError && <p role="alert" className="room-error">{entranceError}</p>}
+    </section>
     <Select label="Wall for opening" value={String(side)} options={room.outline.points.map((_, i) => ({ value: String(i), label: `Wall ${i + 1}` }))} onChange={e => onSide({ kind: "side", index: Number(e.target.value) })} />
     <h3>Add on this wall</h3>
     {(["window", "door"] as const).map(kind => <Button key={kind} variant="secondary" onClick={() => apply(() => { const next = addOpening(room, side, kind); onSelect(next.openings.at(-1)!.key); return next; })}>{kind === "window" ? "Add window" : "Add door"}</Button>)}
     <Select label="Selected opening" value={opening?.key ?? ""} options={[{ value: "", label: "Choose an opening" }, ...room.openings.map((o, i) => ({ value: o.key, label: `${o.kind === "glass_wall" ? "Glass wall" : o.kind === "door" ? "Door" : "Window"} ${i + 1} · Wall ${o.side + 1}${o.is_main_entrance ? " · Main entrance" : ""}` }))]} onChange={e => onSelect(e.target.value || null)} />
-    {opening && <OpeningFields key={opening.key} room={room} opening={opening} onUpdate={change => apply(() => updateOpening(room, opening.key, change))} onNumberUpdate={change => { try { onChange(updateOpening(room, opening.key, change)); } catch (caught) { onError(caught instanceof Error ? caught.message : "Check the opening."); throw caught; } }} />}
+    {opening && <OpeningFields key={opening.key} room={room} opening={opening} onMainEntrance={on => apply(() => on ? markMainEntrance(room, opening.key) : updateOpening(room, opening.key, { is_main_entrance: false }))} onUpdate={change => apply(() => updateOpening(room, opening.key, change))} onNumberUpdate={change => { try { onChange(updateOpening(room, opening.key, change)); } catch (caught) { onError(caught instanceof Error ? caught.message : "Check the opening."); throw caught; } }} />}
     {opening && <Button variant="danger" onClick={() => { onChange({ ...room, openings: room.openings.filter(o => o.key !== opening.key) }); onSelect(null); }}>Remove opening</Button>}
   </div>;
 }
 
-function OpeningFields({ room, opening: o, onUpdate, onNumberUpdate }: { room: Room; opening: RoomOpening; onUpdate: (change: Partial<RoomOpening>) => void; onNumberUpdate: (change: Partial<RoomOpening>) => void }) {
+function OpeningFields({ room, opening: o, onMainEntrance, onUpdate, onNumberUpdate }: { room: Room; opening: RoomOpening; onMainEntrance: (on: boolean) => void; onUpdate: (change: Partial<RoomOpening>) => void; onNumberUpdate: (change: Partial<RoomOpening>) => void }) {
   const { venueId = "" } = useParams();
   let direction: number | null = null, validWall = true;
   try { direction = openingBearing(room, o); } catch { validWall = false; }
@@ -34,7 +46,7 @@ function OpeningFields({ room, opening: o, onUpdate, onNumberUpdate }: { room: R
       <RoomNumberField label="Opening width (cm)" value={o.width} min={40} max={sideLength(room.outline, o.side) - o.offset} onCommit={width => onNumberUpdate({ width })} />
     </>}
     {o.kind === "glass_wall" && <p>Width: {Math.round(o.width)} cm · Entire wall</p>}
-    {o.kind === "door" ? <Checkbox label="Main entrance" checked={o.is_main_entrance} onChange={e => onUpdate({ is_main_entrance: e.target.checked })} /> : <>
+    {o.kind === "door" ? <Checkbox label="This door is the main entrance" checked={o.is_main_entrance} onChange={e => onMainEntrance(e.target.checked)} /> : <>
       <RoomNumberField label="Window top height (cm)" value={o.top_height} min={100} max={500} onCommit={top_height => onNumberUpdate({ top_height })} />
       <p>{!validWall ? "Check the wall geometry first" : direction === null ? "Set north first" : `Faces ${names[Math.round(direction / 45) % 8]} (${Math.round(direction) % 360}°)`}</p>
       <Field label="View" value={o.view_text} maxLength={80} onChange={e => onUpdate({ view_text: e.target.value })} />

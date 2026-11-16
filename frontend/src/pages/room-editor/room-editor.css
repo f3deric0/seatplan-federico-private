@@ -25,6 +25,9 @@
 .room-properties { padding: var(--space-4); background: var(--c-surface); border-left: 1px solid var(--c-border); overscroll-behavior: contain; } /* scrolling past its end must not scroll the page */
 .room-properties h2 { font-size: var(--fs-lg); margin-top: 0; }
 .room-form { display: grid; gap: var(--space-4); }
+/* The main entrance is chosen first, so its block leads the Walls tab and is set apart. */
+.room-entrance { display: grid; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--c-primary); border-radius: var(--radius-md); background: var(--c-surface-sunk); }
+.room-entrance h3, .room-entrance p { margin: 0; }
 /* Title of the selected wall or corner: a quiet section heading above its fields. It takes focus when the
    selection changes so screen readers announce it, but it is not a control, so it shows no focus ring. */
 :root .room-properties .room-form > h3 {

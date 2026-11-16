@@ -46,7 +46,7 @@ a second tab saved before you, SeatPlan tells you and keeps your work so you can
 | Tool | What it does |
 |---|---|
 | **Shape** | Draw the walls of a room: straight sides, curved sides, L-shapes. Drag a corner to move it, drag the middle of a side to add a corner or bend it. |
-| **Walls** | Add **windows** and **doors** to a side. Mark the **main entrance**. For a window you can write what the view is ("The Tagus river"), what it looks like at night, add a photo of the view, and say when it gets sun. |
+| **Walls** | Add **windows** and **doors** to a side. Choose the **main entrance** first, at the top of the tab: pick its wall and it is drawn with a "Main entrance" tag, for you and for diners choosing a table. For a window you can write what the view is ("The Tagus river"), what it looks like at night, add a photo of the view, and say when it gets sun. |
 | **North** | Set which way north points. Without it the app cannot say anything about the sun, and it will not guess. |
 | **Fixed** | Place things that are not tables: bar, kitchen, toilets, stage, fireplace, awning. They also tell diners what is near a table. |
 | **Zones** | Name areas (window row, terrace, quiet corner). |
