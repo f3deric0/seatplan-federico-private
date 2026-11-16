@@ -3,9 +3,9 @@
 LeafletMap loads only when a location form opens. Leaflet is pinned to 1.9.4.
 It uses the standard HTTPS OpenStreetMap tile URL with visible attribution.
 There is no bulk downloading or server-side proxy. The only address lookup is reverseGeocode.ts, used by the
-owner's location form: one OpenStreetMap Nominatim reverse request, made after a pin is placed (debounced) or when
-the owner clicks "Fill address from pin". It never overwrites an address the owner typed unless they click the
-button, and a failure leaves the field for typing. The production CSP (vercel.json, connect-src 'self') must allow
+owner's location form: one OpenStreetMap Nominatim reverse request, made (debounced) after the owner places or drags
+the pin. It fills an empty address, or one it filled itself, and never overwrites an address the owner typed. A failure
+leaves the field for typing. The production CSP in vercel.json (connect-src) must also allow
 https://nominatim.openstreetmap.org before this works on the live site; that is a deployment decision for Martim.
 Tiles follow normal browser caching and override the page referrer policy
 with strict-origin-when-cross-origin, sending only the site origin to OSM.
