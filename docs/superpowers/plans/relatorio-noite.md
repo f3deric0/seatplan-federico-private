@@ -859,3 +859,9 @@ o rodapé das páginas que mostram o mapa.
 Build, 512 testes Vitest e 182 verificações de contraste passaram. Os testes
 no Chromium com tiles e API de teste verificaram as cores, zoom por teclado e
 rato, seleção de pinos e recuperação sem tiles, incluindo a 320 e 390 px.
+
+## Destaque do restaurante selecionado
+
+Depois de selecionar um resultado, o destaque fica no cartão e no pino desse
+restaurante até selecionar outro. O foco continua visível nas ligações.
+Build, 513 testes Vitest e reprodução em Chromium com dados de teste passaram.

@@ -83,7 +83,8 @@ test("when the map tiles cannot load, a numbered diagram takes the map's place a
   await expect(page.locator(".discover-card-number")).toHaveCount(5);
   // A pin and its card are linked: pointing at the card lights the pin, and the pin takes you to its card.
   await diagram.getByRole("button", { name: /^2\./ }).click();
-  await expect(page.locator(".discover-card.is-highlighted")).toHaveCount(1);
+  await expect(page.locator(".discover-card.is-selected")).toHaveCount(1);
+  await expect(page.locator(".discover-card.is-highlighted")).toHaveCount(0);
   const found = await new AxeBuilder({ page }).withTags(TAGS).analyze();
   expect(found.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
 });
