@@ -11,14 +11,11 @@ for (const width of [1440, 390]) {
     await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
     await page.getByRole("button", { name: "Walls", exact: true }).click();
     await page.getByRole("button", { name: "Add window", exact: true }).click();
-    await expect(page.getByText(/^Faces /).first()).toBeVisible();
-    await page.getByLabel("View", { exact: true }).fill("Tagus river");
-    await page.getByLabel("river", { exact: true }).check();
+    await expect(page.getByLabel("Opening width (cm)")).toBeVisible();
+    for (const gone of ["Window top height (cm)", "View", "View at night", "Sun"]) await expect(page.getByLabel(gone, { exact: true })).toHaveCount(0);
     await expect(page.getByRole("img", { name: "North is at the top of the plan" })).toBeVisible();
     await page.screenshot({ path: join(tmpdir(), `seatplan-room-north-${width}.png`), fullPage: true });
     await page.getByRole("button", { name: "Walls", exact: true }).click();
-    await expect(page.getByText("Faces north (0°)", { exact: true })).toBeVisible();
-    await expect(page.getByLabel("View", { exact: true })).toHaveValue("Tagus river");
     await page.getByRole("button", { name: "Add door", exact: true }).click();
     await page.getByLabel("This door is the main entrance").check();
     await page.getByRole("button", { name: "Undo", exact: true }).click();

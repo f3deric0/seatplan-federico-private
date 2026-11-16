@@ -7,14 +7,14 @@ import type { IconKind } from "./FixtureIcon";
 import { editFixture, editZone, FIXTURE_NAMES } from "./roomObjects";
 import { snappedPoint } from "./shapeModel";
 
-interface Props { room: Room; kind: "fixture" | "zone"; only?: (item: RoomFixture | RoomZone) => boolean; editing: boolean; selected: string | null; grid: boolean; zoom: number; toWorld: (event: { clientX: number; clientY: number }) => Point; onSelect: (key: string) => void; onChange: (room: Room, transient?: boolean) => void; onDragStart: () => void }
+interface Props { room: Room; kind: "fixture" | "zone"; only?: (item: RoomFixture | RoomZone) => boolean; rotationOf?: (zone: RoomZone) => number; editing: boolean; selected: string | null; grid: boolean; zoom: number; toWorld: (event: { clientX: number; clientY: number }) => Point; onSelect: (key: string) => void; onChange: (room: Room, transient?: boolean) => void; onDragStart: () => void }
 interface Resize { key: string; base: Room; item: RoomFixture | RoomZone; sx: number; sy: number; started: boolean }
 const MIN_SIZE = 20;
 // The eight grips of a selected element: the corners and the middle of each side.
 const GRIPS: [number, number, string][] = [[-1, -1, "nwse-resize"], [0, -1, "ns-resize"], [1, -1, "nesw-resize"], [1, 0, "ew-resize"], [1, 1, "nwse-resize"], [0, 1, "ns-resize"], [-1, 1, "nesw-resize"], [-1, 0, "ew-resize"]];
 const turn = (p: Point, degrees: number): Point => { const a = degrees * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return { x: p.x * c - p.y * s, y: p.x * s + p.y * c }; };
 
-export function ObjectLayer({ room, kind, only, editing, selected, grid, zoom, toWorld, onSelect, onChange, onDragStart }: Props) {
+export function ObjectLayer({ room, kind, only, rotationOf, editing, selected, grid, zoom, toWorld, onSelect, onChange, onDragStart }: Props) {
   const drag = useRef<{ key: string; base: Room; start: Point; at: Point; last: Point; started: boolean } | null>(null);
   // A grip answers only when the cursor is right on its small square, so the rest of the element stays free to drag.
   // A finger is less exact, so a touch screen gets a larger target.
@@ -32,7 +32,7 @@ export function ObjectLayer({ room, kind, only, editing, selected, grid, zoom, t
     event.stopPropagation();
     if (!r.started) { onDragStart(); r.started = true; }
     const centre = { x: f.x + f.w / 2, y: f.y + f.h / 2 }, world = toWorld(event);
-    const angle = "rotation" in f ? f.rotation : 0;
+    const angle = "rotation" in f ? f.rotation : rotationOf ? rotationOf(f) : 0; // a terrace is turned to its wall
     const local = turn({ x: world.x - centre.x, y: world.y - centre.y }, -angle);
     const size = (value: number) => Math.max(MIN_SIZE, grid ? Math.round(value / 10) * 10 : Math.round(value));
     let w = f.w, h = f.h;
@@ -70,7 +70,7 @@ export function ObjectLayer({ room, kind, only, editing, selected, grid, zoom, t
   };
   return <g className={`room-${kind}-layer`} style={{ pointerEvents: editing ? "auto" : "none" }} onPointerMove={move} onPointerUp={event => { if (editing) event.stopPropagation(); drag.current = null; resize.current = null; turning.current = null; }} onPointerCancel={() => { drag.current = null; resize.current = null; turning.current = null; }} onClick={event => { if (editing) event.stopPropagation(); }}>
     {items.map(item => {
-      const rotation = "rotation" in item ? item.rotation : 0;
+      const rotation = "rotation" in item ? item.rotation : rotationOf ? rotationOf(item) : 0;
       const label = "label" in item ? item.label || FIXTURE_NAMES[item.kind] : item.name;
       const font = Math.max(13 / zoom, 15), small = Math.min(item.w, item.h);
       // Fixed elements and the two zones an owner can add wear an icon.

@@ -1,7 +1,9 @@
-import { bearing, outlineToPolygon, pointInPolygon, sideNormal } from "./geometry";
+import { bearing } from "./geometry";
 import type { Point } from "./geometry";
+import { onTerrace, outward, strip, TERRACE_DEPTH, terraceOn } from "./terraceGeometry";
 import type { Room, RoomZone } from "./roomModel";
 import { addZone, editZone, removeZone } from "./roomObjects";
+export { TERRACE_DEPTH, terraceOn } from "./terraceGeometry";
 import { addOpening, updateOpening } from "./wallModel";
 
 /*
@@ -52,15 +54,6 @@ const WORDS = ["north", "north-east", "east", "south-east", "south", "south-west
 /** "south-east" for 135 degrees. */
 export const directionWord = (degrees: number): string => WORDS[Math.round((((degrees % 360) + 360) % 360) / 45) % 8];
 
-function outward(room: Room, side: number): { mid: Point; normal: Point } | null {
-  const points = room.outline.points, n = points.length;
-  if (n < 3 || side < 0 || side >= n) return null;
-  const a = points[side], b = points[(side + 1) % n], mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-  let normal = sideNormal(room.outline, side, 0.5);
-  try { if (pointInPolygon({ x: mid.x + normal.x * 5, y: mid.y + normal.y * 5 }, outlineToPolygon(room.outline))) normal = { x: -normal.x, y: -normal.y }; } catch { /* keep it */ }
-  return { mid, normal };
-}
-
 /** The way a wall faces, in degrees clockwise from north (the top of the plan). */
 export function wallBearing(room: Room, side: number): number | null {
   const o = outward(room, side);
@@ -79,24 +72,6 @@ export function wallFacing(room: Room, degrees: number): { side: number; off: nu
   return best;
 }
 
-/** How deep a terrace is, in cm: room for a table, its chairs and a way past. */
-export const TERRACE_DEPTH = 250;
-
-/** The strip outside a wall, from `from` to `to` cm away from it. */
-function strip(room: Room, side: number, from: number, to: number): Point[] | null {
-  const o = outward(room, side), points = room.outline.points;
-  if (!o) return null;
-  const a = points[side], b = points[(side + 1) % points.length], at = (p: Point, d: number): Point => ({ x: p.x + o.normal.x * d, y: p.y + o.normal.y * d });
-  return [at(a, from), at(b, from), at(b, to), at(a, to)];
-}
-
-/** The terrace outside a wall, if there is one: a terrace zone whose middle lies just outside it. */
-export function terraceOn(room: Room, side: number): RoomZone | null {
-  const area = strip(room, side, 0, TERRACE_DEPTH * 1.6);
-  if (!area) return null;
-  return room.zones.find(z => z.kind === "terrace" && pointInPolygon({ x: z.x + z.w / 2, y: z.y + z.h / 2 }, area)) ?? null;
-}
-
 /** Puts a terrace outside a wall (a terrace zone, so diners can look for one), or takes it away. */
 export function setTerrace(room: Room, side: number, on: boolean): Room {
   const existing = terraceOn(room, side);
@@ -104,10 +79,11 @@ export function setTerrace(room: Room, side: number, on: boolean): Room {
   if (existing) return room;
   const quad = strip(room, side, 0, TERRACE_DEPTH), o = outward(room, side);
   if (!quad || !o) throw new Error("Choose a wall first.");
-  if (Math.abs(o.normal.x) < 0.99 && Math.abs(o.normal.y) < 0.99) throw new Error("A terrace goes against a straight wall that runs across or up and down the plan.");
-  const xs = quad.map(p => p.x), ys = quad.map(p => p.y), x = Math.round(Math.min(...xs)), y = Math.round(Math.min(...ys));
-  const added = addZone(room, "terrace", { x, y });
-  return editZone(added, added.zones.at(-1)!.key, { w: Math.max(100, Math.round(Math.max(...xs)) - x), h: Math.max(100, Math.round(Math.max(...ys)) - y) });
+  const a = room.outline.points[side], b = room.outline.points[(side + 1) % room.outline.points.length], along = Math.hypot(b.x - a.x, b.y - a.y);
+  const horizontal = Math.abs(o.normal.y) > 0.5, w = Math.max(100, Math.round(horizontal ? along : TERRACE_DEPTH)), h = Math.max(100, Math.round(horizontal ? TERRACE_DEPTH : along));
+  const centre = { x: o.mid.x + o.normal.x * TERRACE_DEPTH / 2, y: o.mid.y + o.normal.y * TERRACE_DEPTH / 2 }; // against the wall, however it slopes
+  const added = addZone(room, "terrace", { x: Math.round(centre.x - w / 2), y: Math.round(centre.y - h / 2) });
+  return editZone(added, added.zones.at(-1)!.key, { w, h });
 }
 
 /** A table standing on a terrace belongs to it; one that leaves it does not. Returns the same room when nothing changes. */
@@ -116,7 +92,7 @@ export function assignTerraceTables(room: Room): Room {
   if (!terraces.length && !room.tables.some(t => t.zone_key)) return room;
   let changed = false;
   const tables = room.tables.map(t => {
-    const x = t.x + t.w / 2, y = t.y + t.h / 2, here = terraces.find(z => x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h);
+    const centre = { x: t.x + t.w / 2, y: t.y + t.h / 2 }, here = terraces.find(z => onTerrace(room, z, centre));
     const current = room.zones.find(z => z.key === t.zone_key);
     let zone_key = t.zone_key;
     if (here) { if (!current || current.kind === "terrace") zone_key = here.key; }
@@ -132,7 +108,7 @@ export interface Band { side: number; surrounding: Surrounding; quad: Point[]; l
 export function surroundingBands(room: Room, depth = 140): Band[] {
   const bands: Band[] = [];
   room.outline.points.forEach((_, side) => {
-    const surrounding = surroundingOf(room, side), inset = terraceOn(room, side) ? TERRACE_DEPTH : 0, quad = strip(room, side, inset, inset + depth), o = outward(room, side);
+    const surrounding = surroundingOf(room, side), inset = terraceDepth(room, side), quad = strip(room, side, inset, inset + depth), o = outward(room, side);
     if (!surrounding || !quad || !o) return;
     bands.push({ side, surrounding, quad, label: { x: o.mid.x + o.normal.x * (inset + depth / 2), y: o.mid.y + o.normal.y * (inset + depth / 2) } });
   });
@@ -145,14 +121,19 @@ export function terraceSize(room: Room, side: number, zone: RoomZone): { along: 
   return o && Math.abs(o.normal.y) > 0.5 ? { along: zone.w, depth: zone.h } : { along: zone.h, depth: zone.w };
 }
 
+/** How far a wall's terrace reaches out from it, in cm (0 when there is none). */
+function terraceDepth(room: Room, side: number): number {
+  const zone = terraceOn(room, side);
+  return zone ? terraceSize(room, side, zone).depth : 0;
+}
+
 /** Sets a terrace's length along its wall (kept centred) or its depth (the side against the wall stays put). */
 export function setTerraceSize(room: Room, side: number, patch: { along?: number; depth?: number }): Room {
   const zone = terraceOn(room, side), o = outward(room, side);
   if (!zone || !o) throw new Error("There is no terrace on this wall.");
   const horizontal = Math.abs(o.normal.y) > 0.5, now = terraceSize(room, side, zone), along = patch.along ?? now.along, depth = patch.depth ?? now.depth;
   if (!(along >= 50) || !(depth >= 50)) throw new Error("A terrace is at least 50 cm each way.");
-  const change: Partial<RoomZone> = horizontal
-    ? { w: along, x: zone.x + (zone.w - along) / 2, h: depth, y: o.normal.y > 0 ? zone.y : zone.y + zone.h - depth }
-    : { h: along, y: zone.y + (zone.h - along) / 2, w: depth, x: o.normal.x > 0 ? zone.x : zone.x + zone.w - depth };
-  return editZone(room, zone.key, Object.fromEntries(Object.entries(change).map(([k, v]) => [k, Math.round(v as number)])));
+  const grow = (depth - now.depth) / 2, centre = { x: zone.x + zone.w / 2 + o.normal.x * grow, y: zone.y + zone.h / 2 + o.normal.y * grow };
+  const w = Math.round(horizontal ? along : depth), h = Math.round(horizontal ? depth : along);
+  return editZone(room, zone.key, { w, h, x: Math.round(centre.x - w / 2), y: Math.round(centre.y - h / 2) });
 }

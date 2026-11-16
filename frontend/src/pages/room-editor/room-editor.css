@@ -38,7 +38,7 @@
 .room-table { fill: var(--c-surface-strong); stroke: var(--c-border-strong); stroke-width: 2; }
 .room-seat { fill: var(--c-surface); stroke: var(--c-border-strong); stroke-width: 2; }
 .room-table-label { font-size: 16px; pointer-events: none; }
-.room-properties { padding: var(--space-4); background: var(--c-surface); border-left: 1px solid var(--c-border); overscroll-behavior: contain; } /* scrolling past its end must not scroll the page */
+.room-properties { padding: var(--space-4); background: var(--c-surface); overscroll-behavior: contain; } /* scrolling past its end must not scroll the page */
 .room-properties h2 { font-size: var(--fs-lg); margin-top: 0; }
 .room-properties .room-form { gap: var(--space-2); }
 .room-properties .room-form p { margin: 0; }
@@ -165,10 +165,14 @@
 .room-tools button[aria-pressed="true"] { background: var(--c-primary-soft); color: var(--c-primary); border-color: var(--c-primary); }
 .room-canvas-wrap { grid-area: canvas; margin: var(--space-3) var(--space-4) var(--space-4); border-radius: var(--radius-lg); overflow: hidden; }
 .room-properties { grid-area: props; grid-row: 1 / span 2; }
+/* The line before the properties runs the full height of the editor, whatever the height of the panel. */
+.room-workspace { position: relative; }
+.room-workspace::after { content: ""; position: absolute; top: 0; bottom: 0; right: 18rem; width: 1px; background: var(--c-border); pointer-events: none; }
 .room-problem-wrap { display: flex; flex-direction: column; gap: var(--space-2); flex: 1 1 18rem; }
 .room-problem-strip { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0; padding: var(--space-3) var(--space-4); border: 1px solid var(--c-border); border-radius: var(--radius-md); background: var(--c-surface); }
 .room-problem-strip .btn { margin-left: auto; font-weight: var(--fw-semibold, 600); }
 @media (max-width: 1023px) {
+  .room-workspace::after { display: none; }
   .room-workspace { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tools" "canvas" "props"; }
   .room-properties { grid-area: props; }
   /* The bar stays one row at the bottom of the screen with all seven tools, as before. */

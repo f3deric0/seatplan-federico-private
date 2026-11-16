@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 import { createRoom } from "./roomModel";
+import { terraceCorners, terraceRotation } from "./terraceGeometry";
 import { assignTerraceTables, directionWord, setSurrounding, setTerrace, setTerraceSize, terraceOn, terraceSize, TERRACE_DEPTH, surroundingBands, surroundingOf, wallBearing, wallFacing } from "./surroundings";
 import { addOpening } from "./wallModel";
 import { addTable } from "./tableModel";
@@ -98,4 +99,22 @@ it("sizes a terrace by its length along the wall and its depth, keeping the wall
   const side = setTerrace(room(), 1, true); // right of the room
   expect(setTerraceSize(side, 1, { depth: 400 }).zones[0]).toMatchObject({ x: 1000, w: 400 });
   expect(() => setTerraceSize(bottom, 2, { depth: 10 })).toThrow("at least 50");
+});
+
+it("fits a terrace to a sloping wall, turned to match it", () => {
+  const base = room(); // walls: 0 top, 1 right, 2 bottom, 3 left; slope the bottom wall (from 1000,700 to 0,600)
+  const sloped = { ...base, outline: { points: [base.outline.points[0], base.outline.points[1], { ...base.outline.points[2], y: 700 }, { ...base.outline.points[3], y: 600 }] } };
+  const next = setTerrace(sloped, 2, true);
+  const zone = next.zones[0];
+  expect(terraceOn(next, 2)).toBe(zone);
+  expect(terraceRotation(next, zone)).toBeCloseTo(5.71, 1); // the angle of the wall
+  expect(zone.w).toBe(Math.round(Math.hypot(1000, 100))); // as long as the wall
+  const a = sloped.outline.points[2], b = sloped.outline.points[3], length = Math.hypot(b.x - a.x, b.y - a.y);
+  const distance = (p: { x: number; y: number }) => Math.abs((b.x - a.x) * (a.y - p.y) - (a.x - p.x) * (b.y - a.y)) / length;
+  const gaps = terraceCorners(next, zone).map(distance).sort((x, y) => x - y);
+  expect(gaps[0]).toBeLessThan(1); expect(gaps[1]).toBeLessThan(1); // two corners lie on the wall
+  expect(gaps[2]).toBeGreaterThan(TERRACE_DEPTH - 1); expect(gaps[3]).toBeGreaterThan(TERRACE_DEPTH - 1); // the others are a terrace deep away
+  const deeper = setTerraceSize(next, 2, { depth: 400 });
+  expect(terraceCorners(deeper, deeper.zones[0]).map(distance).sort((x, y) => x - y)[0]).toBeLessThan(1); // the wall side stays on the wall
+  expect(validateRooms([addTable(next, "round", { x: 450, y: 760 })]).some(p => p.code === "table_outside")).toBe(false);
 });

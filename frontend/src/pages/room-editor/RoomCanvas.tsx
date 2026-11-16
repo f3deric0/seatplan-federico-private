@@ -4,6 +4,7 @@ import { Button } from "../../design/components";
 import { usePanZoom } from "../../seatmap/usePanZoom";
 import { outlinePath, outlineToPolygon, sidePath } from "./geometry";
 import { surroundingBands } from "./surroundings";
+import { terraceCorners, terraceRotation } from "./terraceGeometry";
 
 const RULER_TOP = 20, RULER_SIDE = 40; // the strip of metre marks, in pixels
 import type { Point } from "./geometry";
@@ -41,7 +42,7 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
   try { if (points.length >= 3) boundsPoints = outlineToPolygon(room.outline); } catch { /* Keep invalid drafts repairable. */ }
   const bands = useMemo(() => surroundingBands(room), [room]);
   // The view takes in what lies outside the walls (a terrace, what is around the room) as well as the walls themselves.
-  const reach = [...boundsPoints, ...bands.flatMap(b => b.quad), ...room.zones.flatMap(z => [{ x: z.x, y: z.y }, { x: z.x + z.w, y: z.y + z.h }])];
+  const reach = [...boundsPoints, ...bands.flatMap(b => b.quad), ...room.zones.flatMap(z => z.kind === "terrace" ? terraceCorners(room, z) : [{ x: z.x, y: z.y }, { x: z.x + z.w, y: z.y + z.h }])];
   const maxX = Math.max(drawing || !points.length ? 1000 : 100, ...reach.map(p => p.x));
   const maxY = Math.max(drawing || !points.length ? 700 : 100, ...reach.map(p => p.y));
   const margin = 100;
@@ -102,8 +103,8 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
           {!drawing && points.length >= 3 && <rect x="-10000" y="-10000" width="20000" height="20000" fill={`url(#${patternId}-check)`} clipPath={`url(#${patternId}-room)`} pointerEvents="none" data-room-checker />}
           {drawing && <polyline points={[...points, ...(cursor ? [cursor] : [])].map(p => `${p.x},${p.y}`).join(" ")} className="room-drawing" />}
           {points.map((p, i) => <text key={i} x={p.x + 12 / pan.view.k} y={p.y - 10 / pan.view.k} fontSize={12 / pan.view.k} className="room-ruler">{i + 1}</text>)}
-          {!drawing && <ObjectLayer room={room} kind="zone" only={z => tool !== "Walls" || z.kind !== "terrace"} editing={tool === "Fixed" && !placement} selected={object} grid={fixtureGrid} zoom={pan.view.k} toWorld={toWorld} onSelect={onObject} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} />}
-          {!drawing && tool === "Walls" && <ObjectLayer room={room} kind="zone" only={z => z.kind === "terrace"} editing={true} selected={object} grid={fixtureGrid} zoom={pan.view.k} toWorld={toWorld} onSelect={onObject} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} />}
+          {!drawing && <ObjectLayer room={room} kind="zone" rotationOf={z => terraceRotation(room, z)} only={z => tool !== "Walls" || z.kind !== "terrace"} editing={tool === "Fixed" && !placement} selected={object} grid={fixtureGrid} zoom={pan.view.k} toWorld={toWorld} onSelect={onObject} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} />}
+          {!drawing && tool === "Walls" && <ObjectLayer room={room} kind="zone" rotationOf={z => terraceRotation(room, z)} only={z => z.kind === "terrace"} editing={true} selected={object} grid={fixtureGrid} zoom={pan.view.k} toWorld={toWorld} onSelect={onObject} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} />}
           {!drawing && <ObjectLayer room={room} kind="fixture" editing={tool === "Fixed" && !placement} selected={object} grid={fixtureGrid} zoom={pan.view.k} toWorld={toWorld} onSelect={onObject} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} />}
           <TableLayer room={room} editing={tool === "Tables" && !placement} selected={object} keys={tableKeys} multiple={multiple} chair={chair} grid={grid} zoom={pan.view.k} toWorld={toWorld} onSelect={onTableSelect} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} onError={onError} invalidKeys={problems.filter(p => p.level === "error").flatMap(p => p.table_keys)} />
           {areaBox && <rect x={Math.min(areaBox.start.x, areaBox.now.x)} y={Math.min(areaBox.start.y, areaBox.now.y)} width={Math.abs(areaBox.now.x - areaBox.start.x)} height={Math.abs(areaBox.now.y - areaBox.start.y)} className="room-selection-box" />}

@@ -1,6 +1,7 @@
 import { outlineToPolygon, pointInPolygon, polygonArea, rectCorners } from "./geometry";
 import type { Point } from "./geometry";
 import type { Room, RoomFixture, RoomTable } from "./roomModel";
+import { terraceCorners } from "./terraceGeometry";
 
 export type ProblemCode = "outline_invalid" | "table_outside" | "tables_overlap" | "tight_passage" | "fixture_overlap" | "no_north" | "window_no_view" | "no_tables";
 export interface RoomProblem { code: ProblemCode; level: "error" | "warning" | "info"; message: string; room_key: string | null; table_keys: string[]; opening_key?: string; fixture_key?: string }
@@ -74,7 +75,7 @@ export function validateRooms(rooms: Room[], forPublication = false): RoomProble
     const windows = room.openings.filter(o => o.kind === "window" || o.kind === "glass_wall");
     if (forPublication && windows.length && room.north_deg === null) add("no_north", "error", "Set north so we can work out the sun.", []);
     for (const opening of windows) if (!opening.view_text.trim()) add("window_no_view", "info", "Add what guests see from this window.", [], { opening_key: opening.key });
-    const terraces = room.zones.filter(z => z.kind === "terrace").map(z => rectCorners({ x: z.x, y: z.y, w: z.w, h: z.h, rotation: 0 }));
+    const terraces = room.zones.filter(z => z.kind === "terrace").map(z => terraceCorners(room, z));
     room.tables.forEach((table, i) => {
       if (polygon && !inside(shape(table), polygon) && !terraces.some(area => inside(shape(table), area))) add("table_outside", "error", `Table ${label(table)} is outside the walls.`, [table.key]);
       for (const other of room.tables.slice(i + 1)) {

@@ -186,4 +186,7 @@ Walls tab: one "Wall" chooser (in Around the room) drives the terrace and the Ad
 "Wall for opening". Openings have a width field but no offset field (drag along the wall). The terrace is an "Add terrace" button
 (a rectangular terrace zone flush against a straight wall, 250 cm deep; surroundings.ts setTerrace / setTerraceSize / terraceSize);
 in the Walls tab terrace zones are selectable and show the zone grips so their sides can be pulled, and the panel has Terrace
-width / Terrace depth fields and Remove terrace. A terrace needs an axis-aligned wall; curved or slanted walls refuse one.
+width / Terrace depth fields and Remove terrace. A terrace on a sloping wall is turned to match it: zones are saved without a rotation, so terraceGeometry.ts derives the angle from the wall the terrace lies against (the saved box is the unturned one) and draws, validates and assigns tables with the turned box. Curved walls use their chord.
+
+Window properties show only the opening width (no top height, view text, view tags, night view, view photo link or sun setting). The
+view of a window is still set from Around the room; the sun rule keeps its default "auto".
