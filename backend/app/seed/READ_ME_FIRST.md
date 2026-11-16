@@ -22,6 +22,9 @@ Commands, run from `backend/`:
   galleries. Each restaurant has researched public details, a licensed cover,
   an approximate price band and a direct Google Maps link. The public page
   labels opening hours, floor plan and table availability as simulated.
+- `python -m app.seed.demo_reviews` adds labelled fictional reviews to all
+  published demo restaurants in local SQLite with `DEMO_MODE=1`. Re-running
+  it preserves existing reviews and adds only missing entries.
 
 `POST /api/demo/reset` (in `routers/demo.py`) wipes the data and calls the
 same `seed_all()`.
