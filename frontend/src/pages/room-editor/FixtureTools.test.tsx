@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { FixtureTools } from "./FixtureTools";
 import { createRoom } from "./roomModel";
-import { addFixture, addZone, editFixture } from "./roomObjects";
+import { addFixture, addZone } from "./roomObjects";
 import type { Room } from "./roomModel";
 
 const show = (room: Room, selected: string | null = null, free = false) => {
@@ -19,10 +19,11 @@ it("adds an element with one tap and offers no second step", () => {
   expect(screen.queryByRole("button", { name: "Place selected in room" })).toBeNull();
 });
 
-it("shows only the name and Remove for a chosen element, with size, position and shape tucked away", () => {
+it("shows only Remove for a chosen element, with size, position and shape tucked away", () => {
   const room = addFixture(empty(), "bar", { x: 100, y: 100 });
   show(room, room.fixtures[0].key);
-  expect(screen.getByLabelText("Rename label")).toBeTruthy();
+  expect(screen.queryByLabelText("Rename label")).toBeNull();
+  expect(screen.queryByRole("button", { name: "Rotate 90°" })).toBeNull();
   expect(screen.getByRole("button", { name: "Remove fixed element" })).toBeTruthy();
   const more = document.querySelector<HTMLDetailsElement>("details.room-more")!;
   expect(more.open).toBe(false);
@@ -37,12 +38,6 @@ it("lists the elements to choose from only when there are two or more", () => {
   const two = addFixture(one, "plant", { x: 300, y: 300 });
   const second = render(<FixtureTools room={two} selected={null} free={false} onFree={vi.fn()} onSelect={onSelect} onPlace={vi.fn()} onChange={vi.fn()} onError={vi.fn()} />);
   expect(second.getByLabelText("Selected fixed element")).toBeTruthy();
-});
-
-it("mentions awning shade only for an awning", () => {
-  const room = addFixture(empty(), "awning", { x: 100, y: 100 });
-  show(room, room.fixtures[0].key);
-  expect(screen.getByText("Awning shade applies to outdoor rooms.")).toBeTruthy();
 });
 
 it("offers free placement as a switch that starts off", () => {
@@ -66,11 +61,10 @@ it("adds a quiet zone with one tap, like any other element", () => {
   expect(onPlace).toHaveBeenCalledWith("zone:quiet");
 });
 
-it("edits a chosen zone here: rename, size and position, remove", () => {
+it("edits a chosen zone here: size and position, remove", () => {
   const room = addZone(empty(), "terrace", { x: 100, y: 100 });
   const { onChange, onSelect } = show(room, room.zones[0].key);
-  expect((screen.getByLabelText("Rename label") as HTMLInputElement).value).toBe("Terrace");
-  expect(screen.getByText("A zone can go beyond the walls, like a terrace.")).toBeTruthy();
+  expect(screen.queryByLabelText("Rename label")).toBeNull();
   expect(screen.queryByRole("button", { name: "Rotate 90°" })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Remove zone" }));
   expect((onChange.mock.calls[0][0] as Room).zones).toHaveLength(0);
@@ -84,25 +78,3 @@ it("lists fixed elements and zones together once there are two or more", () => {
   expect(options).toEqual(["Choose an element", "Bar 1", "Quiet zone"]);
 });
 
-it("names the field Rename label", () => {
-  const room = addFixture(empty(), "bar", { x: 100, y: 100 });
-  show(room, room.fixtures[0].key);
-  expect(screen.getByLabelText("Rename label")).toBeTruthy();
-  expect(screen.queryByLabelText("Fixture label")).toBeNull();
-});
-
-it("turns the chosen element a quarter at a time", () => {
-  const room = addFixture(empty(), "bar", { x: 100, y: 100 });
-  const { onChange } = show(room, room.fixtures[0].key);
-  fireEvent.click(screen.getByRole("button", { name: "Rotate 90°" }));
-  expect((onChange.mock.calls[0][0] as Room).fixtures[0].rotation).toBe(90);
-});
-
-it("says so beside the button when a turn would take the element out of the room", () => {
-  const added = addFixture(createRoom("Narrow", 400, 100), "bar", { x: 50, y: 20 });
-  const room = editFixture(added, added.fixtures[0].key, { w: 300, h: 60 }); // fits lying down, not standing up
-  const { onChange } = show(room, room.fixtures[0].key);
-  fireEvent.click(screen.getByRole("button", { name: "Rotate 90°" }));
-  expect(onChange).not.toHaveBeenCalled();
-  expect(screen.getByRole("alert").textContent).toContain("inside the room");
-});

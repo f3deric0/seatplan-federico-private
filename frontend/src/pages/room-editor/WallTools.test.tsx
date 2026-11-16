@@ -15,7 +15,6 @@ it("puts the main entrance first and asks for it when the room has none", () => 
   show(createRoom("Room 1", 1000, 700));
   const headings = screen.getAllByRole("heading", { level: 3 }).map(h => h.textContent);
   expect(headings[0]).toBe("Main entrance");
-  expect(screen.getByText(/Start here: choose the wall where guests come in/)).toBeTruthy();
   expect(screen.getByRole("button", { name: "Set main entrance" })).toBeTruthy();
 });
 
@@ -31,7 +30,6 @@ it("places the main entrance on the chosen wall and selects its door", () => {
 it("offers to move an existing main entrance, never to place it where it already is", () => {
   const room = setMainEntrance(createRoom("Room 1", 1000, 700), 0);
   show(room);
-  expect(screen.getByText(/Guests come in on Wall 1/)).toBeTruthy();
   const button = screen.getByRole<HTMLButtonElement>("button", { name: "Move main entrance here" });
   expect(button.disabled).toBe(true);
   fireEvent.change(screen.getByLabelText("Wall of the main entrance"), { target: { value: "1" } });

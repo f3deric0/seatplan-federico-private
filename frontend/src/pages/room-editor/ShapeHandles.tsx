@@ -42,7 +42,8 @@ export function ShapeHandles(props: Props) {
       const a = active.base.outline.points[active.index], b = active.base.outline.points[(active.index + 1) % active.base.outline.points.length];
       const dx = b.x - a.x, dy = b.y - a.y, chord = Math.hypot(dx, dy);
       const curve = a.curve + (point.x - active.start.x) * dy / chord - (point.y - active.start.y) * dx / chord;
-      apply(() => setSideCurve(active.base, active.index, Math.max(-chord / 2, Math.min(chord / 2, Math.round(curve)))), true);
+      const bulge = Math.max(-chord / 2, Math.min(chord / 2, Math.round(curve)));
+      apply(() => setSideCurve(active.base, active.index, Math.abs(bulge) < 12 ? 0 : bulge), true); // a nearly flat wall snaps back to straight
     }
   };
   const up = (event: ReactPointerEvent<SVGGElement>) => {

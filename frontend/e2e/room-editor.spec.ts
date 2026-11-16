@@ -31,11 +31,6 @@ test("an owner builds a room on a phone, saves, reloads and sees the same", asyn
   await open(page, token, venue);
   await expect(page.getByText("Walls: 4 sides")).toBeVisible();
 
-  // One wall bulges outwards.
-  await page.getByLabel("Selected wall", { exact: true }).selectOption("2");
-  await page.getByLabel("Bulge (cm)").fill("80");
-  await page.getByLabel("Bulge (cm)").press("Tab");
-
   // Two windows on two walls (north is always the top of the plan).
   await page.getByRole("button", { name: "Walls", exact: true }).tap();
   await page.getByRole("button", { name: "Add window", exact: true }).tap();
@@ -61,8 +56,6 @@ test("an owner builds a room on a phone, saves, reloads and sees the same", asyn
   await expect(page.getByText("Tables: 8")).toBeVisible();
   await expect(page.getByText("Walls: 4 sides")).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: /Unsaved|Saved/ })).toHaveText("Saved");
-  await page.getByLabel("Selected wall", { exact: true }).selectOption("2");
-  await expect(page.getByLabel("Bulge (cm)")).toHaveValue("80");
   await expect(page.getByRole("img", { name: "North is at the top of the plan" })).toBeVisible();
   await page.getByRole("button", { name: "Walls", exact: true }).tap();
   await expect(page.getByLabel("Selected opening").locator("option")).toHaveCount(3); // "Choose an opening" and the two windows

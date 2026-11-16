@@ -12,8 +12,6 @@ for (const width of [1440, 390]) {
     await page.getByRole("button", { name: "Fixed", exact: true }).click();
     await page.getByRole("button", { name: "Place Bar", exact: true }).click();
     await expect(page.getByLabel("Object width (cm)")).toBeHidden();
-    await page.getByLabel("Rename label", { exact: true }).fill("Service bar");
-    await page.getByLabel("Rename label", { exact: true }).press("Tab");
     await page.getByText("Size, position and shape", { exact: true }).click();
     await page.getByLabel("Object x (cm)").fill("650");
     await page.getByLabel("Object x (cm)").press("Tab");
@@ -29,12 +27,10 @@ for (const width of [1440, 390]) {
     await page.getByLabel("Object rotation (degrees)").press("Tab");
     await page.screenshot({ path: join(tmpdir(), `seatplan-room-fixed-${width}.png`), fullPage: true });
     await page.getByRole("button", { name: "Place Quiet zone", exact: true }).click();
-    await page.getByLabel("Rename label", { exact: true }).fill("Quiet corner");
-    await page.getByLabel("Rename label", { exact: true }).press("Tab");
     await page.getByRole("button", { name: "Remove zone", exact: true }).click();
     await page.getByRole("button", { name: "Undo", exact: true }).click();
-    await page.getByLabel("Selected fixed element").selectOption({ label: "Quiet corner" });
-    await expect(page.getByLabel("Rename label", { exact: true })).toHaveValue("Quiet corner");
+    await page.getByLabel("Selected fixed element").selectOption({ label: "Quiet zone" });
+    await expect(page.getByRole("button", { name: "Remove zone", exact: true })).toBeVisible();
     await page.screenshot({ path: join(tmpdir(), `seatplan-room-zones-${width}.png`), fullPage: true });
     expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -46,7 +42,7 @@ test("palette drop places a fixture and moving it makes one undo step", async ({
   await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
   await page.getByRole("button", { name: "Fixed", exact: true }).click();
   await page.getByRole("button", { name: "Place TV", exact: true }).dragTo(page.locator(".room-canvas"), { targetPosition: { x: 400, y: 200 } });
-  await expect(page.getByLabel("Rename label", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Remove fixed element", exact: true })).toBeVisible();
   await expect(page.getByLabel("Fixed element shape")).toHaveValue("rect");
   const before = await page.getByLabel("Object x (cm)").inputValue();
   const circle = (await page.locator(".room-fixture > rect").first().boundingBox())!;
@@ -119,7 +115,7 @@ test("a selected fixed element is resized by pulling its grips, like a picture i
   await expect(page.locator("[data-fixture-grip]")).toHaveCount(0);
 });
 
-test("a fixed element is turned with its rotation grip or the Rotate 90 button", async ({ page, request }) => {
+test("a fixed element is turned with its rotation grip", async ({ page, request }) => {
   const links = await demoLinks(request);
   await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
   await page.getByRole("button", { name: "Fixed", exact: true }).click();
@@ -137,10 +133,8 @@ test("a fixed element is turned with its rotation grip or the Rotate 90 button",
   await page.mouse.move(centre.x + 120, centre.y, { steps: 8 }); // swing it to the right of the centre
   await page.mouse.up();
   await expect(rotation).toHaveValue("90");
-  await page.getByRole("button", { name: "Rotate 90°", exact: true }).click();
-  await expect(rotation).toHaveValue("180");
   await page.getByRole("button", { name: "Undo", exact: true }).click();
-  await expect(rotation).toHaveValue("90");
+  await expect(rotation).toHaveValue("0");
 });
 
 test("a grip answers only right on its square, so the rest of the element still drags it", async ({ page, request }) => {
@@ -170,7 +164,7 @@ test("a quiet zone may stand outside the room, a fixed element may not, and ther
   await page.getByRole("button", { name: "Fixed", exact: true }).click();
   await expect(page.getByRole("button", { name: "Place Terrace", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Place Quiet zone", exact: true }).click();
-  await expect(page.getByLabel("Rename label", { exact: true })).toHaveValue(/^Quiet zone/);
+  await expect(page.getByRole("button", { name: "Remove zone", exact: true })).toBeVisible();
   await page.getByText("Size and position", { exact: true }).click();
   const x = page.getByLabel("Object x (cm)");
   await x.fill("3000"); // far beyond the walls

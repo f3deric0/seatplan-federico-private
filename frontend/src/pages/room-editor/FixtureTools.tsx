@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { Button, Checkbox, Select } from "../../design/components";
-import { ObjectFields, ObjectTextField, OBJECT_DRAG_TYPE } from "./ObjectFields";
+import { ObjectFields, OBJECT_DRAG_TYPE } from "./ObjectFields";
 import { FixtureIcon } from "./FixtureIcon";
 import type { IconKind } from "./FixtureIcon";
 import { editFixture, editZone, FIXTURE_NAMES, FIXTURE_PALETTE, removeZone, ZONE_NAMES, ZONE_PALETTE } from "./roomObjects";
@@ -13,17 +12,11 @@ export function FixtureTools({ room, selected, free, onFree, onSelect, onPlace, 
   const updateZone = (patch: Partial<RoomZone>) => { if (zone) onChange(editZone(room, zone.key, patch)); };
   const update = (patch: Partial<RoomFixture>) => { if (item) onChange(editFixture(room, item.key, patch)); };
   const safe = (patch: Partial<RoomFixture>) => { try { update(patch); } catch (caught) { onError(caught instanceof Error ? caught.message : "Check the fixed element."); } };
-  const [turnError, setTurnError] = useState<{ key: string; message: string } | null>(null);
   return <div className="room-form">
-    <p>Tap an element to add it to the room, then drag it where it goes.</p>
     <div className="room-object-palette">{[...FIXTURE_PALETTE.map(kind => ({ value: `fixture:${kind}`, kind, name: FIXTURE_NAMES[kind] })), ...ZONE_PALETTE.map(kind => ({ value: `zone:${kind}`, kind, name: ZONE_NAMES[kind] ?? kind }))].map(({ value, kind, name }) => <button type="button" draggable key={value} onDragStart={event => { event.dataTransfer.setData(OBJECT_DRAG_TYPE, value); event.dataTransfer.effectAllowed = "copy"; }} aria-label={`Place ${name}`} onClick={() => onPlace(value)}><svg viewBox="-12 -12 24 24" aria-hidden="true"><FixtureIcon kind={kind as IconKind} size={24} /></svg>{name}</button>)}</div>
     <Checkbox label="Free placement (no grid snapping)" checked={free} onChange={e => onFree(e.target.checked)} />
     {room.fixtures.length + room.zones.length > 1 && <Select label="Selected fixed element" value={item?.key ?? zone?.key ?? ""} options={[{ value: "", label: "Choose an element" }, ...room.fixtures.map((f, i) => ({ value: f.key, label: f.label || `${FIXTURE_NAMES[f.kind]} ${i + 1}` })), ...room.zones.map(z => ({ value: z.key, label: z.name }))]} onChange={e => onSelect(e.target.value || null)} />}
     {item && <div key={item.key} className="room-form">
-      <ObjectTextField label="Rename label" value={item.label} maxLength={40} onCommit={label => update({ label })} />
-      <Button variant="secondary" onClick={() => { try { update({ rotation: (item.rotation + 90) % 360 }); setTurnError(null); } catch (caught) { setTurnError({ key: item.key, message: caught instanceof Error ? caught.message : "It does not fit when turned." }); } }}>Rotate 90°</Button>
-      {turnError?.key === item.key && <p role="alert" className="room-error">{turnError.message}</p>}
-      {item.kind === "awning" && <p>Awning shade applies to outdoor rooms.</p>}
       <details className="room-more">
         <summary>Size, position and shape</summary>
         <div className="room-form">
@@ -34,8 +27,6 @@ export function FixtureTools({ room, selected, free, onFree, onSelect, onPlace, 
       <Button variant="danger" onClick={() => { onChange({ ...room, fixtures: room.fixtures.filter(f => f.key !== item.key) }); onSelect(null); }}>Remove fixed element</Button>
     </div>}
     {zone && <div key={zone.key} className="room-form">
-      <ObjectTextField label="Rename label" value={zone.name} maxLength={80} onCommit={name => updateZone({ name })} />
-      <p>A zone can go beyond the walls, like a terrace.</p>
       <details className="room-more">
         <summary>Size and position</summary>
         <div className="room-form"><ObjectFields item={zone} onChange={updateZone} /></div>

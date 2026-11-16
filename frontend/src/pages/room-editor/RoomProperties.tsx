@@ -1,6 +1,6 @@
 import { Button, Select } from "../../design/components";
 import { sideLength } from "./geometry";
-import { insertCorner, moveCorner, removeCorner, setSideCurve, setSideLength } from "./shapeEditing";
+import { insertCorner, moveCorner, removeCorner, setSideLength } from "./shapeEditing";
 import type { Room } from "./roomModel";
 import { RoomNumberField } from "./ShapeTools";
 import type { ShapeSelection } from "./ShapeTools";
@@ -27,12 +27,9 @@ export function RoomProperties({ room, selection, onSelect, onChange, onError }:
     <Button variant="secondary" disabled={points.length >= 60} onClick={addWall}>Add a new wall</Button>
     {addError && <p role="alert" className="room-error">{addError}</p>}
     <Select label="Selected wall" value={selection?.kind === "side" && point ? String(index) : ""} options={options} onChange={e => onSelect(e.target.value === "" ? null : { kind: "side", index: Number(e.target.value) })} />
-    <Select label="Selected corner" value={selection?.kind === "corner" && point ? String(index) : ""} options={options} onChange={e => onSelect(e.target.value === "" ? null : { kind: "corner", index: Number(e.target.value) })} />
     {point && selection?.kind === "side" && <>
       <h3 ref={heading} tabIndex={-1}>Wall {index + 1}</h3>
       <RoomNumberField label="Wall length (m)" value={sideLength(room.outline, index) / 100} decimals={2} min={0.01} onCommit={length => onChange(setSideLength(room, index, length * 100))} />
-      <RoomNumberField label="Bulge (cm)" value={point.curve} onCommit={curve => onChange(setSideCurve(room, index, curve))} />
-      <Button variant="secondary" onClick={() => apply(() => setSideCurve(room, index, 0))}>Make straight</Button>
     </>}
     {point && selection?.kind === "corner" && <>
       <h3 ref={heading} tabIndex={-1}>Corner {index + 1}</h3>

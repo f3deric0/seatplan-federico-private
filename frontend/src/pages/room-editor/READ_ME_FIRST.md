@@ -176,3 +176,8 @@ Later changes: the metre marks start at 0 m on the room's top-left corner and ne
 Shape, Walls, Fixed, Tables (last); there is no separate "Add table" button, the table palette is the "Add a table"
 section of the Tables tab. The footer shows the area and only layout errors (ProblemList); warnings, tips and the
 "Grid on" text are not shown.
+
+Less text, fewer controls: the panels carry almost no instructions (only where an action is not obvious). The Shape panel has no
+"Selected corner" list, "Bulge" field or "Make straight" button: corners are chosen on the plan and a wall is bent by dragging its
+midpoint (under 12 cm of bulge snaps to straight; a double tap also straightens). The Fixed panel has no "Rename label" or
+"Rotate 90°": elements turn with the grip on the plan.

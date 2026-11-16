@@ -18,7 +18,6 @@ export function WallTools({ room, selection, selected, onSelect, onSide, onChang
   return <div className="room-form">
     <section className="room-entrance" aria-labelledby="room-entrance-title">
       <h3 id="room-entrance-title">Main entrance</h3>
-      <p>{entrance ? `Guests come in on Wall ${entrance.side + 1}. Tables near it are shown as "Near the entrance".` : "Start here: choose the wall where guests come in. Tables near it are shown as \"Near the entrance\"."}</p>
       <Select label="Wall of the main entrance" value={entranceWall} options={room.outline.points.map((_, i) => ({ value: String(i), label: `Wall ${i + 1}` }))} onChange={e => { setEntranceWall(e.target.value); setEntranceError(""); }} />
       <Button variant={entrance ? "secondary" : "primary"} disabled={entrance?.side === Number(entranceWall)} onClick={() => {
         try { const next = setMainEntrance(room, Number(entranceWall)); setEntranceError(""); onChange(next); onSelect(mainEntrance(next)!.key); }
