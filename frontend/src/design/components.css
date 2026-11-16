@@ -68,11 +68,20 @@
   border-top: var(--border-width) solid var(--c-border);
   color: var(--c-text-muted);
   font-size: var(--fs-sm);
-  padding-block: var(--space-4);
+  padding-block: var(--space-3);
 }
 
 .shell-footer p {
   margin: 0;
+  max-width: none;
+}
+
+/* The notes in the footer (the project line, map and photo credits) sit side by side and only wrap when they must. */
+.shell-footer .shell-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-5);
 }
 
 .wordmark {
@@ -84,18 +93,32 @@
   text-decoration: none;
 }
 
-.wordmark-mark {
+.wordmark-restaurants {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+}
+.wordmark-restaurants .wordmark-logo { height: 38px; }
+.wordmark-restaurants .restaurant-brand-label { margin: -1px 0 0 43px; } /* under the name, clear of the pin */
+@media (max-width: 30rem) {
+  .wordmark-restaurants .wordmark-logo { height: 32px; }
+  .wordmark-restaurants .restaurant-brand-label { margin-left: 36px; }
+}
+
+.wordmark-logo {
   flex: none;
-  width: 44px;
+  display: block;
   height: 40px;
-  object-fit: cover;
-  mix-blend-mode: multiply;
+  width: auto;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-surface="restaurants"]) .wordmark-mark,
-  :root[data-surface="restaurants"][data-theme="dark"] .wordmark-mark {
-    mix-blend-mode: normal;
-    border-radius: var(--radius-sm);
+  /* The logo is dark purple: on a dark page it sits on a light plate so it stays readable. */
+  :root:not([data-surface="restaurants"]) .wordmark-logo,
+  :root[data-surface="restaurants"][data-theme="dark"] .wordmark-logo {
+    background: #f6f3ff;
+    border-radius: var(--radius-md);
+    padding: 3px 8px;
   }
 }
 

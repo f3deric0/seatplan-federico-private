@@ -23,8 +23,8 @@ Referer/CSP behavior still needs a deployment check; no deployment is authorized
 
 ResultsMap supplies the public discovery and restaurant maps. Leaflet positions
 the pins and canvases. DiscoveryBasemap draws the land, water, parks, buildings
-and roads from OpenFreeMap vector tiles. It requests only visible tiles, aborts
-requests when Leaflet unloads them and omits labels. The public page footer
+and roads from OpenFreeMap vector tiles. It requests only visible tiles and aborts
+requests when Leaflet unloads them. The land is drawn without text; the names are a separate overlay (below). The public page footer
 credits OpenMapTiles and OpenStreetMap. When tiles fail, the numbered diagram
 and the list still give diners access to the results.
 
@@ -33,3 +33,17 @@ from its parent (tileSource.sourceTile) and the vector geometry is redrawn large
 picture (Leaflet's maxNativeZoom would blur it). Road and water widths grow gently with zoom (strokeGrowth). Parent tiles are
 shared between the tiles cut from them, so one download serves many.
 
+
+Names on the map (discoveryLabels.ts, mapLabels.ts): main areas (districts and neighbourhoods, in small letter-spaced capitals), the
+city, rivers and the sea, parks, places worth finding (monuments, museums, castles, viewpoints, theatres...) and streets. They come from
+the same OpenFreeMap tiles (the place, water_name, waterway, park, poi and transportation_name layers) and are laid out once over the
+whole view, not tile by tile: pieces of a street cut at tile edges are stitched together, a name never overlaps another, the same name
+is not repeated close by, and street names follow the street. Smaller things appear as the map is zoomed in (labelStyle gates each
+class by zoom, and the poi layer by its importance rank within the tile; artworks and the like are never named). The text has a halo
+in the colour of the land so it reads as part of the map. The owner's location map (LeafletMap) uses the OpenStreetMap raster tiles,
+which already carry names.
+
+Smoothness (discoveryBasemap.ts): a stored tile is decoded once and kept (40 tiles); each shape keeps its outline as a Path2D and its
+bounding box, so redrawing a tile skips decoding and every shape that is off screen (this matters most when zoomed in past the stored
+detail, where many canvas tiles are cut from one parent). Tiles for the in-between zoom steps are not drawn (updateWhenZooming:
+false) and more tiles are kept around the view (keepBuffer 3). Names are worked out once per stored tile and zoom.

@@ -34,6 +34,29 @@ describe("discovery vector tiles", () => {
     });
   });
 
+  it("reads a name and keeps point features", () => {
+    const named = [...bytesField(2, [0, 0, 1, 1]), 24, 1, ...bytesField(4, [9, 2, 4])];
+    const layer = [
+      ...textField(1, "place"),
+      ...bytesField(2, named),
+      ...textField(3, "class"), ...textField(3, "name"),
+      ...bytesField(4, textField(1, "suburb")), ...bytesField(4, textField(1, "Chiado")),
+    ];
+    const layers = readMapLayers(Uint8Array.from(bytesField(3, layer)), new Set(["place"]));
+    expect(layers.get("place")?.features).toEqual([{ kind: 1, category: "suburb", name: "Chiado", geometry: Uint8Array.from([9, 2, 4]) }]);
+  });
+
+  it("reads a numeric rank and a subclass", () => {
+    const poi = [...bytesField(2, [0, 0, 1, 1, 2, 2]), 24, 1, ...bytesField(4, [9, 2, 4])];
+    const layer = [
+      ...textField(1, "poi"), ...bytesField(2, poi),
+      ...textField(3, "class"), ...textField(3, "subclass"), ...textField(3, "rank"),
+      ...bytesField(4, textField(1, "attraction")), ...bytesField(4, textField(1, "artwork")), ...bytesField(4, [40, 3]),
+    ];
+    const layers = readMapLayers(Uint8Array.from(bytesField(3, layer)), new Set(["poi"]));
+    expect(layers.get("poi")?.features[0]).toMatchObject({ category: "attraction", subclass: "artwork", rank: 3 });
+  });
+
   it("traces signed deltas and closes a ring without resetting its coordinate cursor", () => {
     const commands: (string | number)[][] = [];
     traceGeometry({

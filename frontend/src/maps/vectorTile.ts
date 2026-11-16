@@ -57,37 +57,50 @@ class Reader {
   }
 }
 
-type Feature = { kind: number; category?: string; geometry: Uint8Array };
-type Layer = { extent: number; features: Feature[] };
+export type MapFeature = { kind: number; category?: string; subclass?: string; rank?: number; name?: string; geometry: Uint8Array };
+export type MapLayer = { extent: number; features: MapFeature[] };
+type Feature = MapFeature;
+type Layer = MapLayer;
 const decoder = new TextDecoder();
 
 function readStringValue(bytes: Uint8Array) {
   const value = new Reader(bytes);
   for (const { field, wire } of value.fields()) {
     if (field === 1 && wire === 2) return decoder.decode(value.fieldBytes());
+    // A number (such as a place's rank) is kept as its text: int, uint and sint.
+    if ((field === 4 || field === 5) && wire === 0) return String(value.uint32());
+    if (field === 6 && wire === 0) { const z = value.uint32(); return String((z >>> 1) ^ -(z & 1)); }
     value.skip(wire);
   }
   return undefined;
 }
 
-function readFeature(bytes: Uint8Array, classKey: number, values: (string | undefined)[]): Feature | undefined {
+function readFeature(bytes: Uint8Array, keyIds: { class: number; subclass: number; rank: number; name: number; latin: number }, values: (string | undefined)[]): Feature | undefined {
   const feature = new Reader(bytes);
   let kind = 0;
   let geometry: Uint8Array | undefined;
   let category: string | undefined;
+  let name: string | undefined;
+  let latin: string | undefined;
+  let subclass: string | undefined;
+  let rank: number | undefined;
   for (const { field, wire } of feature.fields()) {
     if (field === 2 && wire === 2) {
       const tags = new Reader(feature.fieldBytes());
       while (tags.more) {
         const key = tags.uint32();
         const index = tags.uint32();
-        if (key === classKey) category = values[index];
+        if (key === keyIds.class) category = values[index];
+        else if (key === keyIds.name) name = values[index];
+        else if (key === keyIds.subclass) subclass = values[index];
+        else if (key === keyIds.rank) rank = values[index] === undefined ? undefined : Number(values[index]);
+        else if (key === keyIds.latin) latin = values[index];
       }
     } else if (field === 3 && wire === 0) kind = feature.uint32();
     else if (field === 4 && wire === 2) geometry = feature.fieldBytes();
     else feature.skip(wire);
   }
-  if (geometry && (kind === 2 || kind === 3)) return { kind, category, geometry };
+  if (geometry && (kind === 1 || kind === 2 || kind === 3)) return { kind, category, ...(subclass ? { subclass } : {}), ...(rank !== undefined && !Number.isNaN(rank) ? { rank } : {}), name: name ?? latin, geometry };
   return undefined;
 }
 
@@ -116,10 +129,10 @@ export function readMapLayers(bytes: Uint8Array, wanted: ReadonlySet<string>) {
       else layer.skip(entry.wire);
     }
     if (!wanted.has(name) || extent === 0) continue;
-    const classKey = keys.indexOf("class");
+    const keyIds = { class: keys.indexOf("class"), subclass: keys.indexOf("subclass"), rank: keys.indexOf("rank"), name: keys.indexOf("name"), latin: keys.indexOf("name:latin") };
     layers.set(name, {
       extent,
-      features: features.flatMap(bytes => readFeature(bytes, classKey, values) ?? []),
+      features: features.flatMap(bytes => readFeature(bytes, keyIds, values) ?? []),
     });
   }
   return layers;
@@ -153,4 +166,15 @@ export function traceGeometry(
       else path.lineTo(x * scale, y * scale);
     }
   }
+}
+
+/** The geometry as lists of points: one list per line or ring, or one per single point. */
+export function geometryLines(bytes: Uint8Array, scale: number): { x: number; y: number }[][] {
+  const lines: { x: number; y: number }[][] = [];
+  traceGeometry({
+    moveTo: (x, y) => lines.push([{ x, y }]),
+    lineTo: (x, y) => lines.at(-1)?.push({ x, y }),
+    closePath: () => undefined,
+  }, bytes, scale);
+  return lines;
 }

@@ -16,7 +16,7 @@
 .rp-contact { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .rp-contact a, .rp aside a { display: inline-flex; align-items: center; min-height: var(--touch-target); }
 .rp-book { padding: var(--space-4) 0 var(--space-5); border-bottom: 1px solid var(--c-border); scroll-margin-top: var(--space-8); }
-.rp-photo-credits { color: var(--c-text-muted); font-size: var(--fs-xs); }
+.rp-photo-credits { color: var(--c-text-muted); font-size: var(--fs-xs); display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
 .rp-book .rp-demo-note { margin-bottom: var(--space-3); }
 
 .rp-gallery { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-3); }

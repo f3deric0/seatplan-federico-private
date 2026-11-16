@@ -217,7 +217,7 @@
 .st-page .st-sidebar .st-home-link,
 .st-page .st-sidebar .st-workspace-label,
 .st-page .st-sidebar .st-tab { color: inherit; }
-.st-page .st-sidebar .wordmark-mark { mix-blend-mode: normal; border-radius: var(--radius-sm); }
+.st-page .st-sidebar .wordmark-logo { background: #f6f3ff; border-radius: var(--radius-md); padding: 3px 8px; } /* the dark logo on a light plate, on the dark menu */
 .st-page .st-sidebar :focus-visible { outline-color: var(--c-ops-nav-text, var(--c-focus)); }
 .st-page .st-sidebar .st-tab:hover,
 .st-page .st-sidebar .st-tab[aria-selected="true"] { background: var(--c-primary-soft); color: var(--c-primary); }

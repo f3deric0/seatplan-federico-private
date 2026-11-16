@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import seatPlanMark from "../seatplan-mark.png";
+import seatPlanLogo from "../seatplan-logo.png";
 
 const RESTAURANT_ROOTS = ["/restaurants", "/r", "/b", "/owner", "/staff"];
 
@@ -34,13 +34,8 @@ export function Wordmark({ restaurantBrand = false }: { restaurantBrand?: boolea
   return (
     <Link to="/" className={restaurantBrand ? "wordmark wordmark-restaurants" : "wordmark"}
       aria-label={restaurantBrand ? "SeatPlan Restaurantes, home" : "SeatPlan, home"}>
-      <img className="wordmark-mark" src={seatPlanMark} alt="" width={44} height={40} />
-      {restaurantBrand ? (
-        <span className="restaurant-brand-text">
-          <span className="wordmark-text">SeatPlan</span>
-          <span className="restaurant-brand-label" lang="pt">Restaurantes</span>
-        </span>
-      ) : <span className="wordmark-text">SeatPlan</span>}
+      <img className="wordmark-logo" src={seatPlanLogo} alt="" width={132} height={40} />
+      {restaurantBrand && <span className="restaurant-brand-label" lang="pt">Restaurantes</span>}
     </Link>
   );
 }

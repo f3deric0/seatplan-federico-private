@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { DiscoveryBasemap } from "./discoveryBasemap";
+import { DiscoveryLabels } from "./discoveryLabels";
 import { SchematicMap } from "./SchematicMap";
 import "./maps.css";
 export interface ResultPin {
@@ -75,6 +76,7 @@ export default function ResultsMap({ pins, highlightedId = null, selectedId = nu
     });
     tiles.on("tileerror", () => setFailed(true));
     tiles.addTo(view);
+    new DiscoveryLabels().addTo(view); // names of areas, rivers, parks and streets, above the basemap
     const retryTiles = () => { if (loaded === 0) tiles.redraw(); };
     window.addEventListener("online", retryTiles);
     // No tile after a while: show the diagram instead of a grey box. A tile that arrives later brings the map back.
