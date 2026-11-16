@@ -919,3 +919,7 @@ O comando `python -m app.seed.demo_reviews` preenche a demonstração SQLite
 com avaliações identificadas como «Demo review». Numa cópia do catálogo
 local, adicionou 340 avaliações aos 25 restaurantes. Uma segunda execução
 adicionou zero, e as médias e a ordenação foram verificadas na API.
+
+Nos cartões, a nota e a cadeira foram ampliadas e centradas no lado
+direito. Verificámos a apresentação e a ligação às reviews no Chromium
+a 320, 390 e 1440 px. O build e os 513 testes Vitest passaram.

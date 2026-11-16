@@ -14,17 +14,17 @@ export function RestaurantCard({card,when,highlighted,onHighlight,number,pending
   <div className="discover-card-body" onClick={event => {
    if (event.target instanceof Element && !event.target.closest("a,button")) onSelect?.();
   }}>
-   <div className="discover-card-heading">
+   <div className="discover-card-main">
     <h3 id={`${compact?"pin-name":"name"}-${card.public_id}`}>{number!==undefined&&<span className="discover-card-number" aria-hidden="true">{number}</span>}<Link to={restaurantHref(card,null)}>{card.name}</Link></h3>
-    {card.reviews && <Link className="discover-card-rating" to={`${restaurantHref(card,null)}#reviews`}>
-      <ReviewRating summary={card.reviews} />
-    </Link>}
-   </div>
    <p className="discover-card-line">{card.cuisines.map(cuisineLabel).join(", ")}{price&&<> · <span aria-hidden="true">{price}</span><span className="visually-hidden">Price level {card.price_level} of 4</span></>}{distance&&` · ${distance}`}</p>
    {card.demo_booking ? <p className="discover-ambience">Demo booking</p> : attribute && <p className="discover-ambience">{DISCOVERY_FEATURE_LABELS[attribute]}</p>}
    {when?<div className="discover-times" aria-label={`Available near ${when.time} for ${when.party}`}>
     {card.next_times.length?[...card.next_times].sort().map(time=>pending?<button key={time} className="discover-time" disabled>{time}</button>:<Link key={time} className={`discover-time${time===when.time?" is-requested":""}`} to={restaurantHref(card,when,time)}>{time}</Link>):<span className="discover-times-label">No free table near {when.time}.</span>}
    </div>:<Link className="discover-card-more" to={restaurantHref(card,null)}>See available times →</Link>}
+   </div>
+   {card.reviews && <Link className="discover-card-rating" to={`${restaurantHref(card,null)}#reviews`}>
+    <ReviewRating summary={card.reviews} />
+   </Link>}
   </div>
  </article>;
 }

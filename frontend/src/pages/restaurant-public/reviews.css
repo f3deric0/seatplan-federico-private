@@ -13,9 +13,15 @@
 .review-chair img {
   position:absolute;max-width:none;width:540%;height:auto;inset-inline-start:-221%;top:-58%;
 }
-.discover-card-heading { display:flex;gap:var(--space-2);align-items:flex-start;flex-wrap:wrap; }
-.discover-card-heading h3 { flex:1 1 10rem; }
-.discover-card-rating { color:inherit;text-decoration:none;text-align:right;margin-inline-start:auto; }
+.discover-card-body { display:flex;align-items:center;gap:var(--space-3); }
+.discover-card-main { flex:1;min-width:0; }
+.discover-card-rating { flex:none;color:inherit;text-decoration:none;text-align:right; }
+.discover-card:not(.is-compact) .discover-card-rating .review-score {
+  font-size:clamp(1.75rem,3vw,2.25rem);gap:.375rem;
+}
+.discover-card:not(.is-compact) .discover-card-rating .review-chair {
+  width:1.75rem;height:auto;aspect-ratio:15/22;
+}
 .discover-card-rating:hover .review-count { text-decoration:underline; }
 .rp-section-nav { display:flex;gap:var(--space-4);border-block-end:1px solid var(--c-border); }
 .rp-section-nav a {
