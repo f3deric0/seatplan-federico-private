@@ -22,7 +22,7 @@
 .room-table { fill: var(--c-surface-strong); stroke: var(--c-border-strong); stroke-width: 2; }
 .room-seat { fill: var(--c-surface); stroke: var(--c-border-strong); stroke-width: 2; }
 .room-table-label { font-size: 16px; pointer-events: none; }
-.room-properties { padding: var(--space-4); background: var(--c-surface); border-left: 1px solid var(--c-border); }
+.room-properties { padding: var(--space-4); background: var(--c-surface); border-left: 1px solid var(--c-border); overscroll-behavior: contain; } /* scrolling past its end must not scroll the page */
 .room-properties h2 { font-size: var(--fs-lg); margin-top: 0; }
 .room-form { display: grid; gap: var(--space-4); }
 /* Title of the selected wall or corner: a quiet section heading above its fields. It takes focus when the
