@@ -85,32 +85,22 @@
 }
 
 .wordmark-mark {
-  width: 28px;
-  height: 28px;
+  flex: none;
+  width: 44px;
+  height: 40px;
+  object-fit: cover;
+  mix-blend-mode: multiply;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-surface="restaurants"]) .wordmark-mark,
+  :root[data-surface="restaurants"][data-theme="dark"] .wordmark-mark {
+    mix-blend-mode: normal;
+    border-radius: var(--radius-sm);
+  }
 }
 
 .restaurant-brand-text { display:grid;gap:.15rem;line-height:1.05; }
 .restaurant-brand-label { color:var(--c-text-muted);font:600 .6875rem/1.05 var(--font-body); }
-.restaurant-mark {
-  position:relative;display:grid;place-items:center;flex:none;width:2.125rem;height:2.125rem;
-  border-radius:var(--radius-md);background:var(--c-primary);color:var(--c-on-primary);
-}
-.restaurant-mark::before {
-  content:"";width:.875rem;height:.875rem;border:1.5px solid currentColor;border-radius:50%;
-  box-shadow:inset 0 0 0 2px var(--c-primary),inset 0 0 0 3px currentColor;
-}
-.restaurant-mark::after,.restaurant-mark > span {
-  content:"";position:absolute;top:.65rem;bottom:.65rem;width:1.5px;background:currentColor;border-radius:2px;
-}
-.restaurant-mark::after { right:.375rem; }
-.restaurant-mark > span { left:.375rem; }
-.restaurant-mark > span::before {
-  content:"";position:absolute;top:0;left:-1.5px;width:4.5px;height:5px;
-  border:1px solid currentColor;border-top:0;border-radius:0 0 2px 2px;
-}
-.wordmark-table { fill: var(--c-primary); }
-.wordmark-seat { fill: var(--c-text); }
-.wordmark-seat-mine { fill: var(--c-accent-bright); }
 
 .wordmark-text {
   font-family: var(--font-display);

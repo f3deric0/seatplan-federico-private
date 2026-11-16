@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
+import seatPlanMark from "../seatplan-mark.png";
 
 const RESTAURANT_ROOTS = ["/restaurants", "/r", "/b", "/owner", "/staff"];
 
@@ -30,27 +31,16 @@ interface PageShellProps {
 }
 
 export function Wordmark({ restaurantBrand = false }: { restaurantBrand?: boolean } = {}) {
-  if (restaurantBrand) {
-    return (
-      <Link to="/" className="wordmark wordmark-restaurants" aria-label="SeatPlan Restaurantes, home">
-        <span className="restaurant-mark" aria-hidden="true"><span /></span>
+  return (
+    <Link to="/" className={restaurantBrand ? "wordmark wordmark-restaurants" : "wordmark"}
+      aria-label={restaurantBrand ? "SeatPlan Restaurantes, home" : "SeatPlan, home"}>
+      <img className="wordmark-mark" src={seatPlanMark} alt="" width={44} height={40} />
+      {restaurantBrand ? (
         <span className="restaurant-brand-text">
           <span className="wordmark-text">SeatPlan</span>
           <span className="restaurant-brand-label" lang="pt">Restaurantes</span>
         </span>
-      </Link>
-    );
-  }
-  return (
-    <Link to="/" className="wordmark" aria-label="SeatPlan, home">
-      <svg viewBox="0 0 32 32" className="wordmark-mark" aria-hidden="true">
-        <circle cx="16" cy="16" r="6.5" className="wordmark-table" />
-        <circle cx="16" cy="4.5" r="2.8" className="wordmark-seat" />
-        <circle cx="27.5" cy="16" r="2.8" className="wordmark-seat" />
-        <circle cx="16" cy="27.5" r="2.8" className="wordmark-seat" />
-        <circle cx="4.5" cy="16" r="2.8" className="wordmark-seat wordmark-seat-mine" />
-      </svg>
-      <span className="wordmark-text">SeatPlan</span>
+      ) : <span className="wordmark-text">SeatPlan</span>}
     </Link>
   );
 }

@@ -883,3 +883,10 @@ A data usa um calendário do SeatPlan com navegação por mês e entrada por
 teclado. Build, 513 testes Vitest e 182 verificações de contraste passaram.
 Testámos os menus, a escolha da data e o regresso do foco no Chromium a
 1440, 390 e 320 px com dados de teste.
+
+## Logótipo partilhado
+
+A imagem aprovada da mesa e da cadeira roxa é usada pela marca partilhada
+nos cabeçalhos de Restaurantes e Eventos e na área de equipa. Build e 513
+testes Vitest passaram. No Chromium verificámos o carregamento na pesquisa,
+na ficha pública, na entrada do dono e em Eventos, incluindo o modo escuro.
