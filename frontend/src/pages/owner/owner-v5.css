@@ -44,7 +44,7 @@
   /* The menu follows the page below the sticky site header, at the same place at any scroll point. */
   .ow-nav {
     position: sticky;
-    top: calc(var(--space-8) + var(--space-4));
+    top: calc(var(--space-8) + var(--space-5));
     align-self: start;
     min-height: 60vh;
     max-height: calc(100dvh - var(--space-8) - var(--space-5));
