@@ -870,3 +870,7 @@ Ao passar o rato sobre outro cartão, o contorno e o pino passam para esse
 restaurante. Ao sair, regressam ao restaurante selecionado. Na ficha pública,
 o mapa e o diagrama mostram um ponto roxo com o nome por cima. Build, 513
 testes Vitest e os dois percursos no Chromium com dados de teste passaram.
+
+Ao passar para outro resultado, a seleção anterior deixa de estar ativa.
+O destaque deixa de saltar para o primeiro cartão entre resultados. Build,
+513 testes Vitest e o percurso de scroll no Chromium passaram.

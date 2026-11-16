@@ -102,7 +102,7 @@ describe("DiscoverPage: the command bar", () => {
     expect(screen.getByRole("link", { name: "Plan an event" }).getAttribute("href")).toBe("/demo");
     await screen.findByText("No restaurants match");
   });
-  it("moves the only card and pin highlight to the hovered result and restores it on leave", async () => {
+  it("moves the only card and pin highlight to the hovered result without restoring a prior selection", async () => {
     server(() => ({ items: [card(1), card(2)], total: 2 }));
     renderPage();
     const first = await screen.findByRole("article", { name: "Casa 1" });
@@ -122,9 +122,9 @@ describe("DiscoverPage: the command bar", () => {
     expect(map.getAttribute("data-preview")).toBe("pid2");
 
     fireEvent.mouseLeave(second);
-    expect(first.getAttribute("aria-current")).toBe("true");
+    expect(first.getAttribute("aria-current")).toBeNull();
     expect(second.classList.contains("is-highlighted")).toBe(false);
-    expect(map.getAttribute("data-selection")).toBe("pid1");
+    expect(map.getAttribute("data-selection")).toBeNull();
     expect(map.getAttribute("data-preview")).toBeNull();
 
     fireEvent.mouseEnter(second);

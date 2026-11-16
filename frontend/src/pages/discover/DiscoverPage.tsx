@@ -185,6 +185,10 @@ export default function DiscoverPage() {
   );
   // The diagram numbers its pins in list order; cards wear the same numbers.
   const pinNumbers = useMemo(() => new Map(items.map((card, index) => [card.public_id, index + 1])), [items]);
+  const previewCard = (id: string | null): void => {
+    setHighlighted(id);
+    if (id !== null) setPinned(current => current === id ? current : null);
+  };
   const selectPin = (id: string): void => {
     setPinned(id);
     const card = document.getElementById(`card-${id}`);
@@ -213,7 +217,7 @@ export default function DiscoverPage() {
   }, [results,saved.scroll]);
   const showMap = wide || view === "map";
   const selectedCard = items.find(card => card.public_id === pinned);
-  // A hover preview temporarily takes over the outline from the previous selection.
+  // Hover and selection share one outline, including when the pointer is over the selected card.
   const previewId = highlighted === pinned ? null : highlighted;
   return <div className={`discover-route${!wide && view === "map" ? " is-map-view" : ""}`}><PageShell title="Find a table you will love" width="wide" restaurantBrand headerActions={<PublicHeaderActions />} footerContent={showMap && <MapCredits />}>
     <section className={`discover-top${!wide && view === "map" ? " discover-top-compact" : ""}`} aria-labelledby="discover-heading">
@@ -241,7 +245,7 @@ export default function DiscoverPage() {
         {results.status==="loading"&&<Skeleton label="Finding restaurants" lines={6}/>}
         {results.status==="error"&&<ErrorState message={results.message} onRetry={search}/>}
         {results.status==="ready"&&<>
-          {!items.length?<EmptyState title={text?`No restaurants match “${text}”`:when?"Nothing available near this time":"No restaurants match"} action={<><Button onClick={()=>{if(text){setText("");setQ("");}else openFilters();}}>{text?"Clear search term":when?"Change time":"Edit filters"}</Button>{text&&<Button variant="secondary" onClick={openFilters}>Edit filters</Button>}</>}><p>{text?"Try a different name or clear the search term.":when?"Try another time or adjust the availability filter.":"Try another cuisine or room feature."}</p></EmptyState>:<div className="discover-cards">{items.map(card=><RestaurantCard key={card.public_id} card={card} when={results.when} navigationWhen={when} pending={updating} priorityFeatures={features} selected={!previewId&&pinned===card.public_id} highlighted={previewId===card.public_id} onHighlight={setHighlighted} onSelect={() => setPinned(card.public_id)} number={pinNumbers.get(card.public_id)}/>)}</div>}
+          {!items.length?<EmptyState title={text?`No restaurants match “${text}”`:when?"Nothing available near this time":"No restaurants match"} action={<><Button onClick={()=>{if(text){setText("");setQ("");}else openFilters();}}>{text?"Clear search term":when?"Change time":"Edit filters"}</Button>{text&&<Button variant="secondary" onClick={openFilters}>Edit filters</Button>}</>}><p>{text?"Try a different name or clear the search term.":when?"Try another time or adjust the availability filter.":"Try another cuisine or room feature."}</p></EmptyState>:<div className="discover-cards">{items.map(card=><RestaurantCard key={card.public_id} card={card} when={results.when} navigationWhen={when} pending={updating} priorityFeatures={features} selected={!previewId&&pinned===card.public_id} highlighted={previewId===card.public_id} onHighlight={previewCard} onSelect={() => setPinned(card.public_id)} number={pinNumbers.get(card.public_id)}/>)}</div>}
           {moreError&&<p role="alert">{moreError}</p>}
           {items.length<results.total&&<Button variant="secondary" busy={loadingMore} disabled={updating} onClick={()=>void showMore()}>Show more</Button>}
         </>}
