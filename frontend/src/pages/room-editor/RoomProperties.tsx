@@ -12,9 +12,21 @@ export function RoomProperties({ room, selection, onSelect, onChange, onError }:
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [selection?.kind, selection?.index]);
   const points = room.outline.points;
   const apply = (change: () => Room) => { try { onChange(change()); } catch (caught) { onError(caught instanceof Error ? caught.message : "Check the wall dimensions."); } };
+  const [addError, setAddError] = useState("");
   const index = selection?.index ?? -1, point = points[index];
+  // A new wall splits an existing one in two: the chosen wall, or the longest when none is chosen.
+  const addWall = () => {
+    const chosen = selection?.kind === "side" && selection.index < points.length ? selection.index : -1;
+    const longest = points.reduce((best, _, i) => sideLength(room.outline, i) > sideLength(room.outline, best) ? i : best, 0);
+    const side = chosen >= 0 ? chosen : longest;
+    try { onChange(insertCorner(room, side)); onSelect({ kind: "side", index: side + 1 }); setAddError(""); }
+    catch (caught) { setAddError(caught instanceof Error ? caught.message : "Could not add a wall here."); }
+  };
   const options = [{ value: "", label: "Choose…" }, ...points.map((_, i) => ({ value: String(i), label: String(i + 1) }))];
   return <div className="room-form">
+    <Button variant="secondary" disabled={points.length >= 60} onClick={addWall}>Add a new wall</Button>
+    <p className="rb-muted">Splits the selected wall in two, or the longest wall if none is selected. Then drag the new corner or set its length.</p>
+    {addError && <p role="alert" className="room-error">{addError}</p>}
     <Select label="Selected wall" value={selection?.kind === "side" && point ? String(index) : ""} options={options} onChange={e => onSelect(e.target.value === "" ? null : { kind: "side", index: Number(e.target.value) })} />
     <Select label="Selected corner" value={selection?.kind === "corner" && point ? String(index) : ""} options={options} onChange={e => onSelect(e.target.value === "" ? null : { kind: "corner", index: Number(e.target.value) })} />
     {point && selection?.kind === "side" && <>
@@ -32,4 +44,4 @@ export function RoomProperties({ room, selection, onSelect, onChange, onError }:
     </>}
   </div>;
 }
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
