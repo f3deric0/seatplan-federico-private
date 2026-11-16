@@ -874,3 +874,12 @@ testes Vitest e os dois percursos no Chromium com dados de teste passaram.
 Ao passar para outro resultado, a seleção anterior deixa de estar ativa.
 O destaque deixa de saltar para o primeiro cartão entre resultados. Build,
 513 testes Vitest e o percurso de scroll no Chromium passaram.
+
+## Seletores da pesquisa
+
+Os menus de cidade, hora e pessoas usam a tipografia e as cores de
+Restaurantes nos browsers com suporte para a personalização de select.
+A data usa um calendário do SeatPlan com navegação por mês e entrada por
+teclado. Build, 513 testes Vitest e 182 verificações de contraste passaram.
+Testámos os menus, a escolha da data e o regresso do foco no Chromium a
+1440, 390 e 320 px com dados de teste.

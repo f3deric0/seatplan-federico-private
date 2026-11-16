@@ -2,16 +2,14 @@
 // On a wide screen it is one compact capsule in the command bar; on a phone the same four
 // controls sit stacked, with visible labels, inside the filters drawer. Only one of the two
 // is ever on the page.
-import { Field, Select } from "../../design/components";
+import { Select } from "../../design/components";
+import { DiscoveryDate } from "./DiscoveryDate";
 import { CITIES } from "./discoverModel";
 import type { Place } from "./discoverModel";
 export const PARTIES = Array.from({ length: 10 }, (_, i) => ({ value: String(i + 1), label: i === 0 ? "1 person" : `${i + 1} people` }));
 const NEAR = "__near";
-export function today(): string {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  return `${now.getFullYear()}-${month}-${String(now.getDate()).padStart(2, "0")}`;
-}
+const TIMES = Array.from({ length: 96 }, (_, index) =>
+  `${String(Math.floor(index / 4)).padStart(2, "0")}:${String(index % 4 * 15).padStart(2, "0")}`);
 interface Props {
   place: Place | null;
   onPlace: (place: Place | null) => void;
@@ -29,27 +27,22 @@ function cityOptions(place: Place | null): { value: string; label: string }[] {
   const near = place?.label === "Near me" ? [{ value: NEAR, label: "Near me" }] : [];
   return [{ value: "", label: "Anywhere" }, ...near, ...CITIES.map((c) => ({ value: c.label, label: c.label }))];
 }
-function DiscoveryDate({ value, onChange, stacked }: { value: string; onChange: (value: string) => void; stacked?: boolean }) {
-  const preview = value
-    ? new Date(`${value}T12:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })
-    : "Choose a date";
-  return (
-    <label className={stacked ? "field discover-date" : "discover-date"}>
-      <span className={stacked ? "field-label" : undefined}>Date</span>
-      <span className="discover-date-control">
-        <input className={stacked ? "field-input" : undefined} type="date" aria-label="Date" min={today()} value={value}
-          onChange={event => onChange(event.target.value)}
-          onClick={event => {
-            try {
-              event.currentTarget.showPicker?.();
-            } catch {
-              // The native input remains editable in embedded browsers.
-            }
-          }} />
-        <span className="discover-date-preview" aria-hidden="true">{preview}</span>
-      </span>
-    </label>
-  );
+function timeOptions(value: string) {
+  const times = value && !TIMES.includes(value) ? [...TIMES, value].sort() : TIMES;
+  return [{ value: "", label: "Choose a time" }, ...times.map(time => ({ value: time, label: time }))];
+}
+
+function CapsuleSelect({ label, name, value, onChange, options }: {
+  label: string;
+  name: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return <label><span>{label}</span><select className="discover-select" aria-label={name} value={value}
+    onChange={event => onChange(event.target.value)}>
+    {options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+  </select></label>;
 }
 export function ContextControls({ place, onPlace, date, time, party, onDate, onTime, onParty, onClearWhen, variant }: Props) {
   const cityValue = place ? (place.label === "Near me" ? NEAR : place.label) : "";
@@ -62,29 +55,17 @@ export function ContextControls({ place, onPlace, date, time, party, onDate, onT
       <div className="discover-stacked">
         <Select label="Choose a city" value={cityValue} options={cityOptions(place)} onChange={(event) => changeCity(event.target.value)} />
         <DiscoveryDate value={date} onChange={onDate} stacked />
-        <Field label="Time" type="time" step={900} value={time} onChange={(event) => onTime(event.target.value)} />
+        <Select label="Time" value={time} options={timeOptions(time)} onChange={event => onTime(event.target.value)} />
         <Select label="People" value={party} options={PARTIES} onChange={(event) => onParty(event.target.value)} />
       </div>
     );
   }
   return (
     <div className="discover-capsule" role="group" aria-label="Where and when">
-      <label><span>Where</span><select aria-label="Choose a city" value={cityValue} onChange={(event) => changeCity(event.target.value)}>
-        {cityOptions(place).map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select></label>
-      <DiscoveryDate value={date} onChange={onDate} />
-      <label><span>Around</span><input type="time" aria-label="Time" step={900} value={time} onChange={(event) => onTime(event.target.value)} /></label>
-      <label><span>Guests</span><select aria-label="People" value={party} onChange={(event) => onParty(event.target.value)}>
-        {PARTIES.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select></label>
+      <CapsuleSelect label="Where" name="Choose a city" value={cityValue} options={cityOptions(place)} onChange={changeCity} />
+      <DiscoveryDate value={date} onChange={onDate} stacked={false} />
+      <CapsuleSelect label="Around" name="Time" value={time} options={timeOptions(time)} onChange={onTime} />
+      <CapsuleSelect label="Guests" name="People" value={party} options={PARTIES} onChange={onParty} />
       {date && (
         <button type="button" className="discover-capsule-clear" aria-label="Clear the date" onClick={onClearWhen}>
           ×
