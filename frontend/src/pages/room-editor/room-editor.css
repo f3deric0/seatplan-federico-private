@@ -11,7 +11,7 @@
 .room-tools button:disabled { color: var(--c-text-muted); }
 .room-canvas-wrap { min-width: 0; position: relative; align-self: start; background: var(--c-surface-sunk); }
 .room-canvas { height: 34rem; overflow: hidden; touch-action: none; }
-.room-zoom { position: absolute; bottom: var(--space-3); left: var(--space-3); display: flex; gap: var(--space-2); align-items: center; }
+.room-zoom { position: absolute; bottom: var(--space-3); left: calc(40px + var(--space-3)); /* clear of the metre strip, inside the grey area */ display: flex; gap: var(--space-2); align-items: center; }
 /* Outline buttons with no white fill, so the plan shows through. */
 .room-zoom .btn { background: transparent; color: var(--c-primary); border-color: var(--c-primary); }
 .room-zoom .btn:hover:not(:disabled) { background: var(--c-primary-soft); }

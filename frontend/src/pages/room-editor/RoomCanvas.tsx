@@ -3,7 +3,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import { Button } from "../../design/components";
 import { usePanZoom } from "../../seatmap/usePanZoom";
 import { outlinePath, outlineToPolygon, sidePath } from "./geometry";
-import { surroundingBands, TERRACE_DEPTH } from "./surroundings";
+import { surroundingBands } from "./surroundings";
 
 const RULER_TOP = 20, RULER_SIDE = 40; // the strip of metre marks, in pixels
 import type { Point } from "./geometry";
@@ -39,11 +39,13 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
   const points = room.outline.points;
   let boundsPoints: Point[] = points;
   try { if (points.length >= 3) boundsPoints = outlineToPolygon(room.outline); } catch { /* Keep invalid drafts repairable. */ }
-  const maxX = Math.max(drawing || !points.length ? 1000 : 100, ...boundsPoints.map(p => p.x));
-  const maxY = Math.max(drawing || !points.length ? 700 : 100, ...boundsPoints.map(p => p.y));
   const bands = useMemo(() => surroundingBands(room), [room]);
-  const margin = (bands.length ? 260 : 100) + (room.zones.some(z => z.kind === "terrace") ? TERRACE_DEPTH : 0); // room outside the walls for a terrace and what is around the room
-  const pan = usePanZoom(viewport, { minX: Math.min(0, ...boundsPoints.map(p => p.x)) - margin, minY: Math.min(0, ...boundsPoints.map(p => p.y)) - margin, maxX: maxX + margin, maxY: maxY + margin });
+  // The view takes in what lies outside the walls (a terrace, what is around the room) as well as the walls themselves.
+  const reach = [...boundsPoints, ...bands.flatMap(b => b.quad), ...room.zones.flatMap(z => [{ x: z.x, y: z.y }, { x: z.x + z.w, y: z.y + z.h }])];
+  const maxX = Math.max(drawing || !points.length ? 1000 : 100, ...reach.map(p => p.x));
+  const maxY = Math.max(drawing || !points.length ? 700 : 100, ...reach.map(p => p.y));
+  const margin = 100;
+  const pan = usePanZoom(viewport, { minX: Math.min(0, ...reach.map(p => p.x)) - margin, minY: Math.min(0, ...reach.map(p => p.y)) - margin, maxX: maxX + margin, maxY: maxY + margin + 80 }); // the extra 80 cm at the bottom keeps the plan clear of the zoom buttons
   useEffect(() => { if (focusTarget?.roomKey === room.key) { pan.focusOn(focusTarget.point.x, focusTarget.point.y, 0.75); viewport.current?.scrollIntoView({ block: "center" }); } }, [focusTarget, room.key, pan.focusOn]);
   const toWorld = (event: { clientX: number; clientY: number }): Point => {
     const bounds = viewport.current!.getBoundingClientRect();
@@ -64,7 +66,7 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
     for (let i = 0; offset + (origin + i * size) * pan.view.k <= length; i++) out.push({ m: i * rulerStep, at: offset + (origin + i * size) * pan.view.k });
     return out;
   };
-  const rulerX = ticks(viewport.current?.clientWidth ?? 1400, pan.view.x, originX).filter(t => t.at >= RULER_SIDE + 14), rulerY = ticks(viewport.current?.clientHeight ?? 900, pan.view.y, originY).filter(t => t.at >= RULER_TOP + 8 && t.at <= (viewport.current?.clientHeight ?? 900) - 72); // keeps clear of the zoom buttons
+  const rulerX = ticks(viewport.current?.clientWidth ?? 1400, pan.view.x, originX).filter(t => t.at >= RULER_SIDE + 14), rulerY = ticks(viewport.current?.clientHeight ?? 900, pan.view.y, originY).filter(t => t.at >= RULER_TOP + 8);
   return <div className="room-canvas-wrap">
     <div ref={viewport} className="room-canvas" tabIndex={0} role="region" aria-label="Room plan" {...pan.pointerHandlers} onPointerDown={event => {
       if (tool === "Tables" && !placement && (areaMode || event.shiftKey)) { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); const start = toWorld(event); areaDrag.current = { start, now: start }; setAreaBox(areaDrag.current); }

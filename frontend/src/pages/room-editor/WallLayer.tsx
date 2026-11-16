@@ -40,7 +40,7 @@ export function WallLayer({ room, zoom, editing, selected, toWorld, onSelect, on
           {editing && <path d={path} className="room-opening-hit" strokeWidth={44 / zoom} />}
         </g>
         {o.kind === "door" && o.is_main_entrance && <MainEntranceTag at={sidePoint(room.outline, o.side, (o.offset + o.width / 2) / length)} normal={normal} zoom={zoom} />}
-        {editing && selected === o.key && o.kind !== "glass_wall" && ([{ part: "start", point: start }, { part: "end", point: end }] as const).map(({ part, point }) => <g key={part} data-opening-handle={part} onPointerDown={event => down(event, o, part)}><circle cx={point.x} cy={point.y} r={22 / zoom} className="room-handle-hit" /><circle cx={point.x} cy={point.y} r={6 / zoom} className="room-handle" /></g>)}
+        {editing && selected === o.key && o.kind !== "glass_wall" && ([{ part: "start", point: start }, { part: "end", point: end }] as const).map(({ part, point }) => <g key={part} data-opening-handle={part} onPointerDown={event => down(event, o, part)}><circle cx={point.x} cy={point.y} r={Math.min(22 / zoom, o.width / 4)} className="room-handle-hit" /><circle cx={point.x} cy={point.y} r={6 / zoom} className="room-handle" /></g>)}
       </g>;
       } catch { return null; }
     })}
