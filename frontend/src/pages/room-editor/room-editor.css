@@ -58,7 +58,7 @@
 .room-main-entrance text { fill: var(--c-on-primary); font-weight: 600; }
 .room-opening-hit { fill: none; stroke: transparent; pointer-events: stroke; cursor: grab; }
 .room-opening.selected .room-window, .room-opening.selected .room-door-arc { stroke: var(--c-primary); }
-.room-compass { position: absolute; top: var(--space-3); right: var(--space-3); width: 36px; height: 36px; pointer-events: none; }
+.room-compass { position: absolute; top: var(--space-3); right: var(--space-3); width: 46px; height: 46px; pointer-events: none; }
 .room-compass svg { display: block; width: 100%; height: 100%; }
 .room-compass circle { fill: none; stroke: var(--c-primary); stroke-width: 1.5; }
 .room-compass path { fill: none; stroke: var(--c-primary); stroke-width: 1.5; stroke-linejoin: round; }
