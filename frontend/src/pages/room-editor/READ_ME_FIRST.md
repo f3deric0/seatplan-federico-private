@@ -50,10 +50,11 @@ length edits. Shape changes which would strand a window beyond the wall are
 refused. Opening ids/keys survive edits. Photo attachment joins the upload
 and saved-room endpoints in tasks 13/17, after an opening has a database id.
 
-NorthTools offers numeric angles, 15-degree steps and a draggable compass.
-The needle uses clockwise screen degrees. Phone readings are optional: only
-absolute alpha or WebKit compass heading is accepted; relative alpha is
-ignored. Permission requests occur on a button click in a secure context.
+NorthCompass is the small circle in the top right of the plan, like the one on a map: the needle (its tip marked N)
+shows where north is. Drag it to turn north (previewed, committed on release) or use the keys: arrows turn 1 degree,
+Shift+arrows and Page Up/Down 15, Home points north up, Delete clears it. It is a slider for screen readers. The needle
+uses clockwise screen degrees. There is no North tab, no numeric field and no phone-compass button any more;
+northModel.compassNorth is kept for a future one.
 The phone must lie flat and align with the plan; the owner checks the result.
 Manual controls remain available when no sensor reading arrives. API reference:
 https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent and

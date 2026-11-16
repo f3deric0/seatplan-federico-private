@@ -50,7 +50,7 @@ export function LightTools({ room, unsaved, date, time, onDate, onTime, answer, 
         />
       </div>
       {answer && !answer.located && <p role="status">This restaurant has no location yet, so the sun cannot be shown. Add it in the restaurant's profile.</p>}
-      {answer?.located && noNorth && <p role="status">Set north (North tool) to see sunlight in this room.</p>}
+      {answer?.located && noNorth && <p role="status">Set north with the compass at the top right of the plan to see sunlight in this room.</p>}
       {answer?.located && <p role="status">{sunSentence(date, time, answer.sun)}</p>}
       {failed && <p role="status">We could not load the light just now. The picture shows an earlier time.</p>}
       <div className="room-actions">

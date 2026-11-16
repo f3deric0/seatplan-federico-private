@@ -47,11 +47,12 @@ a second tab saved before you, SeatPlan tells you and keeps your work so you can
 |---|---|
 | **Shape** | Draw the walls of a room: straight sides, curved sides, L-shapes. Drag a corner to move it, drag the middle of a side to add a corner or bend it. |
 | **Walls** | Add **windows** and **doors** to a side. Choose the **main entrance** first, at the top of the tab: pick its wall and it is drawn with a "Main entrance" tag, for you and for diners choosing a table. For a window you can write what the view is ("The Tagus river"), what it looks like at night, add a photo of the view, and say when it gets sun. |
-| **North** | Set which way north points. Without it the app cannot say anything about the sun, and it will not guess. |
 | **Fixed** | Place things that are not tables: bar, kitchen, toilets, stage, fireplace, awning. They also tell diners what is near a table. |
 | **Zones** | Name areas (window row, terrace, quiet corner). |
 | **Tables** | Add tables (round or rectangular), set how many people they seat, which are accessible, which suit a high chair, which can be joined, and place the **chairs**. Select several tables to move, align or duplicate them together. |
 | **Light** | Pick a date and a time to see where the sun falls in the room, when it gets dark, and what each table is like at that moment, as a diner will see it. |
+
+The **compass** in the top right corner of the plan shows which way north points. Without it the app cannot say anything about the sun, and it will not guess. Drag the needle to turn it, or focus it and use the arrow keys (1°), Shift+arrows (15°), Home (north up) and Delete (clear).
 
 You can have several rooms (for example **Main room** and **Terrace**); an outdoor room is marked as such. The editor warns you as
 you draw: a table outside the walls, two tables overlapping, a window with no wall under it, windows but no north. Warnings do
@@ -83,6 +84,6 @@ bookings; bookings already made stay, and their manage links keep working.
 | You see | What to do |
 |---|---|
 | Publish is greyed out | Read the **To do** items on the review page; each has a link to fix it |
-| "No sun" everywhere | Set the north in the **North** tool and place the pin on the map |
+| "No sun" everywhere | Set the north with the **compass** at the top right of the plan and place the pin on the map |
 | The map does not load | Type the latitude and longitude in the location step; the rest works without the map |
 | "Someone saved a newer version" | Another tab saved first. Your work is kept; reload to see theirs, then re-apply what you need |

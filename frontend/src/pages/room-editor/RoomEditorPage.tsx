@@ -21,7 +21,6 @@ import { RoomProperties } from "./RoomProperties";
 import type { ShapeSelection } from "./ShapeTools";
 import { RoomCanvas } from "./RoomCanvas";
 import { WallTools } from "./WallTools";
-import { NorthTools } from "./NorthTools";
 import { FixtureTools } from "./FixtureTools";
 import { ZoneTools } from "./ZoneTools";
 import { addFixture, addZone, FIXTURE_KINDS, removeZone, ZONE_KINDS } from "./roomObjects";
@@ -161,7 +160,7 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
         </div>
         {/* No "Preview" button: the Light tool already shows the saved room as a diner will see it, and a button that never works is worse than none. */}
         <nav className="room-other-tools" aria-label="Room tools">
-          {["Shape", "Walls", "North", "Fixed", "Zones", "Light"].map(name => <Button variant="ghost" key={name} aria-pressed={tool === name} disabled={drawing && name !== "Shape"} onClick={() => { setTool(name); setPlacement(null); setError(""); }}>{name}</Button>)}
+          {["Shape", "Walls", "Fixed", "Zones", "Light"].map(name => <Button variant="ghost" key={name} aria-pressed={tool === name} disabled={drawing && name !== "Shape"} onClick={() => { setTool(name); setPlacement(null); setError(""); }}>{name}</Button>)}
         </nav>
       </div>
       <RoomCanvas room={room} drawing={drawing} grid={grid} onPoint={addPoint} onCloseShape={closeShape} selection={selection} onSelect={setSelection} onChange={changeRoom} onDragStart={history.checkpoint} onError={setError} tool={tool} opening={opening} onOpening={setOpening} placement={placement} object={object} onObject={setObject} onPlace={placeObject} chair={chair} onTableSelect={chooseTable} tableKeys={tableKeys} multiple={multiple} areaMode={areaMode} onArea={keys => { updateKeys(keys); setAreaMode(false); }} problems={problems.filter(p => p.room_key === room.key)} focusTarget={focusTarget} light={tool === "Light" ? light.answer : null} />
@@ -173,7 +172,6 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
         {!drawing && tool === "Shape" && room.outline.points.length < 3 && <Button onClick={() => setDrawingRoom(room.key)}>Continue drawing walls</Button>}
         {!drawing && tool === "Walls" && <WallTools room={room} selection={selection} selected={opening} onSelect={setOpening} onSide={setSelection} onChange={changeRoom} onError={setError} />}
         {!drawing && tool === "Light" && <LightTools room={room} unsaved={dirty} date={lightDate} time={lightTime} onDate={setLightDate} onTime={setLightTime} answer={light.answer} failed={light.failed} />}
-        {!drawing && tool === "North" && <NorthTools key={room.key} room={room} onChange={changeRoom} />}
         {!drawing && tool === "Fixed" && <FixtureTools room={room} selected={object} placement={placement} onSelect={setObject} onArm={setPlacement} onCentre={placeCentre} onChange={changeRoom} onError={setError} />}
         {!drawing && tool === "Zones" && <ZoneTools room={room} selected={object} placement={placement} onSelect={setObject} onArm={setPlacement} onCentre={placeCentre} onChange={changeRoom} />}
         {!drawing && tool === "Tables" && <div className="room-form" ref={palette}><TableTools room={room} selected={object} chair={chair} placement={placement} onSelect={key => updateKeys(key ? [key] : [])} onChair={setChair} onArm={setPlacement} onCentre={placeCentre} onChange={changeRoom} onError={setError} /><SelectionTools room={room} keys={tableKeys} multiple={multiple} area={areaMode} onMultiple={setMultiple} onArea={setAreaMode} onKeys={updateKeys} onChange={changeRoom} onError={setError} /></div>}
