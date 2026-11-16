@@ -181,3 +181,10 @@ lands on the nearest spot inside (addFixture), centred on the point. They snap t
 switch in the Fixed panel is ticked (page state `free`, passed down as `fixtureGrid`). The room floor shows a 50 cm chessboard
 (`data-room-checker`, clipped to the outline) so the owner can see where an element will sit.
 
+The Fixed palette offers only a bar, a WC, stairs and a TV (roomObjects.FIXTURE_PALETTE); the other kinds in FIXTURE_KINDS
+stay valid so older plans still open, draw and edit. Each element is drawn with a line icon (FixtureIcon) above its name.
+A selected element shows eight grips (data-fixture-grip="sx,sy") in ObjectLayer: pulling one keeps the opposite side or
+corner fixed, works in the element's own turned frame, snaps sizes to 10 cm unless placement is free, keeps circles round,
+never goes below 20 cm and stops where the element would leave the room. The width and height fields stay as the keyboard
+alternative.
+

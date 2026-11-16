@@ -12,8 +12,8 @@ for (const width of [1440, 390]) {
     await page.getByRole("button", { name: "Fixed", exact: true }).click();
     await page.getByRole("button", { name: "Place Bar", exact: true }).click();
     await expect(page.getByLabel("Object width (cm)")).toBeHidden();
-    await page.getByLabel("Fixture label", { exact: true }).fill("Service bar");
-    await page.getByLabel("Fixture label", { exact: true }).press("Tab");
+    await page.getByLabel("Rename label", { exact: true }).fill("Service bar");
+    await page.getByLabel("Rename label", { exact: true }).press("Tab");
     await page.getByText("Size, position and shape", { exact: true }).click();
     await page.getByLabel("Object x (cm)").fill("650");
     await page.getByLabel("Object x (cm)").press("Tab");
@@ -48,11 +48,11 @@ test("palette drop places a fixture and moving it makes one undo step", async ({
   const links = await demoLinks(request);
   await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
   await page.getByRole("button", { name: "Fixed", exact: true }).click();
-  await page.getByRole("button", { name: "Place Plant", exact: true }).dragTo(page.locator(".room-canvas"), { targetPosition: { x: 400, y: 200 } });
-  await expect(page.getByLabel("Fixture label", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Fixed element shape")).toHaveValue("circle");
+  await page.getByRole("button", { name: "Place TV", exact: true }).dragTo(page.locator(".room-canvas"), { targetPosition: { x: 400, y: 200 } });
+  await expect(page.getByLabel("Rename label", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Fixed element shape")).toHaveValue("rect");
   const before = await page.getByLabel("Object x (cm)").inputValue();
-  const circle = (await page.locator(".room-fixture > circle").boundingBox())!;
+  const circle = (await page.locator(".room-fixture > rect").first().boundingBox())!;
   await page.mouse.move(circle.x + circle.width / 2, circle.y + circle.height / 2);
   await page.mouse.down();
   await page.mouse.move(circle.x + circle.width / 2 + 90, circle.y + circle.height / 2, { steps: 5 });
@@ -83,4 +83,35 @@ test("a fixed element stays inside the room, on a chessboard, and can be placed 
   await expect(page.getByText("Keep the element inside the room.", { exact: true })).toBeVisible();
   await page.getByLabel("Free placement (no grid snapping)").check();
   await expect(page.getByLabel("Free placement (no grid snapping)")).toBeChecked();
+});
+
+test("a selected fixed element is resized by pulling its grips, like a picture in a slide", async ({ page, request }) => {
+  const links = await demoLinks(request);
+  await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
+  await page.getByRole("button", { name: "Fixed", exact: true }).click();
+  const icons = await page.locator(".room-fixture-icon").count();
+  await page.getByRole("button", { name: "Place Bar", exact: true }).click();
+  await expect(page.locator("[data-fixture-grip]")).toHaveCount(8);
+  await expect(page.locator(".room-fixture-icon")).toHaveCount(icons + 1); // the new bar wears its icon
+  const width = page.getByLabel("Object width (cm)"), height = page.getByLabel("Object height (cm)"), x = page.getByLabel("Object x (cm)");
+  const [w0, h0, x0] = [Number(await width.inputValue()), Number(await height.inputValue()), Number(await x.inputValue())];
+  const grip = page.locator('[data-fixture-grip="1,1"]'); // bottom right corner
+  const box = (await grip.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 60, box.y + box.height / 2 + 40, { steps: 6 });
+  await page.mouse.up();
+  expect(Number(await width.inputValue())).toBeGreaterThan(w0);
+  expect(Number(await height.inputValue())).toBeGreaterThan(h0);
+  expect(Number(await x.inputValue())).toBe(x0); // the opposite corner stayed put
+  await page.getByRole("button", { name: "Undo", exact: true }).click();
+  await expect(width).toHaveValue(String(w0));
+  const left = page.locator('[data-fixture-grip="-1,0"]'); // left side: only the width changes
+  const side = (await left.boundingBox())!;
+  await page.mouse.move(side.x + side.width / 2, side.y + side.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(side.x + side.width / 2 - 50, side.y + side.height / 2, { steps: 5 });
+  await page.mouse.up();
+  expect(Number(await width.inputValue())).toBeGreaterThan(w0);
+  await expect(height).toHaveValue(String(h0));
 });

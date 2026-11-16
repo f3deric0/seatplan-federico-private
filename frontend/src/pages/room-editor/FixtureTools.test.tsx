@@ -22,7 +22,7 @@ it("adds an element with one tap and offers no second step", () => {
 it("shows only the name and Remove for a chosen element, with size, position and shape tucked away", () => {
   const room = addFixture(empty(), "bar", { x: 100, y: 100 });
   show(room, room.fixtures[0].key);
-  expect(screen.getByLabelText("Fixture label")).toBeTruthy();
+  expect(screen.getByLabelText("Rename label")).toBeTruthy();
   expect(screen.getByRole("button", { name: "Remove fixed element" })).toBeTruthy();
   const more = document.querySelector<HTMLDetailsElement>("details.room-more")!;
   expect(more.open).toBe(false);
@@ -51,4 +51,18 @@ it("offers free placement as a switch that starts off", () => {
   expect(box.checked).toBe(false);
   fireEvent.click(box);
   expect(onFree).toHaveBeenCalledWith(true);
+});
+
+it("offers only a bar, a WC, stairs and a TV, each with an icon", () => {
+  show(empty());
+  const names = screen.getAllByRole("button").map(b => b.getAttribute("aria-label")).filter(Boolean);
+  expect(names).toEqual(["Place Bar", "Place WC", "Place Stairs", "Place TV"]);
+  expect(document.querySelectorAll(".room-object-palette svg")).toHaveLength(4);
+});
+
+it("names the field Rename label", () => {
+  const room = addFixture(empty(), "bar", { x: 100, y: 100 });
+  show(room, room.fixtures[0].key);
+  expect(screen.getByLabelText("Rename label")).toBeTruthy();
+  expect(screen.queryByLabelText("Fixture label")).toBeNull();
 });

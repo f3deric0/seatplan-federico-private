@@ -6,8 +6,9 @@ import type { FixtureKind, Room, RoomFixture, RoomZone } from "./roomModel";
 import type { ZoneKind } from "../../api/types";
 
 export const FIXTURE_KINDS: readonly FixtureKind[] = ["bar", "kitchen", "wc", "column", "stairs", "plant", "stage", "fireplace", "tv", "host_stand", "awning"];
+/** What the owner can add today. Older plans may still hold the other kinds, which keep drawing and editing. */
+export const FIXTURE_PALETTE: readonly FixtureKind[] = ["bar", "wc", "stairs", "tv"];
 export const FIXTURE_NAMES: Record<FixtureKind, string> = { bar: "Bar", kitchen: "Open kitchen", wc: "WC", column: "Column", stairs: "Stairs", plant: "Plant", stage: "Stage", fireplace: "Fireplace", tv: "TV", host_stand: "Host stand", awning: "Awning" };
-export const FIXTURE_ICONS: Record<FixtureKind, string> = { bar: "▱", kitchen: "♨", wc: "WC", column: "●", stairs: "▤", plant: "♧", stage: "♫", fireplace: "♨", tv: "▣", host_stand: "◆", awning: "☂" };
 export const ZONE_KINDS: readonly ZoneKind[] = ["general", "window", "terrace", "bar", "quiet", "vip", "accessible"];
 
 /** The size a new fixed element starts with, in cm. */
