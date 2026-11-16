@@ -81,6 +81,9 @@
 .fp-room.is-outdoor .fp-wall { stroke-dasharray: 2 8; stroke-linecap: round; }
 .fp-glass { fill: none; stroke: var(--fp-glass); stroke-width: 6; stroke-linecap: round; }
 .fp-door { fill: none; stroke: var(--fp-floor); stroke-width: 8; }
+.fp-door.is-main { stroke: var(--c-primary); }
+.fp-entrance rect { fill: var(--c-primary); }
+.fp-entrance text { font-family: var(--font-body); font-weight: 600; fill: var(--c-on-primary); }
 .fp-fixture { fill: var(--fp-fixture); }
 .fp-sun { fill: var(--fp-sun); opacity: 0.16; }
 .fp-night path { fill: transparent; }
@@ -111,7 +114,7 @@
 
 /* Words: upright on a turned plan, sized in screen pixels by the component. */
 .fp-words text { pointer-events: none; }
-.fp-code, .fp-fixture-text, .fp-band-text { text-anchor: middle; dominant-baseline: central; }
+.fp-code, .fp-fixture-text, .fp-band-text, .fp-entrance text { text-anchor: middle; dominant-baseline: central; }
 .fp-code { font-family: var(--font-body); font-weight: 650; fill: var(--fp-code); }
 .fp-code.is-selected { fill: var(--fp-code); font-weight: 800; }
 

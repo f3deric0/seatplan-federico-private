@@ -20,7 +20,7 @@ import type { DescribeItem } from "../../seatmap/describe";
 import { tableCentre } from "../../seatmap/geometry";
 import { handleMapKey } from "../../seatmap/mapKeyboard";
 import { fixtureName, openingPath, outlinePath, polygonPath } from "../../seatmap/roomScene";
-import { planLayout, project, shouldTurn, viewBox } from "./floorPlanScene";
+import { entranceTags, planLayout, project, shouldTurn, viewBox } from "./floorPlanScene";
 import "./floor-plan.css";
 
 export interface FloorPlanProps {
@@ -158,7 +158,7 @@ export function FloorPlan(props: FloorPlanProps) {
             room.sun_patches.map((patch, i) => <path key={i} className="room-sun fp-sun" d={polygonPath(patch)} clipPath={`url(#${id}-clip-${room.id ?? "x"})`} />)}
           <path className="fp-wall" d={outlinePath(room.outline)} />
           {room.openings.map((opening) => (
-            <path key={opening.id} className={opening.kind === "door" ? "fp-door" : "fp-glass"} d={openingPath(room.outline, opening)} />
+            <path key={opening.id} className={opening.kind === "door" ? (opening.is_main_entrance ? "fp-door is-main" : "fp-door") : "fp-glass"} d={openingPath(room.outline, opening)} />
           ))}
           {room.fixtures.map((fixture) =>
             fixture.shape === "circle" ? (
@@ -238,6 +238,20 @@ export function FloorPlan(props: FloorPlanProps) {
           <text key={band.side} className="fp-band-text" x={middle.x} y={middle.y} fontSize={px(12)} transform={vertical ? `rotate(-90 ${middle.x} ${middle.y})` : undefined}>
             {band.text}
           </text>
+        );
+      })}
+      {entranceTags(shownRooms).map((tag, i) => {
+        // Where the diner walks in. Upright on a turned plan, like every other word here.
+        const p = at(tag.x, tag.y);
+        const w = px(100);
+        const h = px(20);
+        return (
+          <g key={`e${i}`} className="fp-entrance">
+            <rect x={p.x - w / 2} y={p.y - h / 2} width={w} height={h} rx={h / 2} />
+            <text x={p.x} y={p.y} fontSize={px(12)}>
+              Main entrance
+            </text>
+          </g>
         );
       })}
       {shownRooms.length > 1 &&

@@ -5,7 +5,7 @@ import type { MapRoom, MapSeat, MapTable, MapZone } from "../../api/types";
 import { contentBounds } from "../../seatmap/geometry";
 import type { Bounds } from "../../seatmap/geometry";
 import { mergeBounds, roomsBounds } from "../../seatmap/roomScene";
-import { sideNormal } from "../room-editor/geometry";
+import { sideLength, sideNormal, sidePoint } from "../room-editor/geometry";
 
 export type Side = "up" | "down" | "left" | "right";
 
@@ -57,6 +57,29 @@ export function viewSides(rooms: readonly MapRoom[]): { side: Side; kind: ViewBa
   return [...found.values()];
 }
 
+/** How far beyond the wall the "Main entrance" tag sits, and the room the picture keeps around it (plan units). */
+export const ENTRANCE_OUT = 45;
+const ENTRANCE_REACH = { x: 80, y: 30 };
+
+/** Where each main entrance's tag is centred: just outside its door, on the side away from the room. */
+export function entranceTags(rooms: readonly MapRoom[]): { x: number; y: number }[] {
+  const found: { x: number; y: number }[] = [];
+  for (const room of rooms) {
+    for (const opening of room.openings) {
+      if (opening.kind !== "door" || !opening.is_main_entrance) continue;
+      try {
+        const fraction = (opening.offset + opening.width / 2) / sideLength(room.outline, opening.side);
+        const at = sidePoint(room.outline, opening.side, fraction);
+        const out = sideNormal(room.outline, opening.side, fraction);
+        found.push({ x: at.x + out.x * ENTRANCE_OUT, y: at.y + out.y * ENTRANCE_OUT });
+      } catch {
+        // A door on a wall that no longer exists draws no tag.
+      }
+    }
+  }
+  return found;
+}
+
 /** The box around rooms, tables, chairs and zones, with room for the view bands. */
 export function planLayout(tables: MapTable[], seats: MapSeat[], zones: MapZone[], rooms: readonly MapRoom[]): { bounds: Bounds; bands: ViewBand[] } {
   const inner = mergeBounds(contentBounds(tables, seats, 40, zones), roomsBounds(rooms));
@@ -73,6 +96,12 @@ export function planLayout(tables: MapTable[], seats: MapSeat[], zones: MapZone[
     if (view.side === "down") bounds.maxY = Math.max(bounds.maxY, y + h + GAP / 2);
     if (view.side === "left") bounds.minX = Math.min(bounds.minX, x - GAP / 2);
     if (view.side === "right") bounds.maxX = Math.max(bounds.maxX, x + w + GAP / 2);
+  }
+  for (const tag of entranceTags(rooms)) {
+    bounds.minX = Math.min(bounds.minX, tag.x - ENTRANCE_REACH.x);
+    bounds.maxX = Math.max(bounds.maxX, tag.x + ENTRANCE_REACH.x);
+    bounds.minY = Math.min(bounds.minY, tag.y - ENTRANCE_REACH.y);
+    bounds.maxY = Math.max(bounds.maxY, tag.y + ENTRANCE_REACH.y);
   }
   return { bounds, bands };
 }

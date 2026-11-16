@@ -2,7 +2,7 @@
 // the quarter turn on a phone.
 import { describe, expect, it } from "vitest";
 import type { MapRoom, MapRoomOpening } from "../../../api/types";
-import { BAND, planLayout, project, shouldTurn, viewBox, viewSides } from "../floorPlanScene";
+import { BAND, ENTRANCE_OUT, entranceTags, planLayout, project, shouldTurn, viewBox, viewSides } from "../floorPlanScene";
 
 const SQUARE = { points: [{ x: 0, y: 0, curve: 0 }, { x: 800, y: 0, curve: 0 }, { x: 800, y: 300, curve: 0 }, { x: 0, y: 300, curve: 0 }] };
 
@@ -62,5 +62,26 @@ describe("turning on a phone", () => {
       expect(p.y).toBeLessThanOrEqual(box.y + box.h);
     }
     expect(project({ x: 5, y: 7 }, false)).toEqual({ x: 5, y: 7 });
+  });
+});
+
+describe("entranceTags", () => {
+  const door = (side: number, offset: number, main: boolean): MapRoomOpening => ({ ...opening(side, "door", "", []), offset, width: 100, is_main_entrance: main });
+
+  it("puts one tag just outside the main entrance, away from the room", () => {
+    const tags = entranceTags([room([door(0, 300, true), door(2, 100, false)])]);
+    expect(tags).toEqual([{ x: 350, y: -ENTRANCE_OUT }]);
+  });
+
+  it("draws nothing for a window, an ordinary door or a door on a missing wall", () => {
+    expect(entranceTags([room([opening(0, "window", "", []), door(1, 50, false), door(9, 0, true)])])).toEqual([]);
+  });
+
+  it("grows the picture so the tag is not cut off", () => {
+    const plain = planLayout([], [], [], [room([])]);
+    const tagged = planLayout([], [], [], [room([door(0, 300, true)])]);
+    expect(tagged.bounds.minY).toBeLessThan(plain.bounds.minY);
+    expect(tagged.bounds.minY).toBeLessThanOrEqual(-ENTRANCE_OUT - 30);
+    expect(tagged.bounds.maxX).toBe(plain.bounds.maxX);
   });
 });
