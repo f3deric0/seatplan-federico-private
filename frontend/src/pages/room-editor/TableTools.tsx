@@ -12,7 +12,7 @@ export function TableTools({ room, selected, chair, placement, onSelect, onChair
   const safe = (fn: () => void) => { try { fn(); } catch (caught) { onError(caught instanceof Error ? caught.message : "Check the table."); } };
   return <div className="room-form">
     <p>Choose a table, then tap the plan, drag it from the palette, or use the placement button.</p>
-    <div className="room-object-palette">{TABLE_KINDS.map(kind => <button type="button" draggable key={kind} aria-pressed={placement === `table:${kind}`} onDragStart={event => { event.dataTransfer.setData(OBJECT_DRAG_TYPE, `table:${kind}`); event.dataTransfer.effectAllowed = "copy"; }} onClick={() => onArm(`table:${kind}`)}>Place {TABLE_NAMES[kind]}</button>)}</div>
+    <div className="room-object-palette">{TABLE_KINDS.map(kind => <button type="button" draggable key={kind} aria-pressed={placement === `table:${kind}`} onDragStart={event => { event.dataTransfer.setData(OBJECT_DRAG_TYPE, `table:${kind}`); event.dataTransfer.effectAllowed = "copy"; }} aria-label={`Place ${TABLE_NAMES[kind]}`} onClick={() => onArm(`table:${kind}`)}>{TABLE_NAMES[kind]}</button>)}</div>
     {placement?.startsWith("table:") && <Button variant="secondary" onClick={onCentre}>Place selected in room</Button>}
     <Select label="Selected table" value={table?.key ?? ""} options={[{ value: "", label: "Choose a table" }, ...room.tables.map(t => ({ value: t.key, label: t.label }))]} onChange={event => { onSelect(event.target.value || null); onChair(null); }} />
     {table && <div key={table.key} className="room-form">

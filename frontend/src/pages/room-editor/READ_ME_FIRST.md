@@ -169,3 +169,8 @@ exactly one door per room flagged. The old main door stays as an ordinary door a
 "Main entrance" tag beside the flagged door, away from its swing. The diner's plan (pages/restaurant/FloorPlan.tsx) draws
 the same tag and a purple door; floorPlanScene.entranceTags gives its place and planLayout makes room for it.
 
+The Fixed tool adds an element with one tap: the palette button places it at the centre of the room and selects it
+(dragging a button onto the plan still places it where it lands). The chosen element shows its name and Remove; size,
+position, rotation and shape sit in a collapsed "Size, position and shape" section, which stays as the keyboard
+alternative to dragging. The element list only appears with two or more elements. Palettes show short names
+("Bar", "Quiet", "Round table"); their accessible names stay "Place ...".

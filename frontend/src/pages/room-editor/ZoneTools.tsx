@@ -10,7 +10,7 @@ export function ZoneTools({ room, selected, placement, onSelect, onArm, onCentre
   const update = (patch: Partial<RoomZone>) => { if (zone) onChange(editZone(room, zone.key, patch)); };
   return <div className="room-form">
     <p>Choose a zone type, then tap the plan, drag it onto the plan, or use the placement button.</p>
-    <div className="room-object-palette">{ZONE_KINDS.map(kind => <button type="button" draggable key={kind} aria-pressed={placement === `zone:${kind}`} onDragStart={event => { event.dataTransfer.setData(OBJECT_DRAG_TYPE, `zone:${kind}`); event.dataTransfer.effectAllowed = "copy"; }} onClick={() => onArm(`zone:${kind}`)}>Place {kind} zone</button>)}</div>
+    <div className="room-object-palette">{ZONE_KINDS.map(kind => <button type="button" draggable key={kind} aria-pressed={placement === `zone:${kind}`} onDragStart={event => { event.dataTransfer.setData(OBJECT_DRAG_TYPE, `zone:${kind}`); event.dataTransfer.effectAllowed = "copy"; }} aria-label={`Place ${kind} zone`} onClick={() => onArm(`zone:${kind}`)}>{kind[0].toUpperCase() + kind.slice(1)}</button>)}</div>
     {placement?.startsWith("zone:") && <Button variant="secondary" onClick={onCentre}>Place selected in room</Button>}
     <Select label="Selected zone" value={zone?.key ?? ""} options={[{ value: "", label: "Choose a zone" }, ...room.zones.map(z => ({ value: z.key, label: z.name }))]} onChange={e => onSelect(e.target.value || null)} />
     {zone && <div key={zone.key} className="room-form">

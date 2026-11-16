@@ -11,9 +11,10 @@ for (const width of [1440, 390]) {
     await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
     await page.getByRole("button", { name: "Fixed", exact: true }).click();
     await page.getByRole("button", { name: "Place Bar", exact: true }).click();
-    await page.locator(".room-canvas").click({ position: { x: 150, y: 150 } });
+    await expect(page.getByLabel("Object width (cm)")).toBeHidden();
     await page.getByLabel("Fixture label", { exact: true }).fill("Service bar");
     await page.getByLabel("Fixture label", { exact: true }).press("Tab");
+    await page.getByText("Size, position and shape", { exact: true }).click();
     await page.getByLabel("Object x (cm)").fill("650");
     await page.getByLabel("Object x (cm)").press("Tab");
     await page.getByLabel("Object y (cm)").fill("250");
@@ -48,7 +49,7 @@ test("palette drop places a fixture and moving it makes one undo step", async ({
   await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
   await page.getByRole("button", { name: "Fixed", exact: true }).click();
   await page.getByRole("button", { name: "Place Plant", exact: true }).dragTo(page.locator(".room-canvas"), { targetPosition: { x: 400, y: 200 } });
-  await expect(page.getByLabel("Selected fixed element")).toHaveValue(/f-/);
+  await expect(page.getByLabel("Fixture label", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Fixed element shape")).toHaveValue("circle");
   const before = await page.getByLabel("Object x (cm)").inputValue();
   const circle = (await page.locator(".room-fixture > circle").boundingBox())!;

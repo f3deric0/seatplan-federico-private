@@ -45,7 +45,6 @@ test("an owner builds a room on a phone, saves, reloads and sees the same", asyn
   // A bar and eight tables.
   await page.getByRole("button", { name: "Fixed", exact: true }).tap();
   await page.getByRole("button", { name: "Place Bar", exact: true }).tap();
-  await page.getByRole("button", { name: "Place selected in room", exact: true }).tap();
   await page.getByRole("button", { name: "Tables", exact: true }).tap();
   for (let table = 0; table < 8; table++) {
     await page.getByRole("button", { name: "Place Round table", exact: true }).tap();
@@ -69,7 +68,7 @@ test("an owner builds a room on a phone, saves, reloads and sees the same", asyn
   await page.getByRole("button", { name: "Walls", exact: true }).tap();
   await expect(page.getByLabel("Selected opening").locator("option")).toHaveCount(3); // "Choose an opening" and the two windows
   await page.getByRole("button", { name: "Fixed", exact: true }).tap();
-  await expect(page.getByLabel("Selected fixed element").locator("option")).toHaveCount(2);
+  await expect(page.locator(".room-fixture")).toHaveCount(1); // the bar
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
 });

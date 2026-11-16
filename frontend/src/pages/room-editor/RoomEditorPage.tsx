@@ -110,7 +110,8 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
     setPlacement(null);
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Could not place this object."); }
   };
-  const placeCentre = () => { if (placement) { const points = room.outline.points; placeObject({ x: (Math.min(...points.map(p => p.x)) + Math.max(...points.map(p => p.x))) / 2, y: (Math.min(...points.map(p => p.y)) + Math.max(...points.map(p => p.y))) / 2 }, placement); } };
+  const centreOfRoom = (): Point => { const points = room.outline.points; return { x: (Math.min(...points.map(p => p.x)) + Math.max(...points.map(p => p.x))) / 2, y: (Math.min(...points.map(p => p.y)) + Math.max(...points.map(p => p.y))) / 2 }; };
+  const placeCentre = () => { if (placement) placeObject(centreOfRoom(), placement); };
   let area = 0;
   try { if (room.outline.points.length >= 3) area = Math.abs(polygonArea(outlineToPolygon(room.outline))) / 10000; } catch { /* Invalid drafts still open for repair. */ }
   const selectProblem = (problem: RoomProblem) => {
@@ -172,7 +173,7 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
         {!drawing && tool === "Shape" && room.outline.points.length < 3 && <Button onClick={() => setDrawingRoom(room.key)}>Continue drawing walls</Button>}
         {!drawing && tool === "Walls" && <WallTools room={room} selection={selection} selected={opening} onSelect={setOpening} onSide={setSelection} onChange={changeRoom} onError={setError} />}
         {!drawing && tool === "Light" && <LightTools room={room} unsaved={dirty} date={lightDate} time={lightTime} onDate={setLightDate} onTime={setLightTime} answer={light.answer} failed={light.failed} />}
-        {!drawing && tool === "Fixed" && <FixtureTools room={room} selected={object} placement={placement} onSelect={setObject} onArm={setPlacement} onCentre={placeCentre} onChange={changeRoom} onError={setError} />}
+        {!drawing && tool === "Fixed" && <FixtureTools room={room} selected={object} onSelect={setObject} onPlace={value => placeObject(centreOfRoom(), value)} onChange={changeRoom} onError={setError} />}
         {!drawing && tool === "Zones" && <ZoneTools room={room} selected={object} placement={placement} onSelect={setObject} onArm={setPlacement} onCentre={placeCentre} onChange={changeRoom} />}
         {!drawing && tool === "Tables" && <div className="room-form" ref={palette}><TableTools room={room} selected={object} chair={chair} placement={placement} onSelect={key => updateKeys(key ? [key] : [])} onChair={setChair} onArm={setPlacement} onCentre={placeCentre} onChange={changeRoom} onError={setError} /><SelectionTools room={room} keys={tableKeys} multiple={multiple} area={areaMode} onMultiple={setMultiple} onArea={setAreaMode} onKeys={updateKeys} onChange={changeRoom} onError={setError} /></div>}
       </div></aside>
