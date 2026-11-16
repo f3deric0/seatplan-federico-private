@@ -54,7 +54,7 @@ North is always the top of the plan. NorthCompass is a small fixed mark (outline
 corner of the plan; it is transparent, takes no clicks and never turns, and there is no North tab or field. New rooms
 get north_deg 0, and the editor opens every room through withNorthUp, so a room the server holds with another north
 (or none) shows as Unsaved until it is saved with north 0. Save replaces north with 0 for every room. The window
-directions, the Light tool and the publish check all use that 0. northModel.compassNorth is kept for a future phone
+directions and the publish check all use that 0. northModel.compassNorth is kept for a future phone
 compass, and validation still reports no_north for a room that reaches it without one.
 The phone must lie flat and align with the plan; the owner checks the result.
 Manual controls remain available when no sensor reading arrives. API reference:
@@ -151,53 +151,7 @@ mirror the server's inclusive 4–5000 m² limits. Server winding normalization
 preserves opening positions and curves. The full phone persistence test now
 uses real tap actions with hasTouch/isMobile, not mouse clicks at a small width.
 
-## Light tool (task 24)
+There is no Light tool: the owner does not choose or preview the sun. A diner sees the sun when choosing a table, worked out by the server from the saved rooms, the north (always the top of the plan) and the windows. The editor kept none of the preview code (LightTools, LightLayer, useLightPreview, lightModel were removed); the backend ambience endpoints are untouched.
 
-The "Light" tool previews the SAVED rooms (`GET /api/owner/restaurants/{vid}/ambience-preview`,
-asked 250 ms after the date or time stops changing, and again after a save). `lightModel.ts` has the
-words and numbers (compass names, "On 21 June at 13:00 the sun is in the south (180°), 74° high.
-Sunset at 21:05.", the 06:00-23:45 slider grid, the Sunrise / Lunch 13:00 / Sunset / Dinner 20:30
-shortcuts, and the sun's screen direction from the room's north). `LightLayer.tsx` draws striped
-sun patches clipped to the room, the dark-blue veil after sunset and the sun on the plan's edge;
-it never catches a tap. `LightTools.tsx` is the panel, with a "Describe table" list that shows the
-same sentences diners get. It says why nothing is shown (no location, north not set, unsaved
-changes) instead of guessing.
-
-The Walls tab starts with the Main entrance block: the owner picks the wall and presses Set main entrance (or Move main
-entrance here). setMainEntrance reuses a door already on that wall or adds one where it fits, and markMainEntrance keeps
-exactly one door per room flagged. The old main door stays as an ordinary door after a move. WallLayer draws a purple
-"Main entrance" tag beside the flagged door, away from its swing. The diner's plan (pages/restaurant/FloorPlan.tsx) draws
-the same tag and a purple door; floorPlanScene.entranceTags gives its place and planLayout makes room for it.
-
-The Fixed tool adds an element with one tap: the palette button places it at the centre of the room and selects it
-(dragging a button onto the plan still places it where it lands). The chosen element shows its name and Remove; size,
-position, rotation and shape sit in a collapsed "Size, position and shape" section, which stays as the keyboard
-alternative to dragging. The element list only appears with two or more elements. Palettes show short names
-("Bar", "Quiet", "Round table"); their accessible names stay "Place ...".
-
-Fixed elements stay inside the room: editFixture rejects a move, resize or turn that would take one out (validation.fitsInRoom),
-unless an older plan already had it outside; a drag stops at a wall and slides along it; an element added or dropped outside
-lands on the nearest spot inside (addFixture), centred on the point. They snap to the 50 cm grid unless the Free placement
-switch in the Fixed panel is ticked (page state `free`, passed down as `fixtureGrid`). The room floor shows a 50 cm chessboard
-(`data-room-checker`, clipped to the outline) so the owner can see where an element will sit.
-
-The Fixed palette offers only a bar, a WC, stairs and a TV (roomObjects.FIXTURE_PALETTE); the other kinds in FIXTURE_KINDS
-stay valid so older plans still open, draw and edit. Each element is drawn with a line icon (FixtureIcon) above its name.
-A selected element shows eight grips (data-fixture-grip="sx,sy") in ObjectLayer: pulling one keeps the opposite side or
-corner fixed, works in the element's own turned frame, snaps sizes to 10 cm unless placement is free, keeps circles round,
-never goes below 20 cm and stops where the element would leave the room. The width and height fields stay as the keyboard
-alternative.
-
-The grips show only for an element the owner has clicked on the plan (ObjectLayer keeps `gripped`): one just added from the palette, or picked from the list, is selected but has no grips until it is clicked. A click on empty floor in the Fixed or Zones tool lets go of the selection.
-
-A clicked element also shows a rotation grip (data-fixture-rotate) on a stem above its top edge. Dragging it makes the element
-face the pointer, in 15 degree steps unless placement is free, and it stops at the last angle that keeps the element in the room.
-The Fixed panel has a Rotate 90 degrees button (an inline error says when the turn does not fit) and the rotation field stays as the
-keyboard alternative. The icon and name are drawn upright whatever the angle.
-
-The grips are small (8 px squares) and answer only right on the square (6 px reach with a mouse; 22 px on a touch screen, `pointer: coarse`), so the rest of the element, including its corners, still drags it.
-
-There is no Zones tab. The Fixed palette also offers the two zones an owner can add, Terrace and Quiet zone (roomObjects.ZONE_PALETTE; `zone:terrace` and `zone:quiet`). They are ordinary zones in room.zones, so they may stand outside the walls and are not limited to the room, unlike fixed elements. Older plans keep their other zone kinds, which stay selectable, movable and removable in the Fixed tool. A chosen zone shows Rename label, Size and position and Remove zone; the same eight resize grips work on zones, with no rotation grip. New zones are named Terrace, Terrace 2, Quiet zone... (the old "Zone 1" for other kinds).
-
-Tables come in four kinds only (tableModel.TABLE_KINDS): round, square, long and counter, each added with one tap (the palette button places it centred on the room, on the grid). Sizes are real (tableModel.tableSize, from furniture guides and manufacturer charts: about 60 cm of table edge per diner, a 90 cm round for four and 150 cm for eight, 180 x 80 cm for six and 240 x 80 cm for eight, 60 cm and 50 cm deep per counter stool) and setChairCount resizes the table, about its centre, to the size for the new number of chairs. tableKind() infers the kind from the shape and proportions, so no field was added to the API. Chairs are drawn 40 cm across (CHAIR_DIAMETER). The shape select is gone: a table keeps its kind.
+The room's name is shown, not edited, in Room properties (`Room: <name>`); it is set when the room is created in the Add a room dialog.
 

@@ -27,7 +27,7 @@ function layout(version: number, name = "Dining room") {
 }
 
 interface Server {
-  puts: { base_version: number; rooms: { name: string; north_deg: number | null; tables: Record<string, unknown>[] }[] }[];
+  puts: { base_version: number; rooms: { name: string; north_deg: number | null; tables: Record<string, unknown>[]; fixtures: unknown[] }[] }[];
   gets: number;
 }
 
@@ -64,12 +64,15 @@ function open(): ReturnType<typeof render> {
   );
 }
 
-/** The name in the "Selected room name" field (the same words also appear in the room list). */
-const shownName = (): string => (screen.getByLabelText("Selected room name") as HTMLInputElement).value;
+/** The name of the room on screen: the room is picked in the "Room" list, and its name is not editable in the properties. */
+const shownName = (): string => (screen.getByLabelText("Room") as HTMLSelectElement).selectedOptions[0].textContent ?? "";
 
-async function rename(name: string): Promise<void> {
-  fireEvent.change(await screen.findByLabelText("Selected room name"), { target: { value: name } });
+/** Any real edit will do: put a bar in the room. */
+async function edit(): Promise<void> {
+  fireEvent.click(await screen.findByRole("button", { name: "Fixed" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Place Bar" }));
 }
+const bars = (): number => document.querySelectorAll(".room-fixture").length;
 
 beforeEach(() => window.localStorage.clear());
 afterEach(() => vi.unstubAllGlobals());
@@ -95,7 +98,7 @@ describe("Room editor persistence", () => {
   it("explains when an invalid edit has taken a published restaurant back to draft", async () => {
     fakeServer(() => ({ ...layout(5), status: "published" }), () => json({ ...layout(6, "Changed"), status: "draft" }));
     open();
-    await rename("Changed");
+    await edit();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByText(/saved as a draft.*new bookings/i)).toBeTruthy();
     expect(screen.getByRole("status").textContent).toBe("Saved");
@@ -107,7 +110,7 @@ describe("Room editor persistence", () => {
     await waitFor(() => expect(shownName()).toBe("Dining room"));
     expect((screen.getByRole("button", { name: "Save" }) as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByRole("status").textContent).toBe("Saved");
-    await rename("Garden room");
+    await edit();
     expect((screen.getByRole("button", { name: "Save" }) as HTMLButtonElement).disabled).toBe(false);
     expect(screen.getByRole("status").textContent).toBe("Unsaved");
   });
@@ -115,16 +118,16 @@ describe("Room editor persistence", () => {
   it("saves the whole layout at its base version and shows the new version as saved", async () => {
     const server = fakeServer(() => layout(5), () => json(layout(6, "Garden room")));
     open();
-    await rename("Garden room");
+    await edit();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Saved"));
     expect(server.puts).toHaveLength(1);
     expect(server.puts[0].base_version).toBe(5);
-    expect(server.puts[0].rooms[0].name).toBe("Garden room");
+    expect(server.puts[0].rooms[0].fixtures).toHaveLength(1);
     expect(server.puts[0].rooms[0].tables[0]).not.toHaveProperty("has_bookings");
     expect(window.localStorage.getItem("seatplan.room-draft.rest")).toBeNull();
     // The next save builds on version 6.
-    await rename("Garden room 2");
+    await edit();
     server.puts.length = 0;
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(server.puts).toHaveLength(1));
@@ -136,7 +139,7 @@ describe("Room editor persistence", () => {
     old.rooms[0].north_deg = 200;
     const server = fakeServer(() => old, () => json(layout(6)));
     open();
-    await screen.findByLabelText("Selected room name");
+    await screen.findByLabelText("Room");
     expect(screen.getByRole("status").textContent).toBe("Unsaved");
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Saved"));
@@ -146,15 +149,15 @@ describe("Room editor persistence", () => {
   it("keeps unsaved work on this device and offers it back after a reload", async () => {
     fakeServer(() => layout(5), () => json({}));
     const first = open();
-    await rename("Half finished");
-    await waitFor(() => expect(window.localStorage.getItem("seatplan.room-draft.rest")).toContain("Half finished"));
+    await edit();
+    await waitFor(() => expect(window.localStorage.getItem("seatplan.room-draft.rest")).toContain('"kind":"bar"'));
     first.unmount();
 
     open();
     expect(await screen.findByText(/unsaved changes from this device/i)).toBeTruthy();
     expect(shownName()).toBe("Dining room"); // the saved layout is on screen until the owner chooses
     fireEvent.click(screen.getByRole("button", { name: "Restore my changes" }));
-    await waitFor(() => expect(shownName()).toBe("Half finished"));
+    await waitFor(() => expect(bars()).toBe(1));
     expect(screen.queryByText(/unsaved changes from this device/i)).toBeNull();
     expect(screen.getByRole("status").textContent).toBe("Unsaved");
   });
@@ -162,7 +165,7 @@ describe("Room editor persistence", () => {
   it("can throw the local draft away", async () => {
     fakeServer(() => layout(5), () => json({}));
     const first = open();
-    await rename("Not wanted");
+    await edit();
     await waitFor(() => expect(window.localStorage.getItem("seatplan.room-draft.rest")).not.toBeNull());
     first.unmount();
     open();
@@ -186,18 +189,18 @@ describe("A second tab saved first", () => {
   it("keeps the owner's work, says why, and keeps it on this device", async () => {
     fakeServer(() => layout(7, "Other tab's name"), () => stale());
     open();
-    await rename("My work");
+    await edit();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByText(/changed in another tab or device/i)).toBeTruthy();
-    expect(shownName()).toBe("My work");
-    expect(window.localStorage.getItem("seatplan.room-draft.rest")).toContain("My work");
+    expect(bars()).toBe(1);
+    expect(window.localStorage.getItem("seatplan.room-draft.rest")).toContain('"kind":"bar"');
   });
 
   it("can load the latest version and drop the draft", async () => {
     let current = layout(5);
     fakeServer(() => current, () => stale());
     open();
-    await rename("My work");
+    await edit();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await screen.findByText(/changed in another tab or device/i);
     current = layout(7, "Other tab's name");
@@ -212,14 +215,14 @@ describe("A second tab saved first", () => {
     let attempts = 0;
     const server = fakeServer(() => current, () => (++attempts === 1 ? stale() : json(layout(8, "My work"))));
     open();
-    await rename("My work");
+    await edit();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await screen.findByText(/changed in another tab or device/i);
     current = layout(7, "Other tab's name");
     fireEvent.click(screen.getByRole("button", { name: "Save mine over it" }));
     await waitFor(() => expect(server.puts).toHaveLength(2));
     expect(server.puts[1].base_version).toBe(7); // rebased on what the other tab saved
-    expect(server.puts[1].rooms[0].name).toBe("My work");
+    expect(server.puts[1].rooms[0].fixtures).toHaveLength(1);
     await waitFor(() => expect(screen.getByRole("status").textContent).toBe("Saved"));
   });
 });
@@ -228,11 +231,11 @@ describe("Tables with bookings", () => {
   it("names the table and points to Available for booking instead of losing work", async () => {
     fakeServer(() => layout(5), () => json({ error: { code: "conflict", message: "This table has bookings. Make it unavailable instead.", tables: [{ id: 40, label: "T1" }] } }, 409));
     open();
-    await rename("Changed");
+    await edit();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     const alert = await screen.findByText(/Table T1 has bookings/);
     expect(alert.textContent).toMatch(/Available for booking/);
-    expect(shownName()).toBe("Changed"); // nothing was lost
+    expect(bars()).toBe(1); // nothing was lost
     await act(async () => undefined);
   });
 });
