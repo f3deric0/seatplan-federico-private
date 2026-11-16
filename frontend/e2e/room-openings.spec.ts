@@ -84,3 +84,29 @@ test("the owner says what is outside a wall, it is drawn and saved, and suggesti
   await expect(page.getByText(/Could not look around your location/)).toBeVisible();
 });
 
+
+test("a terrace is chosen on a wall, tables can stand on it, and it is saved", async ({ page, request }) => {
+  const links = await demoLinks(request);
+  await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
+  await page.getByRole("button", { name: "Add room", exact: true }).click();
+  await page.getByLabel("Room name", { exact: true }).fill("Terrace room");
+  await page.getByRole("button", { name: "Create room", exact: true }).click();
+  await page.getByRole("button", { name: "Fixed", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Place Terrace", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Walls", exact: true }).click();
+  await expect(page.locator("[data-room-object]")).toHaveCount(0);
+  await page.getByLabel("Wall", { exact: true }).selectOption("2");
+  await page.getByLabel("Terrace outside this wall").check();
+  await expect(page.locator(".room-zone")).toHaveCount(1);
+  await page.getByRole("button", { name: "Tables", exact: true }).click();
+  await page.getByLabel("Put new tables").selectOption({ label: "On Terrace" });
+  await page.getByRole("button", { name: "Place Round table", exact: true }).click();
+  await expect(page.locator(".room-invalid-table")).toHaveCount(0); // outside the walls, but on the terrace
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: /Unsaved|Saved/ })).toHaveText("Saved");
+  await page.reload();
+  await page.getByLabel("Room", { exact: true }).selectOption({ label: "Terrace room" });
+  await page.getByRole("button", { name: "Walls", exact: true }).click();
+  await page.getByLabel("Wall", { exact: true }).selectOption("2");
+  await expect(page.getByLabel("Terrace outside this wall")).toBeChecked();
+});

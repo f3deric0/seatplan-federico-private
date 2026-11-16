@@ -7,7 +7,7 @@ import type { Room } from "./roomModel";
 
 const show = (room: Room, selected: string | null = null) => {
   const onPlace = vi.fn(), onChange = vi.fn();
-  render(<TableTools room={room} selected={selected} chair={null} onSelect={vi.fn()} onChair={vi.fn()} onPlace={onPlace} onChange={onChange} onError={vi.fn()} />);
+  render(<TableTools room={room} selected={selected} onSelect={vi.fn()} onPlace={onPlace} onChange={onChange} onError={vi.fn()} />);
   return { onPlace, onChange };
 };
 
@@ -17,7 +17,7 @@ it("offers a round table, a square table, a long table and a counter, each added
   expect(names).toEqual(["Place Round table", "Place Square table", "Place Long table", "Place Counter"]);
   expect(document.querySelectorAll(".room-object-palette svg")).toHaveLength(4);
   fireEvent.click(screen.getByRole("button", { name: "Place Long table" }));
-  expect(onPlace).toHaveBeenCalledWith("table:long");
+  expect(onPlace).toHaveBeenCalledWith("table:long", undefined);
   expect(screen.queryByRole("button", { name: "Place selected in room" })).toBeNull();
 });
 

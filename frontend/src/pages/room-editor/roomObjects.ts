@@ -10,7 +10,7 @@ export const FIXTURE_KINDS: readonly FixtureKind[] = ["bar", "kitchen", "wc", "c
 export const FIXTURE_PALETTE: readonly FixtureKind[] = ["bar", "wc", "stairs", "tv"];
 export const FIXTURE_NAMES: Record<FixtureKind, string> = { bar: "Bar", kitchen: "Open kitchen", wc: "WC", column: "Column", stairs: "Stairs", plant: "Plant", stage: "Stage", fireplace: "Fireplace", tv: "TV", host_stand: "Host stand", awning: "Awning" };
 /** The zones an owner can add today. Plans may still hold the other kinds, which keep drawing and editing. */
-export const ZONE_PALETTE: readonly ZoneKind[] = ["terrace", "quiet"];
+export const ZONE_PALETTE: readonly ZoneKind[] = ["quiet"];
 export const ZONE_NAMES: Partial<Record<ZoneKind, string>> = { terrace: "Terrace", quiet: "Quiet zone" };
 export const ZONE_KINDS: readonly ZoneKind[] = ["general", "window", "terrace", "bar", "quiet", "vip", "accessible"];
 

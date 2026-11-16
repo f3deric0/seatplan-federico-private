@@ -1,7 +1,9 @@
 import { expect, it } from "vitest";
 import { createRoom } from "./roomModel";
-import { directionWord, setSurrounding, surroundingBands, surroundingOf, wallBearing, wallFacing } from "./surroundings";
+import { assignTerraceTables, directionWord, setSurrounding, setTerrace, terraceOn, TERRACE_DEPTH, surroundingBands, surroundingOf, wallBearing, wallFacing } from "./surroundings";
 import { addOpening } from "./wallModel";
+import { addTable } from "./tableModel";
+import { validateRooms } from "./validation";
 
 const room = () => createRoom("Room 1", 1000, 700); // walls: 0 top, 1 right, 2 bottom, 3 left
 
@@ -53,4 +55,33 @@ it("draws a strip outside only the walls that have something outside them", () =
   const sea = bands.find(b => b.side === 2)!;
   expect(Math.max(...sea.quad.map(p => p.y))).toBeGreaterThan(700); // below the bottom wall, outside the room
   expect(sea.label.y).toBeGreaterThan(700);
+});
+
+it("puts a terrace outside a wall as a terrace zone, and takes it away again", () => {
+  const next = setTerrace(room(), 2, true); // the bottom wall, y = 700
+  expect(next.zones).toHaveLength(1);
+  expect(next.zones[0]).toMatchObject({ kind: "terrace", name: "Terrace", x: 0, y: 700, w: 1000, h: TERRACE_DEPTH });
+  expect(terraceOn(next, 2)).not.toBeNull();
+  expect(terraceOn(next, 0)).toBeNull();
+  expect(setTerrace(next, 2, true)).toBe(next);
+  expect(setTerrace(next, 2, false).zones).toHaveLength(0);
+});
+
+it("lets tables stand on the terrace, and puts them in its zone", () => {
+  let r = setTerrace(room(), 2, true);
+  r = addTable(r, "round", { x: 200, y: 750 });
+  expect(validateRooms([r]).some(p => p.code === "table_outside")).toBe(false);
+  r = assignTerraceTables(r);
+  expect(r.tables[0].zone_key).toBe(r.zones[0].key);
+  expect(assignTerraceTables(r)).toBe(r);
+  const away = assignTerraceTables({ ...r, tables: [{ ...r.tables[0], y: 200 }] });
+  expect(away.tables[0].zone_key).toBeNull();
+  const nowhere = addTable(room(), "round", { x: 200, y: 750 });
+  expect(validateRooms([nowhere]).some(p => p.code === "table_outside")).toBe(true);
+});
+
+it("draws the view beyond the terrace", () => {
+  const r = setSurrounding(setTerrace(room(), 2, true), 2, "sea");
+  const band = surroundingBands(r).find(b => b.side === 2)!;
+  expect(Math.min(...band.quad.map(p => p.y))).toBe(700 + TERRACE_DEPTH);
 });

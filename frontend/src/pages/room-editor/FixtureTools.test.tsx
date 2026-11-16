@@ -53,17 +53,17 @@ it("offers free placement as a switch that starts off", () => {
   expect(onFree).toHaveBeenCalledWith(true);
 });
 
-it("offers a bar, a WC, stairs, a TV, a terrace and a quiet zone, each with an icon", () => {
+it("offers a bar, a WC, stairs, a TV and a quiet zone, each with an icon (a terrace is chosen on a wall instead)", () => {
   show(empty());
   const names = screen.getAllByRole("button").map(b => b.getAttribute("aria-label")).filter(Boolean);
-  expect(names).toEqual(["Place Bar", "Place WC", "Place Stairs", "Place TV", "Place Terrace", "Place Quiet zone"]);
-  expect(document.querySelectorAll(".room-object-palette svg")).toHaveLength(6);
+  expect(names).toEqual(["Place Bar", "Place WC", "Place Stairs", "Place TV", "Place Quiet zone"]);
+  expect(document.querySelectorAll(".room-object-palette svg")).toHaveLength(5);
 });
 
-it("adds a terrace with one tap, like any other element", () => {
+it("adds a quiet zone with one tap, like any other element", () => {
   const { onPlace } = show(empty());
-  fireEvent.click(screen.getByRole("button", { name: "Place Terrace" }));
-  expect(onPlace).toHaveBeenCalledWith("zone:terrace");
+  fireEvent.click(screen.getByRole("button", { name: "Place Quiet zone" }));
+  expect(onPlace).toHaveBeenCalledWith("zone:quiet");
 });
 
 it("edits a chosen zone here: rename, size and position, remove", () => {

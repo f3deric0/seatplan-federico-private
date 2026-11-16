@@ -3,7 +3,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import { Button } from "../../design/components";
 import { usePanZoom } from "../../seatmap/usePanZoom";
 import { outlinePath, outlineToPolygon, sidePath } from "./geometry";
-import { surroundingBands } from "./surroundings";
+import { surroundingBands, TERRACE_DEPTH } from "./surroundings";
 import type { Point } from "./geometry";
 import { snappedPoint } from "./shapeModel";
 import type { Room } from "./roomModel";
@@ -40,7 +40,7 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
   const maxX = Math.max(drawing || !points.length ? 1000 : 100, ...boundsPoints.map(p => p.x));
   const maxY = Math.max(drawing || !points.length ? 700 : 100, ...boundsPoints.map(p => p.y));
   const bands = useMemo(() => surroundingBands(room), [room]);
-  const margin = bands.length ? 260 : 100; // room outside the walls for what is around the room
+  const margin = (bands.length ? 260 : 100) + (room.zones.some(z => z.kind === "terrace") ? TERRACE_DEPTH : 0); // room outside the walls for a terrace and what is around the room
   const pan = usePanZoom(viewport, { minX: Math.min(0, ...boundsPoints.map(p => p.x)) - margin, minY: Math.min(0, ...boundsPoints.map(p => p.y)) - margin, maxX: maxX + margin, maxY: maxY + margin });
   useEffect(() => { if (focusTarget?.roomKey === room.key) { pan.focusOn(focusTarget.point.x, focusTarget.point.y, 0.75); viewport.current?.scrollIntoView({ block: "center" }); } }, [focusTarget, room.key, pan.focusOn]);
   const toWorld = (event: { clientX: number; clientY: number }): Point => {

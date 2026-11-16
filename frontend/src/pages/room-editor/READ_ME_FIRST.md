@@ -89,9 +89,12 @@ retaining the first existing ids/keys and custom labels/flags. Chairs are 30 cm
 across; a square table has chairs on all four sides. Party sizes are no longer
 edited: minimum is 1 and maximum follows the chair count. A room allows 200 tables/1000 chairs; each table 1–20.
 
-TableTools exposes labels, geometry, zone, availability and the chair count,
-plus individual chair coordinates/label/flags. There are no party-size, wheelchair,
-high-chair or join-group fields.
+TableTools exposes the table palette, the selected table, its chair count (+/-) and
+its zone, and, when the room has a terrace, a "Put new tables" choice (inside / on a
+terrace). Tables cannot be resized by hand and there are no label, geometry,
+party-size, availability, wheelchair, high-chair, join-group or per-chair fields
+and no batch selection panel (SelectionTools is gone). The selection helpers in
+selection.ts remain for the keyboard shortcuts.
 TableLayer selects and drags tables or individual chairs with one history step.
 Chair drag uses centimetres, table drag the optional room grid. Inactive tables
 have dashed outlines and an (off) label. Accessible/blocked chairs have extra
@@ -106,13 +109,11 @@ Negative distribution gaps are refused until the outer tables are further apart.
 has_bookings is read-only server metadata: unknown persisted tables cannot be
 deleted; task 17 must provide it and strip it from write payloads.
 
-SelectionTools has checkboxes and buttons for every batch action. Shift-click
-or a selection area adds tables; touch hold enters multiple mode. Arrows move
+Shift-click adds tables; touch hold enters multiple mode. Arrows move
 1 cm (Shift 10), R rotates 15, Ctrl/Meta+D duplicates, Delete removes selected
 tables, Escape clears. Shortcuts ignore form inputs. A selected chair moves by
 arrows; Delete asks for the chair-count controls to avoid deleting the table.
-TableHandles rotates in 15-degree steps (Alt gives free angles) and resizes from
-the opposite anchored corner. Table body hit areas take priority over expanded
+TableHandles rotates in 15-degree steps (Alt gives free angles); there is no resize grip. Table body hit areas take priority over expanded
 chair targets within the body. Touch targets, numeric forms and checkbox lists
 provide alternatives; task 20 completes the phone workspace and camera behavior.
 
@@ -159,3 +160,10 @@ The room's name is shown, not edited, in Room properties (`Room: <name>`); it is
 
 Around the room (AroundRoom.tsx, surroundings.ts), at the top of the Walls tab: for a chosen wall the owner says what is outside it (Sea, River, Park, Street, City, Hills). No API field was added: it is stored as the view of a window on that wall (`view_tags` sea/river/garden/street/city/hills and a few words), which setSurrounding adds when the wall has none. The diner's plan already reads those views, so water and parks are drawn there too. The editor draws a labelled strip outside each such wall (RoomCanvas, `data-room-view`, surroundingBands). "Suggest from my location" reads the restaurant's pin (getOwnerProfile) and the OpenFreeMap tiles around it (maps/nearbyFeatures.ts: water, waterways and parks within 600 m, with the direction of each), then offers the wall that faces each one (wallFacing). The tile server is the one the discovery map already uses; nothing is sent but the tile addresses.
 
+
+Terrace: a terrace is a zone of kind terrace (so diners can filter for one) created from the
+"Terrace outside this wall" checkbox in Around the room (surroundings.ts: setTerrace, terraceOn). It is a
+250 cm strip outside the chosen wall; the wall's view band is drawn beyond it. Tables may stand
+wholly inside a terrace zone even though it is outside the walls (validation.ts), and
+assignTerraceTables (run by changeRoom) puts them in its zone. Terrace is no longer in the Fixed palette;
+an existing terrace zone is still editable there.

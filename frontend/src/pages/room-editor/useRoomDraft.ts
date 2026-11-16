@@ -66,7 +66,7 @@ function clearDraft(venueId: string): void {
 function blockedMessage(tables: { label: string }[]): string {
   const many = tables.length > 1;
   const names = tables.map((t) => `Table ${t.label}`).join(", ");
-  return `${names} ${many ? "have" : "has"} bookings, so ${many ? "they cannot" : "it cannot"} be deleted. Switch off "Available for booking" for ${many ? "them" : "it"} instead. Your changes are still here.`;
+  return `${names} ${many ? "have" : "has"} bookings, so ${many ? "they cannot" : "it cannot"} be deleted. Put ${many ? "them" : "it"} back, or deal with the bookings first. Your changes are still here.`;
 }
 
 export type SaveState = "idle" | "saving" | "conflict";

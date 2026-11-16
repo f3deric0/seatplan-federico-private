@@ -74,8 +74,9 @@ export function validateRooms(rooms: Room[], forPublication = false): RoomProble
     const windows = room.openings.filter(o => o.kind === "window" || o.kind === "glass_wall");
     if (forPublication && windows.length && room.north_deg === null) add("no_north", "error", "Set north so we can work out the sun.", []);
     for (const opening of windows) if (!opening.view_text.trim()) add("window_no_view", "info", "Add what guests see from this window.", [], { opening_key: opening.key });
+    const terraces = room.zones.filter(z => z.kind === "terrace").map(z => rectCorners({ x: z.x, y: z.y, w: z.w, h: z.h, rotation: 0 }));
     room.tables.forEach((table, i) => {
-      if (polygon && !inside(shape(table), polygon)) add("table_outside", "error", `Table ${label(table)} is outside the walls.`, [table.key]);
+      if (polygon && !inside(shape(table), polygon) && !terraces.some(area => inside(shape(table), area))) add("table_outside", "error", `Table ${label(table)} is outside the walls.`, [table.key]);
       for (const other of room.tables.slice(i + 1)) {
         const depth = penetration(shape(table), shape(other)), sameGroup = table.combine_group && table.combine_group === other.combine_group;
         if (table.is_active && other.is_active && depth !== null && depth > (sameGroup ? 2 + EPS : EPS)) add("tables_overlap", "error", `Tables ${label(table)} and ${label(other)} overlap.`, [table.key, other.key]);

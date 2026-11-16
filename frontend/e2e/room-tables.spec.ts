@@ -11,20 +11,10 @@ for (const width of [1440, 390]) {
     await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
     await page.getByRole("button", { name: "Tables", exact: true }).click();
     await page.getByRole("button", { name: "Place Counter", exact: true }).click();
-    await page.getByLabel("Table label", { exact: true }).fill("Counter A");
-    await page.getByLabel("Table label", { exact: true }).press("Tab");
     await page.getByRole("button", { name: "Add chair", exact: true }).click();
     await expect(page.getByText("6 chairs", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Undo", exact: true }).click();
     await expect(page.getByText("5 chairs", { exact: true })).toBeVisible();
-    await page.getByLabel("Selected chair", { exact: true }).selectOption({ label: "1" });
-    await page.getByLabel("Chair label", { exact: true }).fill("Window seat");
-    await page.getByLabel("Chair label", { exact: true }).press("Tab");
-    await page.getByLabel("Chair accessible", { exact: true }).check();
-    await page.getByLabel("Chair blocked", { exact: true }).check();
-    await page.getByLabel("Chair x (cm)", { exact: true }).fill("520");
-    await page.getByLabel("Chair x (cm)", { exact: true }).press("Tab");
-    await expect(page.getByLabel("Chair x (cm)", { exact: true })).toHaveValue("520");
     await page.screenshot({ path: join(tmpdir(), `seatplan-room-tables-${width}.png`), fullPage: true });
     expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -34,33 +24,32 @@ for (const width of [1440, 390]) {
 test("moving a table carries its chairs, and a chair can then move independently", async ({ page, request }) => {
   const links = await demoLinks(request);
   await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
+  await page.getByRole("button", { name: "Add room", exact: true }).click(); // an empty room: nothing else in the way
+  await page.getByLabel("Room name", { exact: true }).fill("Moving tables");
+  await page.getByRole("button", { name: "Create room", exact: true }).click();
   await page.getByRole("button", { name: "Tables", exact: true }).click();
   await page.getByRole("button", { name: "Place Counter", exact: true }).click();
   const key = await page.getByLabel("Selected table", { exact: true }).inputValue();
-  await page.getByText("Size and position", { exact: true }).click();
-  await page.getByLabel("Object x (cm)").fill("600"); // the centre of the demo room is taken: move to free floor
-  await page.getByLabel("Object x (cm)").press("Tab");
-  await page.getByLabel("Object y (cm)").fill("250");
-  await page.getByLabel("Object y (cm)").press("Tab");
-  const startX = await page.getByLabel("Object x (cm)").inputValue();
-  const body = (await page.locator(`[data-room-table="${key}"] .room-table`).boundingBox())!;
-  await page.mouse.move(body.x + body.width / 2, body.y + body.height / 2);
+  const body = page.locator(`[data-room-table="${key}"] .room-table`), chair = page.locator(".room-seat").first();
+  const before = { table: (await body.boundingBox())!, chair: (await chair.boundingBox())! };
+  const centre = { x: before.table.x + before.table.width / 2, y: before.table.y + before.table.height / 2 };
+  await page.mouse.move(centre.x, centre.y);
   await page.mouse.down();
-  await page.mouse.move(body.x + body.width / 2 + 60, body.y + body.height / 2, { steps: 5 });
+  await page.mouse.move(centre.x + 60, centre.y, { steps: 5 });
   await page.mouse.up();
-  expect(Number(await page.getByLabel("Object x (cm)").inputValue())).toBeGreaterThan(Number(startX));
+  const moved = { table: (await body.boundingBox())!, chair: (await chair.boundingBox())! };
+  expect(moved.table.x - before.table.x).toBeGreaterThan(20);
+  expect(Math.abs((moved.chair.x - before.chair.x) - (moved.table.x - before.table.x))).toBeLessThan(2); // the chair travels with it
   await page.getByRole("button", { name: "Undo", exact: true }).click();
-  await expect(page.getByLabel("Object x (cm)")).toHaveValue(startX);
-  await page.getByLabel("Selected chair").selectOption({ label: "1" });
-  const chairKey = await page.getByLabel("Selected chair").inputValue();
-  const seat = (await page.locator(`[data-room-chair="${chairKey}"] .room-seat`).boundingBox())!;
-  const originalX = await page.getByLabel("Chair x (cm)").inputValue();
+  expect(Math.abs((await body.boundingBox())!.x - before.table.x)).toBeLessThan(1);
+  // A chair can be dragged on its own.
+  const seat = (await chair.boundingBox())!;
   await page.mouse.move(seat.x + seat.width / 2, seat.y + seat.height / 2);
   await page.mouse.down();
   await page.mouse.move(seat.x + seat.width / 2 + 30, seat.y + seat.height / 2, { steps: 5 });
   await page.mouse.up();
-  expect(Number(await page.getByLabel("Chair x (cm)").inputValue())).toBeGreaterThan(Number(originalX));
-  await expect(page.getByLabel("Object x (cm)")).toHaveValue(startX);
+  expect((await chair.boundingBox())!.x).toBeGreaterThan(seat.x + 10);
+  expect(Math.abs((await body.boundingBox())!.x - before.table.x)).toBeLessThan(1);
   await page.getByRole("button", { name: "Undo", exact: true }).click();
-  await expect(page.getByLabel("Chair x (cm)")).toHaveValue(originalX);
+  expect(Math.abs((await chair.boundingBox())!.x - seat.x)).toBeLessThan(1);
 });

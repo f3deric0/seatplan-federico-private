@@ -46,6 +46,6 @@ export function TableLayer({ room, editing, selected, keys, multiple, chair, gri
       {table.shape === "round" ? <circle r={table.w / 2} className="room-table" /> : <rect x={-table.w / 2} y={-table.h / 2} width={table.w} height={table.h} className="room-table" />}
       <text textAnchor="middle" dominantBaseline="middle" className="room-table-label">{invalidKeys.includes(table.key) ? "⚠ " : ""}{table.label}{table.is_active ? "" : " (off)"}</text>
     </g>)}
-    {editing && active && keys.length === 1 && !chair && <TableHandles room={room} table={active} grid={grid} zoom={zoom} toWorld={toWorld} onChange={onChange} onDragStart={onDragStart} onError={onError} />}
+    {editing && active && keys.length === 1 && !chair && <TableHandles room={room} table={active} zoom={zoom} toWorld={toWorld} onChange={onChange} onDragStart={onDragStart} onError={onError} />}
   </g>;
 }

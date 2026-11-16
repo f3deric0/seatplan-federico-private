@@ -1,6 +1,7 @@
 import { bearing, outlineToPolygon, pointInPolygon, sideNormal } from "./geometry";
 import type { Point } from "./geometry";
-import type { Room } from "./roomModel";
+import type { Room, RoomZone } from "./roomModel";
+import { addZone, editZone, removeZone } from "./roomObjects";
 import { addOpening, updateOpening } from "./wallModel";
 
 /*
@@ -78,15 +79,61 @@ export function wallFacing(room: Room, degrees: number): { side: number; off: nu
   return best;
 }
 
+/** How deep a terrace is, in cm: room for a table, its chairs and a way past. */
+export const TERRACE_DEPTH = 250;
+
+/** The strip outside a wall, from `from` to `to` cm away from it. */
+function strip(room: Room, side: number, from: number, to: number): Point[] | null {
+  const o = outward(room, side), points = room.outline.points;
+  if (!o) return null;
+  const a = points[side], b = points[(side + 1) % points.length], at = (p: Point, d: number): Point => ({ x: p.x + o.normal.x * d, y: p.y + o.normal.y * d });
+  return [at(a, from), at(b, from), at(b, to), at(a, to)];
+}
+
+/** The terrace outside a wall, if there is one: a terrace zone whose middle lies just outside it. */
+export function terraceOn(room: Room, side: number): RoomZone | null {
+  const area = strip(room, side, 0, TERRACE_DEPTH * 1.6);
+  if (!area) return null;
+  return room.zones.find(z => z.kind === "terrace" && pointInPolygon({ x: z.x + z.w / 2, y: z.y + z.h / 2 }, area)) ?? null;
+}
+
+/** Puts a terrace outside a wall (a terrace zone, so diners can look for one), or takes it away. */
+export function setTerrace(room: Room, side: number, on: boolean): Room {
+  const existing = terraceOn(room, side);
+  if (!on) return existing ? removeZone(room, existing.key) : room;
+  if (existing) return room;
+  const quad = strip(room, side, 0, TERRACE_DEPTH);
+  if (!quad) throw new Error("Choose a wall first.");
+  const xs = quad.map(p => p.x), ys = quad.map(p => p.y), x = Math.round(Math.min(...xs)), y = Math.round(Math.min(...ys));
+  const added = addZone(room, "terrace", { x, y });
+  return editZone(added, added.zones.at(-1)!.key, { w: Math.max(100, Math.round(Math.max(...xs)) - x), h: Math.max(100, Math.round(Math.max(...ys)) - y) });
+}
+
+/** A table standing on a terrace belongs to it; one that leaves it does not. Returns the same room when nothing changes. */
+export function assignTerraceTables(room: Room): Room {
+  const terraces = room.zones.filter(z => z.kind === "terrace");
+  if (!terraces.length && !room.tables.some(t => t.zone_key)) return room;
+  let changed = false;
+  const tables = room.tables.map(t => {
+    const x = t.x + t.w / 2, y = t.y + t.h / 2, here = terraces.find(z => x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h);
+    const current = room.zones.find(z => z.key === t.zone_key);
+    let zone_key = t.zone_key;
+    if (here) { if (!current || current.kind === "terrace") zone_key = here.key; }
+    else if (current?.kind === "terrace") zone_key = null;
+    if (zone_key === t.zone_key) return t;
+    changed = true; return { ...t, zone_key };
+  });
+  return changed ? { ...room, tables } : room;
+}
+
 export interface Band { side: number; surrounding: Surrounding; quad: Point[]; label: Point }
-/** The strips drawn outside the walls that have something outside them. */
+/** The strips drawn outside the walls that have something outside them (beyond the terrace, when there is one). */
 export function surroundingBands(room: Room, depth = 140): Band[] {
-  const bands: Band[] = [], points = room.outline.points;
-  room.outline.points.forEach((a, side) => {
-    const surrounding = surroundingOf(room, side), o = outward(room, side);
-    if (!surrounding || !o) return;
-    const b = points[(side + 1) % points.length], d = (p: Point): Point => ({ x: p.x + o.normal.x * depth, y: p.y + o.normal.y * depth });
-    bands.push({ side, surrounding, quad: [a, b, d(b), d(a)], label: { x: o.mid.x + o.normal.x * depth / 2, y: o.mid.y + o.normal.y * depth / 2 } });
+  const bands: Band[] = [];
+  room.outline.points.forEach((_, side) => {
+    const surrounding = surroundingOf(room, side), inset = terraceOn(room, side) ? TERRACE_DEPTH : 0, quad = strip(room, side, inset, inset + depth), o = outward(room, side);
+    if (!surrounding || !quad || !o) return;
+    bands.push({ side, surrounding, quad, label: { x: o.mid.x + o.normal.x * (inset + depth / 2), y: o.mid.y + o.normal.y * (inset + depth / 2) } });
   });
   return bands;
 }

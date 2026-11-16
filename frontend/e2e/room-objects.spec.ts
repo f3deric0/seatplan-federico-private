@@ -163,13 +163,14 @@ test("a grip answers only right on its square, so the rest of the element still 
   expect(Number(await x.inputValue())).toBeGreaterThan(x0); // moved
 });
 
-test("a terrace or a quiet zone may stand outside the room, a fixed element may not, and there is no Zones tab", async ({ page, request }) => {
+test("a quiet zone may stand outside the room, a fixed element may not, and there is no Zones tab", async ({ page, request }) => {
   const links = await demoLinks(request);
   await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
   await expect(page.getByRole("button", { name: "Zones", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Fixed", exact: true }).click();
-  await page.getByRole("button", { name: "Place Terrace", exact: true }).click();
-  await expect(page.getByLabel("Rename label", { exact: true })).toHaveValue(/^Terrace/);
+  await expect(page.getByRole("button", { name: "Place Terrace", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Place Quiet zone", exact: true }).click();
+  await expect(page.getByLabel("Rename label", { exact: true })).toHaveValue(/^Quiet zone/);
   await page.getByText("Size and position", { exact: true }).click();
   const x = page.getByLabel("Object x (cm)");
   await x.fill("3000"); // far beyond the walls

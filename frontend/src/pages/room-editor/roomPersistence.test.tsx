@@ -228,13 +228,13 @@ describe("A second tab saved first", () => {
 });
 
 describe("Tables with bookings", () => {
-  it("names the table and points to Available for booking instead of losing work", async () => {
+  it("names the table that has bookings instead of losing work", async () => {
     fakeServer(() => layout(5), () => json({ error: { code: "conflict", message: "This table has bookings. Make it unavailable instead.", tables: [{ id: 40, label: "T1" }] } }, 409));
     open();
     await edit();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     const alert = await screen.findByText(/Table T1 has bookings/);
-    expect(alert.textContent).toMatch(/Available for booking/);
+    expect(alert.textContent).toMatch(/deal with the bookings first/);
     expect(bars()).toBe(1); // nothing was lost
     await act(async () => undefined);
   });
