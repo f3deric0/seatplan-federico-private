@@ -22,8 +22,7 @@ import type { ShapeSelection } from "./ShapeTools";
 import { RoomCanvas } from "./RoomCanvas";
 import { WallTools } from "./WallTools";
 import { FixtureTools } from "./FixtureTools";
-import { ZoneTools } from "./ZoneTools";
-import { addFixture, addZone, FIXTURE_KINDS, fixtureSize, removeZone, ZONE_KINDS } from "./roomObjects";
+import { addFixture, addZone, FIXTURE_KINDS, fixtureSize, removeZone, ZONE_KINDS, ZONE_SIZE } from "./roomObjects";
 import { snappedPoint } from "./shapeModel";
 import { addTable, TABLE_KINDS } from "./tableModel";
 import { TableTools } from "./TableTools";
@@ -106,7 +105,9 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
       const size = fixtureSize(fixed), top = { x: point.x - size.w / 2, y: point.y - size.h / 2 };
       const next = addFixture(room, fixed, free ? { x: Math.round(top.x), y: Math.round(top.y) } : snappedPoint(top, null, true, false)); changeRoom(next); setObject(next.fixtures.at(-1)!.key); setTool("Fixed");
     } else if (category === "zone" && zone) {
-      const next = addZone(room, zone, point); changeRoom(next); setObject(next.zones.at(-1)!.key); setTool("Zones");
+      // Centred on the point, on the grid unless placement is free. A zone may be dragged beyond the walls afterwards.
+      const top = { x: point.x - ZONE_SIZE.w / 2, y: point.y - ZONE_SIZE.h / 2 };
+      const next = addZone(room, zone, free ? { x: Math.round(top.x), y: Math.round(top.y) } : snappedPoint(top, null, true, false)); changeRoom(next); setObject(next.zones.at(-1)!.key); setTool("Fixed");
     } else if (category === "table") {
       const table = TABLE_KINDS.find(k => k === kind); if (!table) return;
       const next = addTable(room, table, point); changeRoom(next); updateKeys([next.tables.at(-1)!.key]); setTool("Tables");
@@ -143,7 +144,7 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
         else { const distance = event.shiftKey ? 10 : 1, dx = event.key === "ArrowLeft" ? -distance : event.key === "ArrowRight" ? distance : 0, dy = event.key === "ArrowUp" ? -distance : event.key === "ArrowDown" ? distance : 0; const table = room.tables.find(t => t.key === object), seat = table?.seats.find(s => s.key === chair); changeRoom(table && seat ? editChair(room, table.key, seat.key, { x: seat.x + dx, y: seat.y + dy }) : moveTables(room, tableKeys, dx, dy)); }
       } catch (caught) { setError(caught instanceof Error ? caught.message : "Check the selected tables."); }
     }
-    else if (event.key === "Delete" && object && (tool === "Fixed" || tool === "Zones")) { event.preventDefault(); changeRoom(tool === "Fixed" ? { ...room, fixtures: room.fixtures.filter(f => f.key !== object) } : removeZone(room, object)); setObject(null); }
+    else if (event.key === "Delete" && object && tool === "Fixed") { event.preventDefault(); changeRoom(room.zones.some(z => z.key === object) ? removeZone(room, object) : { ...room, fixtures: room.fixtures.filter(f => f.key !== object) }); setObject(null); }
     else if (event.key === "Delete" && tool === "Walls" && opening) { event.preventDefault(); changeRoom({ ...room, openings: room.openings.filter(o => o.key !== opening) }); setOpening(null); }
     else if (event.key === "Delete" && tool === "Shape" && selection?.kind === "corner") {
       event.preventDefault();
@@ -165,7 +166,7 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
         </div>
         {/* No "Preview" button: the Light tool already shows the saved room as a diner will see it, and a button that never works is worse than none. */}
         <nav className="room-other-tools" aria-label="Room tools">
-          {["Shape", "Walls", "Fixed", "Zones", "Light"].map(name => <Button variant="ghost" key={name} aria-pressed={tool === name} disabled={drawing && name !== "Shape"} onClick={() => { setTool(name); setPlacement(null); setError(""); }}>{name}</Button>)}
+          {["Shape", "Walls", "Fixed", "Light"].map(name => <Button variant="ghost" key={name} aria-pressed={tool === name} disabled={drawing && name !== "Shape"} onClick={() => { setTool(name); setPlacement(null); setError(""); }}>{name}</Button>)}
         </nav>
       </div>
       <RoomCanvas room={room} drawing={drawing} grid={grid} fixtureGrid={!free} onPoint={addPoint} onCloseShape={closeShape} selection={selection} onSelect={setSelection} onChange={changeRoom} onDragStart={history.checkpoint} onError={setError} tool={tool} opening={opening} onOpening={setOpening} placement={placement} object={object} onObject={setObject} onPlace={placeObject} chair={chair} onTableSelect={chooseTable} tableKeys={tableKeys} multiple={multiple} areaMode={areaMode} onArea={keys => { updateKeys(keys); setAreaMode(false); }} problems={problems.filter(p => p.room_key === room.key)} focusTarget={focusTarget} light={tool === "Light" ? light.answer : null} />
@@ -178,7 +179,6 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
         {!drawing && tool === "Walls" && <WallTools room={room} selection={selection} selected={opening} onSelect={setOpening} onSide={setSelection} onChange={changeRoom} onError={setError} />}
         {!drawing && tool === "Light" && <LightTools room={room} unsaved={dirty} date={lightDate} time={lightTime} onDate={setLightDate} onTime={setLightTime} answer={light.answer} failed={light.failed} />}
         {!drawing && tool === "Fixed" && <FixtureTools room={room} selected={object} free={free} onFree={setFree} onSelect={setObject} onPlace={value => placeObject(centreOfRoom(), value)} onChange={changeRoom} onError={setError} />}
-        {!drawing && tool === "Zones" && <ZoneTools room={room} selected={object} placement={placement} onSelect={setObject} onArm={setPlacement} onCentre={placeCentre} onChange={changeRoom} />}
         {!drawing && tool === "Tables" && <div className="room-form" ref={palette}><TableTools room={room} selected={object} chair={chair} placement={placement} onSelect={key => updateKeys(key ? [key] : [])} onChair={setChair} onArm={setPlacement} onCentre={placeCentre} onChange={changeRoom} onError={setError} /><SelectionTools room={room} keys={tableKeys} multiple={multiple} area={areaMode} onMultiple={setMultiple} onArea={setAreaMode} onKeys={updateKeys} onChange={changeRoom} onError={setError} /></div>}
       </div></aside>
     </div><footer className="room-status">{area.toLocaleString("pt-PT", { maximumFractionDigits: 1 })} m² · Grid on<ProblemList problems={problems} onSelect={selectProblem} /></footer>

@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import { FixtureTools } from "./FixtureTools";
 import { createRoom } from "./roomModel";
-import { addFixture, editFixture } from "./roomObjects";
+import { addFixture, addZone, editFixture } from "./roomObjects";
 import type { Room } from "./roomModel";
 
 const show = (room: Room, selected: string | null = null, free = false) => {
@@ -53,11 +53,35 @@ it("offers free placement as a switch that starts off", () => {
   expect(onFree).toHaveBeenCalledWith(true);
 });
 
-it("offers only a bar, a WC, stairs and a TV, each with an icon", () => {
+it("offers a bar, a WC, stairs, a TV, a terrace and a quiet zone, each with an icon", () => {
   show(empty());
   const names = screen.getAllByRole("button").map(b => b.getAttribute("aria-label")).filter(Boolean);
-  expect(names).toEqual(["Place Bar", "Place WC", "Place Stairs", "Place TV"]);
-  expect(document.querySelectorAll(".room-object-palette svg")).toHaveLength(4);
+  expect(names).toEqual(["Place Bar", "Place WC", "Place Stairs", "Place TV", "Place Terrace", "Place Quiet zone"]);
+  expect(document.querySelectorAll(".room-object-palette svg")).toHaveLength(6);
+});
+
+it("adds a terrace with one tap, like any other element", () => {
+  const { onPlace } = show(empty());
+  fireEvent.click(screen.getByRole("button", { name: "Place Terrace" }));
+  expect(onPlace).toHaveBeenCalledWith("zone:terrace");
+});
+
+it("edits a chosen zone here: rename, size and position, remove", () => {
+  const room = addZone(empty(), "terrace", { x: 100, y: 100 });
+  const { onChange, onSelect } = show(room, room.zones[0].key);
+  expect((screen.getByLabelText("Rename label") as HTMLInputElement).value).toBe("Terrace");
+  expect(screen.getByText("A zone can go beyond the walls, like a terrace.")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Rotate 90°" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Remove zone" }));
+  expect((onChange.mock.calls[0][0] as Room).zones).toHaveLength(0);
+  expect(onSelect).toHaveBeenCalledWith(null);
+});
+
+it("lists fixed elements and zones together once there are two or more", () => {
+  const room = addZone(addFixture(empty(), "bar", { x: 100, y: 100 }), "quiet", { x: 400, y: 300 });
+  show(room);
+  const options = Array.from(screen.getByLabelText("Selected fixed element").querySelectorAll("option")).map(o => o.textContent);
+  expect(options).toEqual(["Choose an element", "Bar 1", "Quiet zone"]);
 });
 
 it("names the field Rename label", () => {

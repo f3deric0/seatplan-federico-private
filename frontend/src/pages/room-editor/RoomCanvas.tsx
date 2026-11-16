@@ -60,10 +60,10 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
     }} onPointerUp={event => {
       if (areaDrag.current) { onArea(tablesInBox(room, areaDrag.current.start, toWorld(event))); areaDrag.current = null; setAreaBox(null); suppressClick.current = true; }
       else pan.pointerHandlers.onPointerUp(event);
-    }} onPointerCancel={event => { areaDrag.current = null; setAreaBox(null); pan.pointerHandlers.onPointerCancel(event); }} onPointerMove={move} onDragOver={event => { if (event.dataTransfer.types.includes(OBJECT_DRAG_TYPE)) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } }} onDrop={event => { const kind = event.dataTransfer.getData(OBJECT_DRAG_TYPE); if (kind) { event.preventDefault(); onPlace(kind.startsWith("fixture:") ? toWorld(event) : snappedPoint(toWorld(event), null, grid, false), kind); } }} onClick={event => {
+    }} onPointerCancel={event => { areaDrag.current = null; setAreaBox(null); pan.pointerHandlers.onPointerCancel(event); }} onPointerMove={move} onDragOver={event => { if (event.dataTransfer.types.includes(OBJECT_DRAG_TYPE)) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } }} onDrop={event => { const kind = event.dataTransfer.getData(OBJECT_DRAG_TYPE); if (kind) { event.preventDefault(); onPlace(kind.startsWith("fixture:") || kind.startsWith("zone:") ? toWorld(event) : snappedPoint(toWorld(event), null, grid, false), kind); } }} onClick={event => {
       if (suppressClick.current) { suppressClick.current = false; return; }
-      if (placement && !pan.wasDragged()) { onPlace(placement.startsWith("fixture:") ? toWorld(event) : snappedPoint(toWorld(event), null, grid, false), placement); return; }
-      if (!drawing && !pan.wasDragged() && (tool === "Fixed" || tool === "Zones")) { onObject(null); return; } // a click on empty floor lets go of the element
+      if (placement && !pan.wasDragged()) { onPlace(placement.startsWith("fixture:") || placement.startsWith("zone:") ? toWorld(event) : snappedPoint(toWorld(event), null, grid, false), placement); return; }
+      if (!drawing && !pan.wasDragged() && tool === "Fixed") { onObject(null); return; } // a click on empty floor lets go of the element
       if (!drawing || pan.wasDragged()) return;
       const point = screenPoint(event);
       if (points.length >= 3 && Math.hypot(point.x - points[0].x, point.y - points[0].y) * pan.view.k < 24) onCloseShape();
@@ -84,7 +84,7 @@ export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseS
           {!drawing && tool === "Light" && <LightLayer room={room} light={light} zoom={pan.view.k} />}
           {drawing && <polyline points={[...points, ...(cursor ? [cursor] : [])].map(p => `${p.x},${p.y}`).join(" ")} className="room-drawing" />}
           {points.map((p, i) => <text key={i} x={p.x + 12 / pan.view.k} y={p.y - 10 / pan.view.k} fontSize={12 / pan.view.k} className="room-ruler">{i + 1}</text>)}
-          {!drawing && <ObjectLayer room={room} kind="zone" editing={tool === "Zones" && !placement} selected={object} grid={grid} zoom={pan.view.k} toWorld={toWorld} onSelect={onObject} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} />}
+          {!drawing && <ObjectLayer room={room} kind="zone" editing={tool === "Fixed" && !placement} selected={object} grid={fixtureGrid} zoom={pan.view.k} toWorld={toWorld} onSelect={onObject} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} />}
           {!drawing && <ObjectLayer room={room} kind="fixture" editing={tool === "Fixed" && !placement} selected={object} grid={fixtureGrid} zoom={pan.view.k} toWorld={toWorld} onSelect={onObject} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} />}
           <TableLayer room={room} editing={tool === "Tables" && !placement} selected={object} keys={tableKeys} multiple={multiple} chair={chair} grid={grid} zoom={pan.view.k} toWorld={toWorld} onSelect={onTableSelect} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} onError={onError} invalidKeys={problems.filter(p => p.level === "error").flatMap(p => p.table_keys)} />
           {areaBox && <rect x={Math.min(areaBox.start.x, areaBox.now.x)} y={Math.min(areaBox.start.y, areaBox.now.y)} width={Math.abs(areaBox.now.x - areaBox.start.x)} height={Math.abs(areaBox.now.y - areaBox.start.y)} className="room-selection-box" />}

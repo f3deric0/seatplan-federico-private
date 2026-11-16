@@ -1,7 +1,12 @@
 import type { FixtureKind } from "./roomModel";
 
+/** Everything that can wear an icon: a fixed element, or one of the two zones the owner can add. */
+export type IconKind = FixtureKind | "terrace" | "quiet";
+
 /** Line icons on a 24 x 24 grid, one per kind of fixed element (older plans can hold all of them). */
-const PATHS: Record<FixtureKind, string> = {
+const PATHS: Record<IconKind, string> = {
+  terrace: "M3 11a9 9 0 0 1 18 0z M12 11v10 M9 21h6",
+  quiet: "M20 14a8 8 0 1 1-10-10 6.5 6.5 0 0 0 10 10z",
   bar: "M4 5h16l-8 9z M12 14v6 M8 20h8",
   wc: "M8 3h8v5H8z M6 10h12c0 4-2 7-6 7s-6-3-6-7z M10 17v4h4v-4",
   stairs: "M3 20h5v-5h5v-5h5V5h3",
@@ -16,7 +21,7 @@ const PATHS: Record<FixtureKind, string> = {
 };
 
 /** The icon for a kind of fixed element, centred on (0, 0) in a square of `size` units. Draw it inside an svg. */
-export function FixtureIcon({ kind, size }: { kind: FixtureKind; size: number }) {
+export function FixtureIcon({ kind, size }: { kind: IconKind; size: number }) {
   return <g className="room-fixture-icon" aria-hidden="true" transform={`translate(${-size / 2} ${-size / 2}) scale(${size / 24})`}>
     <path d={PATHS[kind]} />
   </g>;

@@ -28,16 +28,13 @@ for (const width of [1440, 390]) {
     await page.getByLabel("Object rotation (degrees)").fill("45");
     await page.getByLabel("Object rotation (degrees)").press("Tab");
     await page.screenshot({ path: join(tmpdir(), `seatplan-room-fixed-${width}.png`), fullPage: true });
-    await page.getByRole("button", { name: "Zones", exact: true }).click();
-    await page.getByRole("button", { name: "Place quiet zone", exact: true }).click();
-    await page.getByRole("button", { name: "Place selected in room", exact: true }).click();
-    await page.getByLabel("Zone name", { exact: true }).fill("Quiet corner");
-    await page.getByLabel("Zone name", { exact: true }).press("Tab");
-    await expect(page.getByLabel("Zone type", { exact: true })).toHaveValue("quiet");
+    await page.getByRole("button", { name: "Place Quiet zone", exact: true }).click();
+    await page.getByLabel("Rename label", { exact: true }).fill("Quiet corner");
+    await page.getByLabel("Rename label", { exact: true }).press("Tab");
     await page.getByRole("button", { name: "Remove zone", exact: true }).click();
     await page.getByRole("button", { name: "Undo", exact: true }).click();
-    await page.getByLabel("Selected zone").selectOption({ label: "Quiet corner" });
-    await expect(page.getByLabel("Zone name", { exact: true })).toHaveValue("Quiet corner");
+    await page.getByLabel("Selected fixed element").selectOption({ label: "Quiet corner" });
+    await expect(page.getByLabel("Rename label", { exact: true })).toHaveValue("Quiet corner");
     await page.screenshot({ path: join(tmpdir(), `seatplan-room-zones-${width}.png`), fullPage: true });
     expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -164,4 +161,25 @@ test("a grip answers only right on its square, so the rest of the element still 
   await page.mouse.up();
   await expect(width).toHaveValue(w0); // not resized
   expect(Number(await x.inputValue())).toBeGreaterThan(x0); // moved
+});
+
+test("a terrace or a quiet zone may stand outside the room, a fixed element may not, and there is no Zones tab", async ({ page, request }) => {
+  const links = await demoLinks(request);
+  await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
+  await expect(page.getByRole("button", { name: "Zones", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Fixed", exact: true }).click();
+  await page.getByRole("button", { name: "Place Terrace", exact: true }).click();
+  await expect(page.getByLabel("Rename label", { exact: true })).toHaveValue(/^Terrace/);
+  await page.getByText("Size and position", { exact: true }).click();
+  const x = page.getByLabel("Object x (cm)");
+  await x.fill("3000"); // far beyond the walls
+  await x.press("Tab");
+  await expect(x).toHaveValue("3000");
+  await expect(page.getByText("Keep the element inside the room.")).toHaveCount(0);
+  await page.getByRole("button", { name: "Place WC", exact: true }).click();
+  await page.getByText("Size, position and shape", { exact: true }).click();
+  const wcX = page.getByLabel("Object x (cm)");
+  await wcX.fill("3000");
+  await wcX.press("Tab");
+  await expect(page.getByText("Keep the element inside the room.", { exact: true })).toBeVisible();
 });

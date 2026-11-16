@@ -9,6 +9,9 @@ export const FIXTURE_KINDS: readonly FixtureKind[] = ["bar", "kitchen", "wc", "c
 /** What the owner can add today. Older plans may still hold the other kinds, which keep drawing and editing. */
 export const FIXTURE_PALETTE: readonly FixtureKind[] = ["bar", "wc", "stairs", "tv"];
 export const FIXTURE_NAMES: Record<FixtureKind, string> = { bar: "Bar", kitchen: "Open kitchen", wc: "WC", column: "Column", stairs: "Stairs", plant: "Plant", stage: "Stage", fireplace: "Fireplace", tv: "TV", host_stand: "Host stand", awning: "Awning" };
+/** The zones an owner can add today. Plans may still hold the other kinds, which keep drawing and editing. */
+export const ZONE_PALETTE: readonly ZoneKind[] = ["terrace", "quiet"];
+export const ZONE_NAMES: Partial<Record<ZoneKind, string>> = { terrace: "Terrace", quiet: "Quiet zone" };
 export const ZONE_KINDS: readonly ZoneKind[] = ["general", "window", "terrace", "bar", "quiet", "vip", "accessible"];
 
 /** The size a new fixed element starts with, in cm. */
@@ -60,11 +63,17 @@ export function editFixture(room: Room, key: string, patch: Partial<RoomFixture>
   }) };
 }
 
+/** The size a new zone starts with, in cm. */
+export const ZONE_SIZE = { w: 200, h: 150 };
+
 export function addZone(room: Room, kind: ZoneKind, at: Point): Room {
   if (!ZONE_KINDS.includes(kind)) throw new Error("Choose a zone type from the palette.");
+  // "Terrace", then "Terrace 2"...; other kinds keep the old "Zone 1".
+  const base = ZONE_NAMES[kind] ?? "Zone";
   let number = 1;
-  while (room.zones.some(z => z.name === `Zone ${number}`)) number++;
-  const zone: RoomZone = { id: null, key: newRoomKey("z"), name: `Zone ${number}`, kind, x: at.x, y: at.y, w: 200, h: 150 };
+  const nameOf = (n: number) => base === "Zone" || n > 1 ? `${base} ${n}` : base;
+  while (room.zones.some(z => z.name === nameOf(number))) number++;
+  const zone: RoomZone = { id: null, key: newRoomKey("z"), name: nameOf(number), kind, x: at.x, y: at.y, ...ZONE_SIZE };
   const next = { ...room, zones: [...room.zones, zone] };
   return editZone(next, zone.key, {});
 }

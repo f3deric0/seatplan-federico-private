@@ -70,7 +70,7 @@ on affected tables and preserves every table. FixtureTools/ZoneTools expose
 palettes, placement in the room and position/size/name fields. Palette drag
 uses a private MIME type; tap-then-place and the placement button also work.
 ObjectLayer draws neutral icons/names and allows one-step drag undo. Zone
-rectangles are behind fixtures and tables and are selectable in Zones mode.
+rectangles are behind fixtures and tables and are selectable in the Fixed tool (there is no Zones tab).
 Outline containment and overlap warnings are added by task 16; placement can
 currently be outside.
 All values use centimetres and clockwise screen rotation.
@@ -196,3 +196,6 @@ The Fixed panel has a Rotate 90 degrees button (an inline error says when the tu
 keyboard alternative. The icon and name are drawn upright whatever the angle.
 
 The grips are small (8 px squares) and answer only right on the square (6 px reach with a mouse; 22 px on a touch screen, `pointer: coarse`), so the rest of the element, including its corners, still drags it.
+
+There is no Zones tab. The Fixed palette also offers the two zones an owner can add, Terrace and Quiet zone (roomObjects.ZONE_PALETTE; `zone:terrace` and `zone:quiet`). They are ordinary zones in room.zones, so they may stand outside the walls and are not limited to the room, unlike fixed elements. Older plans keep their other zone kinds, which stay selectable, movable and removable in the Fixed tool. A chosen zone shows Rename label, Size and position and Remove zone; the same eight resize grips work on zones, with no rotation grip. New zones are named Terrace, Terrace 2, Quiet zone... (the old "Zone 1" for other kinds).
+

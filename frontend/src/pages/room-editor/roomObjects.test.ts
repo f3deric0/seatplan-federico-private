@@ -78,3 +78,14 @@ it("leaves an element that an older plan put outside the room editable", () => {
   expect(editFixture(stray, stray.fixtures[0].key, { label: "Old bar" }).fixtures[0].label).toBe("Old bar");
   expect(editFixture(stray, stray.fixtures[0].key, { x: 4100 }).fixtures[0].x).toBe(4100);
 });
+
+it("names new zones Terrace and Quiet zone, then numbers repeats, and lets them stand outside the room", () => {
+  let room = createRoom("Main", 1000, 700);
+  room = addZone(room, "terrace", { x: 1200, y: -300 }); // outside the walls, and welcome
+  room = addZone(room, "terrace", { x: 100, y: 100 });
+  room = addZone(room, "quiet", { x: 300, y: 300 });
+  expect(room.zones.map(z => z.name)).toEqual(["Terrace", "Terrace 2", "Quiet zone"]);
+  expect(room.zones[0]).toMatchObject({ x: 1200, y: -300 });
+  expect(editZone(room, room.zones[1].key, { x: 5000, y: -2000 }).zones[1]).toMatchObject({ x: 5000, y: -2000 });
+  expect(addZone(createRoom("Other", 1000, 700), "general", { x: 0, y: 0 }).zones[0].name).toBe("Zone 1");
+});
