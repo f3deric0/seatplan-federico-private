@@ -17,6 +17,9 @@ Sources: https://leafletjs.com/reference-1.9.4.html and
 https://operations.osmfoundation.org/policies/tiles/ . The actual hosted
 Referer/CSP behavior still needs a deployment check; no deployment is authorized.
 
-ResultsMap (discovery page) shows one pin per search result and a bigger pin for the card the diner points at. It is a
-second small component beside LeafletMap, built the same way (map made in an effect, removed on unmount, tiles from the
-standard OSM URL with attribution, no react-leaflet). The list beside it is the keyboard route to every restaurant.
+ResultsMap supplies the public discovery and restaurant maps. Leaflet positions
+the pins and canvases. DiscoveryBasemap draws the land, water, parks, buildings
+and roads from OpenFreeMap vector tiles. It requests only visible tiles, aborts
+requests when Leaflet unloads them and omits labels. The public page footer
+credits OpenMapTiles and OpenStreetMap. When tiles fail, the numbered diagram
+and the list still give diners access to the results.

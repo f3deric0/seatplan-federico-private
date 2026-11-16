@@ -25,6 +25,7 @@ interface PageShellProps {
   width?: "normal" | "wide";
   /** Extra items on the right of the header, e.g. a "Sign out" button. */
   headerActions?: ReactNode;
+  footerContent?: ReactNode;
   restaurantBrand?: boolean;
 }
 
@@ -54,7 +55,7 @@ export function Wordmark({ restaurantBrand = false }: { restaurantBrand?: boolea
   );
 }
 
-export function PageShell({ title, children, width = "normal", headerActions, restaurantBrand }: PageShellProps) {
+export function PageShell({ title, children, width = "normal", headerActions, footerContent, restaurantBrand }: PageShellProps) {
   useEffect(() => {
     document.title = `${title} · SeatPlan`;
   }, [title]);
@@ -89,6 +90,7 @@ export function PageShell({ title, children, width = "normal", headerActions, re
       <footer className="shell-footer">
         <div className={`shell-inner shell-${width}`}>
           <p>SeatPlan, a student project at Nova SBE. Demo data only: every person here is invented.</p>
+          {footerContent}
         </div>
       </footer>
     </div>

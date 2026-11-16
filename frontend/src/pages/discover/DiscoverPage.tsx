@@ -6,6 +6,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { searchRestaurants } from "../../api/discovery";
 import type { FeatureKey, RestaurantCard as Card, SearchQuery, SearchWhen } from "../../api/discovery";
 import { Button, EmptyState, ErrorState, PageShell, Skeleton } from "../../design/components";
+import { MapCredits } from "../../maps/MapCredits";
 import { errorMessage } from "../restaurant/format";
 import { ContextControls } from "./ContextControls";
 import { DiscoverBar } from "./DiscoverBar";
@@ -212,7 +213,7 @@ export default function DiscoverPage() {
   }, [results,saved.scroll]);
   const showMap = wide || view === "map";
   const selectedCard = items.find(card => card.public_id === pinned);
-  return <div className={`discover-route${!wide && view === "map" ? " is-map-view" : ""}`}><PageShell title="Find a table you will love" width="wide" restaurantBrand headerActions={<PublicHeaderActions />}>
+  return <div className={`discover-route${!wide && view === "map" ? " is-map-view" : ""}`}><PageShell title="Find a table you will love" width="wide" restaurantBrand headerActions={<PublicHeaderActions />} footerContent={showMap && <MapCredits />}>
     <section className={`discover-top${!wide && view === "map" ? " discover-top-compact" : ""}`} aria-labelledby="discover-heading">
       <h1 id="discover-heading" aria-label={wide || headline !== FIRST_HEADLINE ? headline : "Find your table."}><span className="discover-desktop-title">{headline}</span><span className="discover-mobile-title">{headline === FIRST_HEADLINE ? "Find your table." : headline}</span></h1><p>See the room and choose where you’ll sit.</p>
     </section>

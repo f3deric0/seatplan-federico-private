@@ -48,7 +48,7 @@ test("filters fit a narrow phone, and each nearby time has its own link", async 
 });
 test("mobile map keeps booking context and returns focus after closing a selected pin",async({page})=>{
  await page.setViewportSize({width:390,height:844});
- await page.route("**/tile.openstreetmap.org/**",route=>route.abort());
+ await page.route("https://tiles.openfreemap.org/**",route=>route.abort());
  await page.goto("/");await page.getByRole("article").first().waitFor();
  await page.getByRole("button",{name:/When and where/}).click();
  const context=page.getByRole("dialog",{name:"Filters"});

@@ -9,6 +9,7 @@ import { ApiError } from "../../api/client";
 import { getPublicRestaurant } from "../../api/discovery";
 import type { PublicRestaurant } from "../../api/discovery";
 import { EmptyState, ErrorState, PageShell, Skeleton } from "../../design/components";
+import { MapCredits } from "../../maps/MapCredits";
 import { PublicHeaderActions } from "../discover/PublicHeaderActions";
 import { FEATURE_KEYS, FEATURE_LABELS, cuisineLabel, formatDistance, loadPlace, priceText } from "../discover/discoverModel";
 import { BookingEmbed } from "../restaurant/BookingPage";
@@ -26,8 +27,9 @@ export default function RestaurantPage() {
   const { slug = "" } = useParams();
   const { state, reload } = useLoad(() => getPublicRestaurant(slug), slug);
   const title = state.status === "ready" ? state.data.name : "Restaurant";
+  const hasMap = state.status === "ready" && state.data.lat !== null && state.data.lng !== null;
   return (
-    <PageShell title={title} width="wide" restaurantBrand headerActions={<PublicHeaderActions />}>
+    <PageShell title={title} width="wide" restaurantBrand headerActions={<PublicHeaderActions />} footerContent={hasMap && <MapCredits />}>
       {state.status === "loading" && <Skeleton lines={6} label="Loading the restaurant" />}
       {state.status === "error" && <LoadError error={state.error} onRetry={() => reload()} />}
       {state.status === "ready" && <Page data={state.data} />}

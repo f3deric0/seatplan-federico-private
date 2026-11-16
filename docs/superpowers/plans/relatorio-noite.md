@@ -848,3 +848,14 @@ do mapa e continua acessível com o cartão de restaurante aberto no telemóvel.
 O build, 509 testes Vitest e 182 verificações de contraste passaram. Em
 Chromium com tiles e API de teste, verificámos o zoom por teclado e rato,
 a seleção de pinos e a atribuição a 1440, 390 e 320 px.
+
+## Mapa claro de Restaurantes
+
+Os mapas públicos desenham ruas brancas, água azul e parques verdes a partir
+de dados vetoriais. Os bairros, nomes de ruas e pontos de referência ficam sem
+rótulos. Os botões de zoom são nativos e transparentes. Os créditos passam para
+o rodapé das páginas que mostram o mapa.
+
+Build, 512 testes Vitest e 182 verificações de contraste passaram. Os testes
+no Chromium com tiles e API de teste verificaram as cores, zoom por teclado e
+rato, seleção de pinos e recuperação sem tiles, incluindo a 320 e 390 px.
