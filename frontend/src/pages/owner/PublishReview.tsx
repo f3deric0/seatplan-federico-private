@@ -88,10 +88,51 @@ function Review({ venueId, check, onChange, refresh }: { venueId: string; check:
         <p role="status" className="owner-stage"><Badge tone={published ? "success" : check.ready ? "info" : "warning"}>{stage}</Badge></p>
       </div>
       <div className="ow-two">
+        <div className="ow-left">
         <aside className="rb-card ow-listing" aria-label="Public listing">
           <h2 className="ow-card-title">Public listing</h2>
           <ListingPreview venueId={venueId} name={check.name} profile={profile.status === "ready" ? profile.data : undefined} />
         </aside>
+        <div className="ow-publish-bar" role="group" aria-label="Publish">
+          <p className="rb-muted">
+            {published
+              ? `${check.name} is live and open for bookings.`
+              : check.ready
+                ? "Everything required is done. Preview the restaurant, then publish it."
+                : `Preview the restaurant and fix the ${blocking.length === 1 ? "blocker" : `${blocking.length} blockers`} to enable publishing.`}
+          </p>
+          <div className="ow-publish-actions">
+            {preview && <Link className={`btn btn-${published ? "primary" : "secondary"}`} to={preview}>{published ? "View public page" : "Preview listing"} <span aria-hidden="true">↗</span></Link>}
+            {!published && (
+              <Button busy={busy} disabled={!check.ready} onClick={() => void publish()}>
+                Publish restaurant
+              </Button>
+            )}
+            {published && (
+              <Button variant="ghost" busy={busy} onClick={() => setConfirming(true)}>
+                Unpublish
+              </Button>
+            )}
+          </div>
+          {refused.length > 0 && (
+            <div role="alert" className="room-error">
+              <p>The server found problems, so nothing was published:</p>
+              <ul>
+                {refused.map((p) => (
+                  <li key={`${p.code}-${p.message}`}>{p.message}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {problem && (
+            <p role="alert" className="room-error">
+              {problem}
+            </p>
+          )}
+          {!check.ready && !published && <p className="rb-muted">Publish switches on when every item marked To do is done.</p>}
+          {published && <p className="rb-muted">Unpublishing hides {check.name} from search and stops new bookings. Bookings already made stay.</p>}
+        </div>
+        </div>
         <div className="rb-card ow-checks">
           {pending.length > 0 && (
             <>
@@ -114,45 +155,6 @@ function Review({ venueId, check, onChange, refresh }: { venueId: string; check:
             </section>
           ))}
         </div>
-      </div>
-      <div className="ow-publish-bar" role="group" aria-label="Publish">
-        <p className="rb-muted">
-          {published
-            ? `${check.name} is live and open for bookings.`
-            : check.ready
-              ? "Everything required is done. Preview the restaurant, then publish it."
-              : `Preview the restaurant and fix the ${blocking.length === 1 ? "blocker" : `${blocking.length} blockers`} to enable publishing.`}
-        </p>
-        <div className="ow-publish-actions">
-          {preview && <Link className={`btn btn-${published ? "primary" : "secondary"}`} to={preview}>{published ? "View public page" : "Preview listing"} <span aria-hidden="true">↗</span></Link>}
-          {!published && (
-            <Button busy={busy} disabled={!check.ready} onClick={() => void publish()}>
-              Publish restaurant
-            </Button>
-          )}
-          {published && (
-            <Button variant="ghost" busy={busy} onClick={() => setConfirming(true)}>
-              Unpublish
-            </Button>
-          )}
-        </div>
-        {refused.length > 0 && (
-          <div role="alert" className="room-error">
-            <p>The server found problems, so nothing was published:</p>
-            <ul>
-              {refused.map((p) => (
-                <li key={`${p.code}-${p.message}`}>{p.message}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {problem && (
-          <p role="alert" className="room-error">
-            {problem}
-          </p>
-        )}
-        {!check.ready && !published && <p className="rb-muted">Publish switches on when every item marked To do is done.</p>}
-        {published && <p className="rb-muted">Unpublishing hides {check.name} from search and stops new bookings. Bookings already made stay.</p>}
       </div>
       <Dialog
         open={confirming}
