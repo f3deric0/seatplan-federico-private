@@ -37,6 +37,11 @@ function inside(item: Shape, polygon: Point[]): boolean {
   if (item.radius !== null) return edges(polygon).every(([a, b]) => distance(item.centre, a, b) + EPS >= item.radius!);
   return item.polygon.every(p => pointInPolygon(p, polygon)) && !edges(item.polygon).some(([a, b]) => edges(polygon).some(([c, d]) => crosses(a, b, c, d, true)));
 }
+/** Whether a table or fixed element lies wholly inside the room's walls. A room whose walls are invalid blocks nothing. */
+export function fitsInRoom(room: Room, item: RoomTable | RoomFixture): boolean {
+  const polygon = outline(room);
+  return polygon ? inside(shape(item), polygon) : true;
+}
 function penetration(a: Shape, b: Shape): number | null {
   if (a.radius !== null && b.radius !== null) { const depth = a.radius + b.radius - Math.hypot(a.centre.x - b.centre.x, a.centre.y - b.centre.y); return depth > EPS ? depth : null; }
   const axes = [...edges(a.polygon), ...edges(b.polygon)].map(([p, q]) => ({ x: -(q.y - p.y), y: q.x - p.x }));

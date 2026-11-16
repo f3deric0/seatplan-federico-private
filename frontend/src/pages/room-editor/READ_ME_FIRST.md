@@ -174,3 +174,10 @@ The Fixed tool adds an element with one tap: the palette button places it at the
 position, rotation and shape sit in a collapsed "Size, position and shape" section, which stays as the keyboard
 alternative to dragging. The element list only appears with two or more elements. Palettes show short names
 ("Bar", "Quiet", "Round table"); their accessible names stay "Place ...".
+
+Fixed elements stay inside the room: editFixture rejects a move, resize or turn that would take one out (validation.fitsInRoom),
+unless an older plan already had it outside; a drag stops at a wall and slides along it; an element added or dropped outside
+lands on the nearest spot inside (addFixture), centred on the point. They snap to the 50 cm grid unless the Free placement
+switch in the Fixed panel is ticked (page state `free`, passed down as `fixtureGrid`). The room floor shows a 50 cm chessboard
+(`data-room-checker`, clipped to the outline) so the owner can see where an element will sit.
+

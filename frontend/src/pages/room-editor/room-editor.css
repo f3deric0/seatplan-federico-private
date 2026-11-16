@@ -112,6 +112,8 @@
 /* ---------- Editor v3: more room for the plan, the counters always in view, all seven tools on a phone.
    Only layout and looks: the tools, their rules and their keyboard use are untouched. ---------- */
 .room-grid-line { opacity: .55; }
+/* A chessboard of 50 cm squares inside the room, so the owner can see where an element will sit. */
+.room-checker-cell { fill: var(--c-primary); opacity: .08; }
 .room-tools button { border-left: 4px solid transparent; }
 .room-tools button[aria-pressed="true"] { border-left-color: var(--c-primary); }
 .room-status { position: sticky; bottom: 0; z-index: var(--z-map-controls); display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-1) var(--space-4); background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-md); margin-top: var(--space-3); }

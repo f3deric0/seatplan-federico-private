@@ -19,7 +19,7 @@ import { tablesInBox } from "./selection";
 import type { RoomProblem } from "./validation";
 
 interface Props {
-  room: Room; drawing: boolean; grid: boolean; onPoint: (point: Point) => void; onCloseShape: () => void;
+  room: Room; drawing: boolean; grid: boolean; fixtureGrid: boolean; onPoint: (point: Point) => void; onCloseShape: () => void;
   selection: ShapeSelection; onSelect: (selection: ShapeSelection) => void;
   onChange: (room: Room, transient?: boolean) => void; onDragStart: () => void; onError: (message: string) => void;
   tool: string; opening: string | null; onOpening: (key: string) => void;
@@ -31,7 +31,7 @@ interface Props {
   light?: AmbienceAnswer | null;
 }
 
-export function RoomCanvas({ room, drawing, grid, onPoint, onCloseShape, selection, onSelect, onChange, onDragStart, onError, tool, opening, onOpening, placement, object, onObject, onPlace, chair, onTableSelect, tableKeys, multiple, areaMode, onArea, problems, focusTarget, light = null }: Props) {
+export function RoomCanvas({ room, drawing, grid, fixtureGrid, onPoint, onCloseShape, selection, onSelect, onChange, onDragStart, onError, tool, opening, onOpening, placement, object, onObject, onPlace, chair, onTableSelect, tableKeys, multiple, areaMode, onArea, problems, focusTarget, light = null }: Props) {
   const viewport = useRef<HTMLDivElement>(null);
   const patternId = useId();
   const [cursor, setCursor] = useState<Point | null>(null);
@@ -60,26 +60,31 @@ export function RoomCanvas({ room, drawing, grid, onPoint, onCloseShape, selecti
     }} onPointerUp={event => {
       if (areaDrag.current) { onArea(tablesInBox(room, areaDrag.current.start, toWorld(event))); areaDrag.current = null; setAreaBox(null); suppressClick.current = true; }
       else pan.pointerHandlers.onPointerUp(event);
-    }} onPointerCancel={event => { areaDrag.current = null; setAreaBox(null); pan.pointerHandlers.onPointerCancel(event); }} onPointerMove={move} onDragOver={event => { if (event.dataTransfer.types.includes(OBJECT_DRAG_TYPE)) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } }} onDrop={event => { const kind = event.dataTransfer.getData(OBJECT_DRAG_TYPE); if (kind) { event.preventDefault(); onPlace(snappedPoint(toWorld(event), null, grid, false), kind); } }} onClick={event => {
+    }} onPointerCancel={event => { areaDrag.current = null; setAreaBox(null); pan.pointerHandlers.onPointerCancel(event); }} onPointerMove={move} onDragOver={event => { if (event.dataTransfer.types.includes(OBJECT_DRAG_TYPE)) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } }} onDrop={event => { const kind = event.dataTransfer.getData(OBJECT_DRAG_TYPE); if (kind) { event.preventDefault(); onPlace(kind.startsWith("fixture:") ? toWorld(event) : snappedPoint(toWorld(event), null, grid, false), kind); } }} onClick={event => {
       if (suppressClick.current) { suppressClick.current = false; return; }
-      if (placement && !pan.wasDragged()) { onPlace(snappedPoint(toWorld(event), null, grid, false), placement); return; }
+      if (placement && !pan.wasDragged()) { onPlace(placement.startsWith("fixture:") ? toWorld(event) : snappedPoint(toWorld(event), null, grid, false), placement); return; }
       if (!drawing || pan.wasDragged()) return;
       const point = screenPoint(event);
       if (points.length >= 3 && Math.hypot(point.x - points[0].x, point.y - points[0].y) * pan.view.k < 24) onCloseShape();
       else onPoint(point);
     }}>
       <svg width="100%" height="100%" aria-hidden="true">
-        <defs><pattern id={patternId} width="50" height="50" patternUnits="userSpaceOnUse"><path d="M 50 0 L 0 0 0 50" className="room-grid-line" /></pattern></defs>
+        <defs>
+          <pattern id={patternId} width="50" height="50" patternUnits="userSpaceOnUse"><path d="M 50 0 L 0 0 0 50" className="room-grid-line" /></pattern>
+          <pattern id={`${patternId}-check`} width="100" height="100" patternUnits="userSpaceOnUse"><rect width="50" height="50" className="room-checker-cell" /><rect x="50" y="50" width="50" height="50" className="room-checker-cell" /></pattern>
+          {points.length >= 3 && <clipPath id={`${patternId}-room`}><path d={outlinePath(room.outline)} /></clipPath>}
+        </defs>
         <g transform={`translate(${pan.view.x} ${pan.view.y}) scale(${pan.view.k})`}>
           <rect x="-10000" y="-10000" width="20000" height="20000" fill={grid ? `url(#${patternId})` : "transparent"} />
           {Array.from({ length: Math.floor(maxX / 100) + 1 }, (_, i) => <text key={`x${i}`} x={i * 100} y={-35 / pan.view.k} textAnchor="middle" fontSize={11 / pan.view.k} className="room-ruler">{i} m</text>)}
           {Array.from({ length: Math.floor(maxY / 100) + 1 }, (_, i) => <text key={`y${i}`} x={-30 / pan.view.k} y={i * 100} textAnchor="end" fontSize={11 / pan.view.k} className="room-ruler">{i} m</text>)}
           {!drawing && points.length >= 3 && <path d={outlinePath(room.outline)} className={problems.some(p => p.code === "outline_invalid") ? "room-outline room-outline-invalid" : "room-outline"} />}
+          {!drawing && points.length >= 3 && <rect x="-10000" y="-10000" width="20000" height="20000" fill={`url(#${patternId}-check)`} clipPath={`url(#${patternId}-room)`} pointerEvents="none" data-room-checker />}
           {!drawing && tool === "Light" && <LightLayer room={room} light={light} zoom={pan.view.k} />}
           {drawing && <polyline points={[...points, ...(cursor ? [cursor] : [])].map(p => `${p.x},${p.y}`).join(" ")} className="room-drawing" />}
           {points.map((p, i) => <text key={i} x={p.x + 12 / pan.view.k} y={p.y - 10 / pan.view.k} fontSize={12 / pan.view.k} className="room-ruler">{i + 1}</text>)}
           {!drawing && <ObjectLayer room={room} kind="zone" editing={tool === "Zones" && !placement} selected={object} grid={grid} zoom={pan.view.k} toWorld={toWorld} onSelect={onObject} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} />}
-          {!drawing && <ObjectLayer room={room} kind="fixture" editing={tool === "Fixed" && !placement} selected={object} grid={grid} zoom={pan.view.k} toWorld={toWorld} onSelect={onObject} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} />}
+          {!drawing && <ObjectLayer room={room} kind="fixture" editing={tool === "Fixed" && !placement} selected={object} grid={fixtureGrid} zoom={pan.view.k} toWorld={toWorld} onSelect={onObject} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} />}
           <TableLayer room={room} editing={tool === "Tables" && !placement} selected={object} keys={tableKeys} multiple={multiple} chair={chair} grid={grid} zoom={pan.view.k} toWorld={toWorld} onSelect={onTableSelect} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} onError={onError} invalidKeys={problems.filter(p => p.level === "error").flatMap(p => p.table_keys)} />
           {areaBox && <rect x={Math.min(areaBox.start.x, areaBox.now.x)} y={Math.min(areaBox.start.y, areaBox.now.y)} width={Math.abs(areaBox.now.x - areaBox.start.x)} height={Math.abs(areaBox.now.y - areaBox.start.y)} className="room-selection-box" />}
           {!drawing && points.length >= 3 && tool === "Shape" && <ShapeHandles room={room} zoom={pan.view.k} grid={grid} selection={selection} toWorld={toWorld} onSelect={onSelect} onChange={onChange} onDragStart={() => { pan.zoomBy(1); onDragStart(); }} onError={onError} />}

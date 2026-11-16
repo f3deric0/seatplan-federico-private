@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { createRoom } from "./roomModel";
-import { addFixture, editFixture, addZone, editZone, removeZone, FIXTURE_KINDS, ZONE_KINDS } from "./roomObjects";
+import { addFixture, editFixture, addZone, editZone, removeZone, fixtureSize, FIXTURE_KINDS, ZONE_KINDS } from "./roomObjects";
 
 it("places every fixed element with independent keys and immutable edits", () => {
   const original = createRoom("Main", 1000, 700);
@@ -46,4 +46,35 @@ it("preserves the existing eighty-character zone name limit while moving", () =>
   const room = addZone(createRoom("Main", 1000, 700), "general", { x: 50, y: 50 });
   room.zones[0].name = "x".repeat(80);
   expect(editZone(room, room.zones[0].key, { x: 100 }).zones[0].name).toHaveLength(80);
+});
+
+it("keeps a fixed element inside the room when it is added, moved, resized or turned", () => {
+  const room = addFixture(createRoom("Main", 1000, 700), "bar", { x: 100, y: 100 });
+  const key = room.fixtures[0].key;
+  expect(() => editFixture(room, key, { x: 5000 })).toThrow("inside the room");
+  expect(() => editFixture(room, key, { x: 900 })).toThrow("inside the room"); // 150 wide: pokes through the right wall
+  expect(() => editFixture(room, key, { w: 2000 })).toThrow("inside the room");
+  expect(editFixture(room, key, { x: 840, y: 600 }).fixtures[0]).toMatchObject({ x: 840, y: 600 }); // touching the walls is fine
+  expect(editFixture(room, key, { label: "Bar" }).fixtures[0].label).toBe("Bar");
+});
+
+it("puts an element dropped outside the room on the nearest spot inside", () => {
+  const room = addFixture(createRoom("Main", 1000, 700), "bar", { x: 5000, y: 100 });
+  const bar = room.fixtures[0];
+  const size = fixtureSize("bar");
+  expect(bar.x + size.w).toBeLessThanOrEqual(1000);
+  expect(bar.x).toBeGreaterThan(800);
+  expect(bar.y).toBeGreaterThanOrEqual(0);
+});
+
+it("refuses an element that fits nowhere in the room", () => {
+  const tiny = createRoom("Tiny", 200, 200);
+  expect(() => addFixture(tiny, "awning", { x: 0, y: 0 })).toThrow("no room");
+});
+
+it("leaves an element that an older plan put outside the room editable", () => {
+  const room = addFixture(createRoom("Main", 1000, 700), "bar", { x: 100, y: 100 });
+  const stray = { ...room, fixtures: [{ ...room.fixtures[0], x: 4000 }] };
+  expect(editFixture(stray, stray.fixtures[0].key, { label: "Old bar" }).fixtures[0].label).toBe("Old bar");
+  expect(editFixture(stray, stray.fixtures[0].key, { x: 4100 }).fixtures[0].x).toBe(4100);
 });

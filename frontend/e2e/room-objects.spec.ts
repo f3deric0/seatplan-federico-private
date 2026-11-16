@@ -61,3 +61,26 @@ test("palette drop places a fixture and moving it makes one undo step", async ({
   await page.getByRole("button", { name: "Undo", exact: true }).click();
   await expect(page.getByLabel("Object x (cm)")).toHaveValue(before);
 });
+
+test("a fixed element stays inside the room, on a chessboard, and can be placed freely", async ({ page, request }) => {
+  const links = await demoLinks(request);
+  await openOwnerRoom(page, request, lastPart(links.restaurant_booking));
+  await expect(page.locator("[data-room-checker]")).toHaveCount(1);
+  await page.getByRole("button", { name: "Fixed", exact: true }).click();
+  await page.getByRole("button", { name: "Place WC", exact: true }).click();
+  await page.getByText("Size, position and shape", { exact: true }).click();
+  const x = page.getByLabel("Object x (cm)");
+  expect(Number(await x.inputValue()) % 50).toBe(0); // on the grid by default
+  const wc = (await page.locator(".room-fixture").first().boundingBox())!;
+  const canvas = (await page.locator(".room-canvas").boundingBox())!;
+  await page.mouse.move(wc.x + wc.width / 2, wc.y + wc.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(canvas.x + canvas.width - 4, wc.y + wc.height / 2, { steps: 12 });
+  await page.mouse.up();
+  expect(Number(await x.inputValue()) + Number(await page.getByLabel("Object width (cm)").inputValue())).toBeLessThanOrEqual(1100); // stopped at the wall
+  await x.fill("5000");
+  await x.press("Tab");
+  await expect(page.getByText("Keep the element inside the room.", { exact: true })).toBeVisible();
+  await page.getByLabel("Free placement (no grid snapping)").check();
+  await expect(page.getByLabel("Free placement (no grid snapping)")).toBeChecked();
+});

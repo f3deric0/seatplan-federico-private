@@ -23,7 +23,8 @@ import { RoomCanvas } from "./RoomCanvas";
 import { WallTools } from "./WallTools";
 import { FixtureTools } from "./FixtureTools";
 import { ZoneTools } from "./ZoneTools";
-import { addFixture, addZone, FIXTURE_KINDS, removeZone, ZONE_KINDS } from "./roomObjects";
+import { addFixture, addZone, FIXTURE_KINDS, fixtureSize, removeZone, ZONE_KINDS } from "./roomObjects";
+import { snappedPoint } from "./shapeModel";
 import { addTable, TABLE_KINDS } from "./tableModel";
 import { TableTools } from "./TableTools";
 import { SelectionTools } from "./SelectionTools";
@@ -62,6 +63,7 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
   const [opening, setOpening] = useState<string | null>(null);
   const [object, setObject] = useState<string | null>(null);
   const [placement, setPlacement] = useState<string | null>(null);
+  const [free, setFree] = useState(false); // free placement: fixed elements are not snapped to the grid (they still stay inside the room)
   const [chair, setChair] = useState<string | null>(null);
   const [selectedTables, setSelectedTables] = useState<string[]>([]), [multiple, setMultiple] = useState(false), [areaMode, setAreaMode] = useState(false);
   const [focusTarget, setFocusTarget] = useState<{ roomKey: string; point: Point; serial: number } | null>(null);
@@ -100,7 +102,9 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
     const [category, kind] = value.split(":");
     const fixed = FIXTURE_KINDS.find(k => k === kind), zone = ZONE_KINDS.find(k => k === kind);
     if (category === "fixture" && fixed) {
-      const next = addFixture(room, fixed, point); changeRoom(next); setObject(next.fixtures.at(-1)!.key); setTool("Fixed");
+      // The point is where the element's centre goes; on the grid unless placement is free.
+      const size = fixtureSize(fixed), top = { x: point.x - size.w / 2, y: point.y - size.h / 2 };
+      const next = addFixture(room, fixed, free ? { x: Math.round(top.x), y: Math.round(top.y) } : snappedPoint(top, null, true, false)); changeRoom(next); setObject(next.fixtures.at(-1)!.key); setTool("Fixed");
     } else if (category === "zone" && zone) {
       const next = addZone(room, zone, point); changeRoom(next); setObject(next.zones.at(-1)!.key); setTool("Zones");
     } else if (category === "table") {
@@ -164,7 +168,7 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
           {["Shape", "Walls", "Fixed", "Zones", "Light"].map(name => <Button variant="ghost" key={name} aria-pressed={tool === name} disabled={drawing && name !== "Shape"} onClick={() => { setTool(name); setPlacement(null); setError(""); }}>{name}</Button>)}
         </nav>
       </div>
-      <RoomCanvas room={room} drawing={drawing} grid={grid} onPoint={addPoint} onCloseShape={closeShape} selection={selection} onSelect={setSelection} onChange={changeRoom} onDragStart={history.checkpoint} onError={setError} tool={tool} opening={opening} onOpening={setOpening} placement={placement} object={object} onObject={setObject} onPlace={placeObject} chair={chair} onTableSelect={chooseTable} tableKeys={tableKeys} multiple={multiple} areaMode={areaMode} onArea={keys => { updateKeys(keys); setAreaMode(false); }} problems={problems.filter(p => p.room_key === room.key)} focusTarget={focusTarget} light={tool === "Light" ? light.answer : null} />
+      <RoomCanvas room={room} drawing={drawing} grid={grid} fixtureGrid={!free} onPoint={addPoint} onCloseShape={closeShape} selection={selection} onSelect={setSelection} onChange={changeRoom} onDragStart={history.checkpoint} onError={setError} tool={tool} opening={opening} onOpening={setOpening} placement={placement} object={object} onObject={setObject} onPlace={placeObject} chair={chair} onTableSelect={chooseTable} tableKeys={tableKeys} multiple={multiple} areaMode={areaMode} onArea={keys => { updateKeys(keys); setAreaMode(false); }} problems={problems.filter(p => p.room_key === room.key)} focusTarget={focusTarget} light={tool === "Light" ? light.answer : null} />
       <aside className="room-properties"><h2>Room properties</h2><div className="room-form">
         <Field label="Selected room name" value={room.name} maxLength={60} onChange={e => history.commit(replaceRoom(history.present, { ...room, name: e.target.value }))} />
         {drawing && <><p>Tap each corner, then close the shape.</p><div className="room-fields"><Field label="Corner x (cm)" inputMode="decimal" value={pointX} onChange={e => setPointX(e.target.value)} /><Field label="Corner y (cm)" inputMode="decimal" value={pointY} onChange={e => setPointY(e.target.value)} /></div><Button variant="secondary" onClick={() => { const x = Number(pointX.replace(",", ".")), y = Number(pointY.replace(",", ".")); if (Number.isFinite(x) && Number.isFinite(y)) addPoint({ x, y }); }}>Add corner</Button><Button disabled={room.outline.points.length < 3} onClick={closeShape}>Close shape</Button></>}
@@ -173,7 +177,7 @@ function RoomSession({ venueId, info, server }: { venueId: string; info: VenueDe
         {!drawing && tool === "Shape" && room.outline.points.length < 3 && <Button onClick={() => setDrawingRoom(room.key)}>Continue drawing walls</Button>}
         {!drawing && tool === "Walls" && <WallTools room={room} selection={selection} selected={opening} onSelect={setOpening} onSide={setSelection} onChange={changeRoom} onError={setError} />}
         {!drawing && tool === "Light" && <LightTools room={room} unsaved={dirty} date={lightDate} time={lightTime} onDate={setLightDate} onTime={setLightTime} answer={light.answer} failed={light.failed} />}
-        {!drawing && tool === "Fixed" && <FixtureTools room={room} selected={object} onSelect={setObject} onPlace={value => placeObject(centreOfRoom(), value)} onChange={changeRoom} onError={setError} />}
+        {!drawing && tool === "Fixed" && <FixtureTools room={room} selected={object} free={free} onFree={setFree} onSelect={setObject} onPlace={value => placeObject(centreOfRoom(), value)} onChange={changeRoom} onError={setError} />}
         {!drawing && tool === "Zones" && <ZoneTools room={room} selected={object} placement={placement} onSelect={setObject} onArm={setPlacement} onCentre={placeCentre} onChange={changeRoom} />}
         {!drawing && tool === "Tables" && <div className="room-form" ref={palette}><TableTools room={room} selected={object} chair={chair} placement={placement} onSelect={key => updateKeys(key ? [key] : [])} onChair={setChair} onArm={setPlacement} onCentre={placeCentre} onChange={changeRoom} onError={setError} /><SelectionTools room={room} keys={tableKeys} multiple={multiple} area={areaMode} onMultiple={setMultiple} onArea={setAreaMode} onKeys={updateKeys} onChange={changeRoom} onError={setError} /></div>}
       </div></aside>

@@ -1,6 +1,7 @@
 import type { Point } from "./geometry";
 import { normaliseNorth } from "./northModel";
 import { newRoomKey } from "./roomModel";
+import { fitsInRoom } from "./validation";
 import type { FixtureKind, Room, RoomFixture, RoomZone } from "./roomModel";
 import type { ZoneKind } from "../../api/types";
 
@@ -9,11 +10,32 @@ export const FIXTURE_NAMES: Record<FixtureKind, string> = { bar: "Bar", kitchen:
 export const FIXTURE_ICONS: Record<FixtureKind, string> = { bar: "▱", kitchen: "♨", wc: "WC", column: "●", stairs: "▤", plant: "♧", stage: "♫", fireplace: "♨", tv: "▣", host_stand: "◆", awning: "☂" };
 export const ZONE_KINDS: readonly ZoneKind[] = ["general", "window", "terrace", "bar", "quiet", "vip", "accessible"];
 
+/** The size a new fixed element starts with, in cm. */
+export function fixtureSize(kind: FixtureKind): { w: number; h: number } {
+  const circle = kind === "plant" || kind === "column";
+  return { w: circle ? 50 : kind === "awning" ? 300 : 150, h: circle ? 50 : kind === "awning" ? 200 : 80 };
+}
+
+/** The spot nearest to `want` (the top-left corner) where `fixture` lies inside the room, searched every 25 cm, or null. */
+function nearestFit(room: Room, fixture: RoomFixture, want: Point): Point | null {
+  const xs = room.outline.points.map(p => p.x), ys = room.outline.points.map(p => p.y);
+  const spots: Point[] = [];
+  for (let x = Math.min(...xs); x <= Math.max(...xs); x += 25) for (let y = Math.min(...ys); y <= Math.max(...ys); y += 25) spots.push({ x, y });
+  spots.sort((a, b) => Math.hypot(a.x - want.x, a.y - want.y) - Math.hypot(b.x - want.x, b.y - want.y));
+  return spots.find(spot => fitsInRoom(room, { ...fixture, x: spot.x, y: spot.y })) ?? null;
+}
+
+/** Adds a fixed element with its top-left corner at `at`. Dropped outside the room, it lands on the nearest spot inside. */
 export function addFixture(room: Room, kind: FixtureKind, at: Point): Room {
   if (!FIXTURE_KINDS.includes(kind)) throw new Error("Choose a fixed element from the palette.");
-  const circle = kind === "plant" || kind === "column";
-  const fixture: RoomFixture = { id: null, key: newRoomKey("f"), kind, shape: circle ? "circle" : "rect", x: at.x, y: at.y, w: circle ? 50 : kind === "awning" ? 300 : 150, h: circle ? 50 : kind === "awning" ? 200 : 80, rotation: 0, label: "" };
+  const { w, h } = fixtureSize(kind);
+  const fixture: RoomFixture = { id: null, key: newRoomKey("f"), kind, shape: kind === "plant" || kind === "column" ? "circle" : "rect", x: at.x, y: at.y, w, h, rotation: 0, label: "" };
   checkFixture(fixture);
+  if (!fitsInRoom(room, fixture)) {
+    const spot = nearestFit(room, fixture, at);
+    if (!spot) throw new Error("There is no room for this element.");
+    fixture.x = spot.x; fixture.y = spot.y;
+  }
   return { ...room, fixtures: [...room.fixtures, fixture] };
 }
 
@@ -30,6 +52,9 @@ export function editFixture(room: Room, key: string, patch: Partial<RoomFixture>
     if (next.shape === "circle") { const diameter = patch.w ?? patch.h ?? f.w; next.w = diameter; next.h = diameter; }
     next.rotation = normaliseNorth(next.rotation);
     checkFixture(next);
+    // Moving, resizing or turning may not take an element out of the room (one already outside, from an older plan, is left alone).
+    const geometry = ["x", "y", "w", "h", "rotation", "shape"].some(k => k in patch);
+    if (geometry && fitsInRoom(room, f) && !fitsInRoom(room, next)) throw new Error("Keep the element inside the room.");
     return next;
   }) };
 }
