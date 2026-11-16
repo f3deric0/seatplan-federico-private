@@ -55,8 +55,8 @@ test("an invalid saved room explains why new bookings closed", async ({ page, re
   await page.goto(`/owner/${venue.id}/rooms`);
   await page.getByRole("button", { name: "Tables", exact: true }).click();
   await page.getByLabel("Selected table", { exact: true }).selectOption({ label: "River 1" });
-  await page.getByLabel("Object x (cm)").fill("5000");
-  await page.getByLabel("Object x (cm)").press("Tab");
+  await page.locator(".room-canvas").focus();
+  for (let i = 0; i < 250; i++) await page.keyboard.press("Shift+ArrowRight"); // 25 m to the right: well outside the walls
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByRole("alert").filter({ hasText: /saved as a draft.*new bookings/i })).toBeVisible();
   expect((await request.get(`/api/r/${venue.id}`)).status()).toBe(404);

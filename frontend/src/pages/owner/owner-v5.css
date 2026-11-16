@@ -46,8 +46,8 @@
     position: sticky;
     top: calc(var(--space-8) + var(--space-5));
     align-self: start;
-    min-height: 60vh;
-    max-height: calc(100dvh - var(--space-8) - var(--space-5));
+    /* It reaches almost the bottom of the screen, leaving the same margin as at the top. */
+    height: calc(100dvh - var(--space-8) - var(--space-5) - var(--space-5));
     overflow-y: auto;
     overscroll-behavior: contain;
   }
@@ -180,10 +180,14 @@
   align-items: start;
 }
 
+/* The public listing is the main thing, on the left; the checks sit beside it, narrower and smaller. */
 @media (min-width: 56rem) {
   .ow-two {
-    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
   }
+}
+@media (max-width: 55.99rem) {
+  .ow-checks { order: -1; } /* stacked: what still needs doing comes first */
 }
 
 .ow-checks,
@@ -266,7 +270,7 @@
 .ow-main, .ow-checks, .ow-listing, .ow-preview { min-width: 0; }
 .ow-preview { display: grid; gap: var(--space-2); overflow-wrap: anywhere; }
 .ow-preview h3, .ow-preview p { margin: 0; }
-.ow-preview-cover { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-md); }
+.ow-preview-cover { display: block; width: 100%; aspect-ratio: 16 / 5; max-height: 11rem; object-fit: cover; border-radius: var(--radius-md); } /* a strip, so the whole review fits on screen */
 .ow-preview-empty { display: grid; place-items: center; background: var(--c-surface-sunk); color: var(--c-text-muted); padding: var(--space-3); }
 .ow-page-next { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); margin-top: var(--space-4); }
 .ow-services { list-style: none; margin: 0; padding: 0; }
@@ -282,4 +286,30 @@
   .ow-nav ul { flex-wrap: wrap; }
   .ow-nav li { flex: 0 0 auto; }
   .ow-nav a { padding-inline: var(--space-2); font-size: var(--fs-sm); }
+}
+
+/* The checks are a side list: small type, tight rows. */
+.ow-checks { padding: var(--space-4); font-size: var(--fs-sm); }
+.ow-checks .ow-card-title { font-size: var(--fs-md); }
+.ow-checks .owner-checklist li { padding: var(--space-2) 0; gap: var(--space-2); }
+.ow-checks .owner-checklist li p { margin: 0; font-size: var(--fs-xs); }
+.ow-checks .owner-check-mark { font-size: 1rem; }
+.ow-checks .ow-fix { min-height: 36px; padding-inline: var(--space-3); font-size: var(--fs-sm); }
+.ow-checks .ow-completed-disclosure summary { min-height: 40px; }
+
+.ow-listing { gap: var(--space-2); padding: var(--space-4); }
+.ow-listing .ow-card-title { margin: 0; }
+.ow-listing p { margin: 0; }
+
+/* Publishing sits in a bar at the bottom of the page, always in view. */
+.ow-publish-bar { position: sticky; bottom: var(--space-4); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); margin-top: var(--space-4); padding: var(--space-3) var(--space-4); background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); box-shadow: 0 2px 10px rgb(0 0 0 / .08); z-index: 2; }
+.ow-publish-bar p { margin: 0; flex: 1 1 18rem; }
+.ow-publish-bar .ow-publish-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-left: auto; }
+.ow-publish-bar .room-error { flex-basis: 100%; }
+
+@media (min-width: 56rem) {
+  /* The page is as tall as the menu, so the publish bar rests at the bottom, level with the end of the menu. */
+  .ow-main { display: flex; flex-direction: column; min-height: calc(100dvh - var(--space-8) - var(--space-5) - var(--space-5)); }
+  .ow-main > .ow-review { flex: 1 1 auto; display: flex; flex-direction: column; }
+  .ow-review .ow-publish-bar { margin-top: auto; }
 }

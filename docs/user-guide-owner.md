@@ -60,7 +60,7 @@ not stop you saving a draft; errors stop you publishing.
 
 ## 6. Review and publish
 
-The review page is a checklist. Each item says **Done** or **To do** in words, with a link that takes you to the step that fixes it:
+The review page shows the **public listing** on the left and the checks on the right (the ones still to do first, the completed ones in a small list), with **Publish restaurant** (or **Unpublish**) in a bar at the bottom of the page. The review page is a checklist. Each item says **Done** or **To do** in words, with a link that takes you to the step that fixes it:
 name and cuisines, address and pin, opening hours with at least one service, at least one table, a room with no errors, and a north
 for rooms with windows. A photo is only *recommended*. **Publish** switches on when every required item is done, and the server checks
 everything again when you press it.
