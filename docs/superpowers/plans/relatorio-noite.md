@@ -897,3 +897,6 @@ Cada clique num cartão centra o mapa no restaurante, mesmo ao repetir a
 seleção. Ao voltar de uma vista afastada, o mapa aproxima para a zona do
 restaurante. Um zoom mais próximo é mantido. Build, 513 testes Vitest e
 os percursos de zoom e arrasto no Chromium com dados de teste passaram.
+
+O botão «Show more» tem 20 px de separação do último cartão da lista.
+Build, 513 testes Vitest e a medição no Chromium a 390 e 1440 px passaram.
