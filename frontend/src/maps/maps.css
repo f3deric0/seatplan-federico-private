@@ -3,12 +3,40 @@
 .owner-location-map .leaflet-control-attribution { color: var(--c-text); background: var(--c-surface); }
 .owner-location-map .leaflet-control-attribution a { color: var(--c-primary); }
 .owner-location-map .leaflet-control-zoom a { min-width: 44px; min-height: 44px; line-height: 44px; }
-.discover-map { height: 100%; min-height: 20rem; width: 100%; isolation: isolate; border: 1px solid var(--c-border-strong); border-radius: var(--radius-lg); background: var(--c-surface-sunk); }
-.discover-pin span { display: block; width: 100%; height: 100%; box-sizing: border-box; border-radius: 50%; background: var(--c-primary); border: 3px solid var(--c-surface); box-shadow: 0 0 0 2px var(--c-primary); }
-.discover-pin-active span { background: var(--c-accent); box-shadow: 0 0 0 3px var(--c-accent); transform: scale(1.35); }
-.discover-map .leaflet-control-attribution { color: var(--c-text); background: var(--c-surface); }
-.discover-map .leaflet-control-attribution a { color: var(--c-primary); }
-.discover-map .leaflet-control-zoom a { min-width: 44px; min-height: 44px; line-height: 44px; }
+.discover-map-panel {
+  position:relative;display:flex;flex-direction:column;height:100%;overflow:hidden;
+  border:1px solid var(--c-border);border-radius:var(--radius-lg);background:var(--c-surface);
+}
+.discover-map-panel[hidden] { position:absolute;inset:0;visibility:hidden;pointer-events:none; }
+.discover-map { flex:1;min-height:0;width:100%;isolation:isolate;background:#dfedf2; }
+.discover-map-zoom {
+  position:absolute;inset-block-start:12px;inset-inline-end:12px;z-index:1;
+  display:flex;flex-direction:column;gap:2px;
+}
+.discover-map-zoom button {
+  display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;
+  background:transparent;color:#27465d;font:600 1.5rem/1 var(--font-body);
+  box-shadow:none;text-shadow:none;cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.discover-map-zoom button:hover,
+.discover-map-zoom button:active { color:#145b9f; }
+.discover-map-panel .discover-map-zoom button:focus-visible { outline:2px solid #27465d;outline-offset:-3px; }
+.discover-map-zoom button:disabled { opacity:.55;cursor:default; }
+/* Only the visible disc scales. The Leaflet marker keeps its 44px target. */
+.discover-pin span {
+  display:grid;place-items:center;box-sizing:border-box;width:26px;height:26px;margin:9px;
+  border:2px solid #fff;border-radius:50%;background:#246bc1;
+  color:#fff;box-shadow:0 1px 6px #17477955;
+  font:700 .875rem/1 var(--font-body);font-variant-numeric:tabular-nums;
+  transition:transform 180ms ease-out,background-color 180ms ease-out,color 180ms ease-out;
+}
+.discover-pin-active span,.discover-pin-selected span {
+  background:#145b9f;box-shadow:0 0 0 4px #4c98ee50;transform:scale(1.24);
+}
+.discover-pin-muted span {
+  background:#fff;color:#44627a;box-shadow:0 0 0 1px #8ba9bc;transform:scale(.82);
+}
+@media (prefers-reduced-motion:reduce) { .discover-pin span { transition:none; } }
 /* The diagram that replaces the map when tiles cannot load: paper, a faint grid, numbered pins. */
 .schematic { display: flex; flex-direction: column; height: 100%; min-height: 20rem; border: 1px solid var(--c-border-strong); border-radius: var(--radius-lg); background: var(--c-surface-sunk); overflow: hidden; }
 .schematic-svg { flex: 1 1 auto; width: 100%; min-height: 0; }
@@ -26,9 +54,7 @@
 .schematic-note { margin: 0; padding: var(--space-2) var(--space-3); font-size: var(--fs-sm); color: var(--c-text-muted); border-top: 1px solid var(--c-border); background: var(--c-surface); }
 .schematic-pin.is-active .schematic-pin-number { fill: var(--c-bg); }
 .discover-map .leaflet-marker-icon:focus-visible { outline: 3px solid var(--c-focus); outline-offset: 5px; }
-/* The visible marker stays compact; its interactive box is a 44 px touch target. */
-.discover-pin span { width: 26px; height: 26px; margin: 9px; }
-.discover-pin-selected span { border-radius: var(--radius-sm); background: var(--c-primary); box-shadow: 0 0 0 3px var(--c-primary); }
-.schematic-selected-ring { fill: none; stroke: var(--c-primary); stroke-width: .8; }
-.discover-pin span { display:flex;align-items:center;justify-content:center;font:700 .875rem var(--font-body);color:var(--c-on-primary); }
-.discover-pin-selected span { border-radius:50%;background:var(--c-danger);box-shadow:0 0 0 2px var(--c-surface); }
+.schematic-selected-ring { fill:none;stroke:var(--c-primary);stroke-width:.8; }
+.schematic-pin.is-muted .schematic-pin-disc { fill:var(--c-surface);stroke:var(--c-border-strong);transform:scale(.85); }
+.schematic-pin.is-muted .schematic-pin-number { fill:var(--c-text-muted); }
+.schematic-pin.is-muted .schematic-selected-ring { stroke:var(--c-border-strong); }

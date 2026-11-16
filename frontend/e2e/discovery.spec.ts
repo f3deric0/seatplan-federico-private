@@ -73,7 +73,7 @@ test("the public restaurant page has no accessibility problems and opens a photo
   await expect(page.getByRole("link", { name: /Open in Google Maps/ })).toBeVisible();
 });
 test("when the map tiles cannot load, a numbered diagram takes the map's place and the cards wear the same numbers", async ({ page }) => {
-  await page.route("**/tile.openstreetmap.org/**", (route) => route.abort());
+  await page.route("https://tiles.openfreemap.org/**", (route) => route.abort());
   await page.goto("/");
   await expect(page.getByRole("article")).toHaveCount(5);
   const diagram = page.getByRole("region", { name: "Diagram of where the restaurants are" });
@@ -88,7 +88,7 @@ test("when the map tiles cannot load, a numbered diagram takes the map's place a
   expect(found.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
 });
 test("the restaurant page also shows the diagram when its tiles fail", async ({ page }) => {
-  await page.route("**/tile.openstreetmap.org/**", (route) => route.abort());
+  await page.route("https://tiles.openfreemap.org/**", (route) => route.abort());
   await page.goto("/restaurants/tagus-terrace");
   await expect(page.getByRole("region", { name: "Diagram of where the restaurants are" })).toBeVisible({ timeout: 20_000 });
 });

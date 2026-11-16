@@ -29,6 +29,28 @@ function cityOptions(place: Place | null): { value: string; label: string }[] {
   const near = place?.label === "Near me" ? [{ value: NEAR, label: "Near me" }] : [];
   return [{ value: "", label: "Anywhere" }, ...near, ...CITIES.map((c) => ({ value: c.label, label: c.label }))];
 }
+function DiscoveryDate({ value, onChange, stacked }: { value: string; onChange: (value: string) => void; stacked?: boolean }) {
+  const preview = value
+    ? new Date(`${value}T12:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })
+    : "Choose a date";
+  return (
+    <label className={stacked ? "field discover-date" : "discover-date"}>
+      <span className={stacked ? "field-label" : undefined}>Date</span>
+      <span className="discover-date-control">
+        <input className={stacked ? "field-input" : undefined} type="date" aria-label="Date" min={today()} value={value}
+          onChange={event => onChange(event.target.value)}
+          onClick={event => {
+            try {
+              event.currentTarget.showPicker?.();
+            } catch {
+              // The native input remains editable in embedded browsers.
+            }
+          }} />
+        <span className="discover-date-preview" aria-hidden="true">{preview}</span>
+      </span>
+    </label>
+  );
+}
 export function ContextControls({ place, onPlace, date, time, party, onDate, onTime, onParty, onClearWhen, variant }: Props) {
   const cityValue = place ? (place.label === "Near me" ? NEAR : place.label) : "";
   const changeCity = (value: string): void => {
@@ -39,7 +61,7 @@ export function ContextControls({ place, onPlace, date, time, party, onDate, onT
     return (
       <div className="discover-stacked">
         <Select label="Choose a city" value={cityValue} options={cityOptions(place)} onChange={(event) => changeCity(event.target.value)} />
-        <Field label="Date" type="date" min={today()} value={date} onChange={(event) => onDate(event.target.value)} />
+        <DiscoveryDate value={date} onChange={onDate} stacked />
         <Field label="Time" type="time" step={900} value={time} onChange={(event) => onTime(event.target.value)} />
         <Select label="People" value={party} options={PARTIES} onChange={(event) => onParty(event.target.value)} />
       </div>
@@ -54,7 +76,7 @@ export function ContextControls({ place, onPlace, date, time, party, onDate, onT
           </option>
         ))}
       </select></label>
-      <label><span>Date</span><input type="date" aria-label="Date" min={today()} value={date} onChange={(event) => onDate(event.target.value)} /></label>
+      <DiscoveryDate value={date} onChange={onDate} />
       <label><span>Around</span><input type="time" aria-label="Time" step={900} value={time} onChange={(event) => onTime(event.target.value)} /></label>
       <label><span>Guests</span><select aria-label="People" value={party} onChange={(event) => onParty(event.target.value)}>
         {PARTIES.map((o) => (

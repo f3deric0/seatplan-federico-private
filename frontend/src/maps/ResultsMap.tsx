@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { DiscoveryBasemap } from "./discoveryBasemap";
 import { SchematicMap } from "./SchematicMap";
 import "./maps.css";
 export interface ResultPin {
@@ -28,6 +29,9 @@ interface Props {
 // If no tile has loaded after this long (or the browser is offline), the map is replaced by a diagram.
 const TILE_PATIENCE_MS = 6000;
 const LISBON = { lat: 38.7223, lng: -9.1393 };
+const INITIAL_ZOOM = 11;
+const MIN_ZOOM = 0;
+const MAX_ZOOM = 19;
 export default function ResultsMap({ pins, highlightedId, selectedId = null, onSelect, center, onFallback }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
@@ -36,18 +40,22 @@ export default function ResultsMap({ pins, highlightedId, selectedId = null, onS
   select.current = onSelect;
   const [failed, setFailed] = useState(false);
   const [fallback, setFallback] = useState(typeof navigator !== "undefined" && navigator.onLine === false);
+  const [zoom, setZoom] = useState(INITIAL_ZOOM);
   const tell = useRef(onFallback);
   tell.current = onFallback;
   useEffect(() => tell.current?.(fallback), [fallback]);
   useEffect(() => {
     if (!host.current) return;
-    const view = L.map(host.current, { scrollWheelZoom: false }).setView(LISBON, 11);
+    const view = L.map(host.current, {
+      scrollWheelZoom: false,
+      attributionControl: false,
+      zoomControl: false,
+      minZoom: MIN_ZOOM,
+      maxZoom: MAX_ZOOM,
+    }).setView(LISBON, INITIAL_ZOOM);
+    view.on("zoomend", () => setZoom(view.getZoom()));
     map.current = view;
-    const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-      referrerPolicy: "strict-origin-when-cross-origin",
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(view);
+    const tiles = new DiscoveryBasemap();
     let loaded = 0;
     tiles.on("tileload", () => {
       loaded += 1;
@@ -55,6 +63,9 @@ export default function ResultsMap({ pins, highlightedId, selectedId = null, onS
       setFailed(false);
     });
     tiles.on("tileerror", () => setFailed(true));
+    tiles.addTo(view);
+    const retryTiles = () => { if (loaded === 0) tiles.redraw(); };
+    window.addEventListener("online", retryTiles);
     // No tile after a while: show the diagram instead of a grey box. A tile that arrives later brings the map back.
     const patience = window.setTimeout(() => {
       if (loaded === 0) setFallback(true);
@@ -62,6 +73,7 @@ export default function ResultsMap({ pins, highlightedId, selectedId = null, onS
     const pinsOnMap = markers.current;
     return () => {
       window.clearTimeout(patience);
+      window.removeEventListener("online", retryTiles);
       // A pan or zoom still animating when the map is removed throws inside Leaflet.
       view.stop();
       view.remove();
@@ -91,17 +103,30 @@ export default function ResultsMap({ pins, highlightedId, selectedId = null, onS
   }, [pins, center?.lat, center?.lng]);
   // The pin of the hovered card gets a bigger, darker look.
   useEffect(() => {
+    const selected = selectedId && markers.current.has(selectedId) ? selectedId : null;
+    const focusedId = highlightedId && markers.current.has(highlightedId) ? highlightedId : selected;
     markers.current.forEach((marker, id) => {
       marker.getElement()?.classList.toggle("discover-pin-active", id === highlightedId);
       marker.getElement()?.classList.toggle("discover-pin-selected", id === selectedId);
+      marker.getElement()?.classList.toggle("discover-pin-muted", focusedId !== null && id !== focusedId);
       marker.getElement()?.setAttribute("aria-current", id === selectedId ? "true" : "false");
-      marker.setZIndexOffset(id === highlightedId || id === selectedId ? 1000 : 0);
+      marker.setZIndexOffset(id === focusedId ? 1000 : 0);
     });
   }, [highlightedId, selectedId, pins]);
+  const changeZoom = (step: number) => {
+    const view = map.current;
+    view?.setZoom(view.getZoom() + step, { animate: false });
+  };
   return (
     <>
       {/* The Leaflet map stays mounted (hidden) while the diagram is shown, so it can recover if tiles arrive. */}
-      <div ref={host} className="discover-map" role="region" aria-label="Map of the restaurants found" hidden={fallback} />
+      <div className="discover-map-panel" role="region" aria-label="Map of the restaurants found" hidden={fallback}>
+        <div ref={host} className="discover-map" />
+        <div className="discover-map-zoom" role="group" aria-label="Map zoom">
+          <button type="button" aria-label="Zoom in" disabled={zoom >= MAX_ZOOM} onClick={() => changeZoom(1)}>+</button>
+          <button type="button" aria-label="Zoom out" disabled={zoom <= MIN_ZOOM} onClick={() => changeZoom(-1)}>−</button>
+        </div>
+      </div>
       {fallback && <SchematicMap pins={pins} highlightedId={highlightedId} selectedId={selectedId} onSelect={onSelect} centre={center} />}
       {failed && !fallback && <p role="status">Map tiles are loading slowly. The list shows every restaurant.</p>}
     </>

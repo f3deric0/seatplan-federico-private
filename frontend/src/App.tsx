@@ -11,6 +11,7 @@ import GuestSignInPage from "./pages/account/GuestSignInPage";
 import MyEventsPage from "./pages/account/MyEventsPage";
 import MySeatPage from "./pages/account/MySeatPage";
 import ResetPage from "./pages/account/ResetPage";
+import DinerAccountPage from "./pages/discover/DinerAccountPage";
 import DiscoverPage from "./pages/discover/DiscoverPage";
 import Home from "./pages/Home";
 import JoinPage from "./pages/join/JoinPage";
@@ -64,6 +65,7 @@ export default function App() {
       <Route path="/my/reset" element={<ResetPage />} />
       <Route path="/my/:eventId" element={<MySeatPage />} />
       {/* Restaurants: public booking, manage-or-cancel link, staff floor */}
+      <Route path="/restaurants/account" element={<DinerAccountPage />} />
       <Route path="/restaurants/:slug" element={<RestaurantPage />} />
       <Route path="/r/:venueId" element={<BookingPage />} />
       <Route path="/b/:token" element={<ManageBookingPage />} />
