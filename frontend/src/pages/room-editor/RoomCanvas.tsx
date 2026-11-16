@@ -89,6 +89,6 @@ export function RoomCanvas({ room, drawing, grid, onPoint, onCloseShape, selecti
       </svg>
     </div>
     {tool === "North" && !drawing && <NorthDial north={room.north_deg} onCommit={north_deg => onChange({ ...room, north_deg })} />}
-    <div className="room-zoom"><Button variant="secondary" aria-label="Zoom out" onClick={() => pan.zoomBy(0.8)}>−</Button><Button variant="secondary" onClick={pan.fit}>Fit room</Button><Button variant="secondary" aria-label="Zoom in" onClick={() => pan.zoomBy(1.25)}>+</Button><span>{Math.round(pan.view.k * 100)}%</span></div>
+    <div className="room-zoom"><Button variant="secondary" aria-label="Zoom out" onClick={() => pan.zoomBy(0.8)}>−</Button><Button variant="secondary" onClick={pan.fit}>Fit room</Button><Button variant="secondary" aria-label="Zoom in" onClick={() => pan.zoomBy(1.25)}>+</Button></div>
   </div>;
 }
