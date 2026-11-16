@@ -40,6 +40,8 @@
 .room-table-label { font-size: 16px; pointer-events: none; }
 .room-properties { padding: var(--space-4); background: var(--c-surface); border-left: 1px solid var(--c-border); overscroll-behavior: contain; } /* scrolling past its end must not scroll the page */
 .room-properties h2 { font-size: var(--fs-lg); margin-top: 0; }
+.room-properties .room-form { gap: var(--space-2); }
+.room-properties .room-form p { margin: 0; }
 .room-form { display: grid; gap: var(--space-4); }
 /* The main entrance is chosen first, so its block leads the Walls tab and is set apart. */
 .room-entrance { display: grid; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--c-primary); border-radius: var(--radius-md); background: var(--c-surface-sunk); }
@@ -139,8 +141,9 @@
 .room-problems { margin-top: 0; flex: 1 1 18rem; }
 .room-problems[open] ul { max-height: 40vh; overflow-y: auto; margin: 0; }
 @media (min-width: 1024px) {
-  .room-canvas { height: clamp(22rem, calc(100dvh - 26rem), 40rem); } /* the whole plan fits on screen without scrolling up and down */
-  .room-properties { max-height: clamp(22rem, calc(100dvh - 26rem), 40rem); }
+  .room-workspace { --room-canvas-h: clamp(22rem, calc(100dvh - 26rem), 40rem); }
+  .room-canvas { height: var(--room-canvas-h); } /* the whole plan fits on screen without scrolling up and down */
+  .room-properties { max-height: calc(var(--room-canvas-h) + 4.75rem); } /* as tall as the tabs and the plan together; it scrolls only when its content is taller */
 }
 @media (max-width: 1023px) {
   .room-tools button { flex: 1 0 auto; min-width: 3.25rem; padding: var(--space-2); font-size: var(--fs-sm); text-align: center; border-left: 0; border-top: 4px solid transparent; }
