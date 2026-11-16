@@ -58,7 +58,7 @@ export default function ResultsMap({ pins, highlightedId = null, selectedId = nu
   useEffect(() => {
     if (!host.current) return;
     const view = L.map(host.current, {
-      scrollWheelZoom: false,
+      scrollWheelZoom: true,
       attributionControl: false,
       zoomControl: false,
       minZoom: MIN_ZOOM,
