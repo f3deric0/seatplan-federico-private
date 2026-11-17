@@ -6,6 +6,7 @@ import { BookingActions } from "./BookingActions";
 import { people, tablesText } from "./format";
 import { BOOKING_LOOK, FLOOR_LOOK } from "./staffStatus";
 import { prefWords } from "./prefs";
+import { CustomerHistory } from "./CustomerHistory";
 
 interface SelectionPanelProps {
   venueId: string;
@@ -31,6 +32,7 @@ export function SelectionPanel(props: SelectionPanelProps) {
     <div className="st-selection">
       {table && !shown && <TableHeader table={table} />}
       {shown && <BookingDetails booking={shown} />}
+      {shown && <CustomerHistory key={shown.id} venueId={props.venueId} bookingId={shown.id} />}
       {shown && <BookingActions key={shown.id} venueId={props.venueId} booking={shown} onChanged={props.onChanged} onProblem={props.onProblem} onMove={props.onMove} />}
       {table && table.status === "free" && <FreeTableActions {...props} table={table} />}
     </div>

@@ -749,6 +749,15 @@ export async function getFloor(vid: string, date: IsoDate, time: ClockTime): Pro
   return { ...server, bookings: server.bookings.map(toStaffBooking) };
 }
 
+export interface CustomerHistory {
+  completed_visits: number;
+  returning_customer: boolean;
+  visits: { date: string; time: string; party_size: number; notes: string; occasion: string | null }[];
+}
+export function getCustomerHistory(vid: string, bookingId: string): Promise<CustomerHistory> {
+  return api.get(`${staff(vid)}/bookings/${encodeURIComponent(bookingId)}/customer`);
+}
+
 export async function seatWalkin(vid: string, walkin: WalkinRequest): Promise<StaffBooking> {
   return toStaffBooking(await api.post<ServerBooking>(`${staff(vid)}/walkins`, walkin));
 }

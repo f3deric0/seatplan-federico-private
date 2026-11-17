@@ -970,3 +970,11 @@ continua bloqueada pela resolução de rede desta sessão.
 - Validação: 22 testes backend (novos campos, segurança do aviso, live floor, migração e gestão de reservas); teste de limpeza do ETA acrescentado e passado. Typecheck, 571 Vitest e build passaram. Ruff e verificação de caminhos protegidos passaram. Contraste não repetido porque não houve novas cores.
 - Chromium com API real: criar reserva com os campos, ler no link de gestão, enviar atraso de 15 minutos e verificar persistência após reload passou.
 - Migração necessária em bases existentes. Não publicado nem aplicado ao checkout ativo nesta tarefa.
+
+## 2026-11-17 — Histórico do cliente para o staff
+
+- Novo endpoint autorizado por restaurante e reserva: `/staff/{vid}/bookings/{bid}/customer`.
+- Conta visitas concluídas anteriores à reserva e apresenta as dez mais recentes com notas e ocasião. Associa pelo email normalizado apenas dentro do restaurante. Não conta no-shows, cancelamentos, reservas futuras ou de outros clientes/restaurantes.
+- Na sala, selecionar reserva e abrir Customer history. O componente é remontado ao mudar de cliente para impedir mostrar dados da seleção anterior.
+- Testes de autorização e separação de dados passaram, juntamente com 20 testes de staff. Typecheck, 127 testes frontend de restaurante, build, Ruff e proteção de caminhos de eventos passaram.
+- Chromium + FastAPI real: selecionar reserva na sala, abrir histórico vazio e verificar alergias/previsão de chegada passou. Notas internas editáveis pelo staff ainda não foram acrescentadas.

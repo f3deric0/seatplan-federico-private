@@ -14,7 +14,7 @@ como integrações de produção.
 | Menu e preços | Pendente | Edição pelo dono, categorias, preço em cêntimos, moeda e publicação pública. |
 | Ocasião e alimentação | Implementado | Campos próprios no formulário, reserva, gestão e sala. Alergias distinguem-se de preferências e exigem confirmação pelo restaurante. |
 | Distribuição | Pendente | Widget incorporável, código de instalação e link Instagram; Google depende de parceiro e contrato, não simular ativação. |
-| Ficha de cliente | Pendente | Acesso exclusivo do staff do restaurante, visitas concluídas, notas, histórico e política de privacidade. |
+| Ficha de cliente | Histórico implementado | Acesso exclusivo do staff do restaurante, visitas concluídas, notas, histórico e política de privacidade. |
 | Meteorologia no sol | Pendente | Previsão horária Open-Meteo, timezone do restaurante, limite da previsão e falhas; manter astronomia separada de nebulosidade. |
 | Plano de chuva | Pendente | Proposta interior comparável, aceite explícito, disponibilidade revalidada; nunca mudar a mesa silenciosamente. |
 | Pôr do sol | Pendente | Dia/hora e mesa sugeridas usando astronomia e orientação real; verificar disponibilidade. |
@@ -41,4 +41,5 @@ O checkout gravável está em `tmp/seatplan-work`, branch `codex/finish-restaura
 O checkout ativo `C:/Users/marti/seatplan-rux` não permite escrita nesta sessão.
 A publicação GitHub falhou anteriormente por falta de resolução de rede. É obrigatório
 distinguir código local, bundle de transporte e alterações efetivamente publicadas.
+
 
