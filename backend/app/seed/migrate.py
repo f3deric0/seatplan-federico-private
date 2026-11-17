@@ -60,6 +60,7 @@ NEW_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("zones", "room_id", "INTEGER REFERENCES rooms (id)"),
     ("bookings", "chosen_seat_id", "INTEGER REFERENCES seats (id)"),
     ("bookings", "prefs", "JSON NOT NULL DEFAULT '[]'"),
+    ("bookings", "account_id", "INTEGER REFERENCES guest_accounts (id) ON DELETE SET NULL"),
 )
 
 # (index name, statement). Both databases understand "IF NOT EXISTS" here.
@@ -84,6 +85,10 @@ NEW_INDEXES: tuple[tuple[str, str], ...] = (
 
 # Kept separate to preserve the historical guest-account index contract.
 RESTAURANT_INDEXES: tuple[tuple[str, str], ...] = (
+    (
+        "ix_bookings_account_id",
+        "CREATE INDEX IF NOT EXISTS ix_bookings_account_id ON bookings (account_id)",
+    ),
     ("uq_venues_slug", "CREATE UNIQUE INDEX IF NOT EXISTS uq_venues_slug ON venues (slug)"),
 )
 

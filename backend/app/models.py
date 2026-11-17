@@ -500,6 +500,21 @@ class Booking(Base):
 
     chosen_seat_id: Mapped[int | None] = mapped_column(ForeignKey("seats.id"))
     prefs: Mapped[list[str]] = mapped_column(JSON, default=list, server_default=text("'[]'"))
+    account_id: Mapped[int | None] = mapped_column(
+        ForeignKey("guest_accounts.id", ondelete="SET NULL"), index=True
+    )
+
+
+class DinerFavorite(Base):
+    __tablename__ = "diner_favorites"
+
+    account_id: Mapped[int] = mapped_column(
+        ForeignKey("guest_accounts.id", ondelete="CASCADE"), primary_key=True
+    )
+    venue_id: Mapped[int] = mapped_column(
+        ForeignKey("venues.id", ondelete="CASCADE"), primary_key=True
+    )
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utc_now)
 
 
 class RestaurantReview(Base):

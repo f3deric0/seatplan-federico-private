@@ -950,3 +950,14 @@ do runner normal com portas locais continua pendente.
 Leitura da base local do checkout seatplan-rux confirmou 340 reviews nos
 25 restaurantes com a migração de 0–10 aplicada. A publicação GitHub
 continua bloqueada pela resolução de rede desta sessão.
+
+## 2026-11-17 — Expansão: conta de cliente, histórico e favoritos
+
+- Âmbito completo retomado em `2026-11-17-expansao-restaurantes.md`; os outros módulos não são apresentados como concluídos.
+- `/api/diner/bookings` liga reservas anteriores apenas a contas com email provado, compara email normalizado e pagina o histórico; novo `bookings.account_id` com `ON DELETE SET NULL`.
+- Favoritos privados e idempotentes; restaurantes não publicados ficam fora da lista. Botão de guardar na página pública.
+- `/restaurants/account` apresenta histórico, nova reserva com o mesmo tamanho de grupo, favoritos e cancelamento confirmado em diálogo. Cancelamento reutiliza libertação de slots, auditoria, email e lista de espera existentes.
+- Validação: 3 testes novos de identidade/privacidade/cancelamento e 3 de reviews passaram; 6 testes de migração passaram após corrigir ordem da coluna e separar o índice dos índices históricos de eventos; 27 testes de regressão de contas de convidados passaram. Typecheck, 571 testes Vitest, build, 182 contrastes, Ruff e proteção dos caminhos de eventos passaram.
+- Chromium com API FastAPI real e DB descartável: login, histórico vazio, guardar restaurante, persistência após reload e remoção passaram. Execução por ponte local devido à restrição de sockets; suite Playwright normal não foi executada nesta tarefa.
+- Ainda falta registo independente de eventos, repetir mesa exata e restantes módulos do âmbito. Nenhuma integração WhatsApp/SMS/pagamentos foi ativada.
+- Trabalho no checkout gravável, não aplicado ao checkout ativo nem publicado no GitHub nesta tarefa.

@@ -17,6 +17,7 @@ import { errorMessage } from "../restaurant/format";
 import { useLoad } from "../restaurant/useLoad";
 import { Gallery, GalleryCredits } from "./Gallery";
 import { RestaurantReviews } from "./RestaurantReviews";
+import { FavoriteButton } from "./FavoriteButton";
 import { instagramHref, metersBetween, shortDate, telHref, websiteHref } from "./pageModel";
 import { weeklyRows } from "./scheduleText";
 import "../restaurant/restaurant.css";
@@ -118,6 +119,7 @@ function Page({ data }: { data: PublicRestaurant }) {
           </a>
         )}
       </header>
+      {!data.preview && data.slug && <FavoriteButton slug={data.slug} />}
       <div className="rp-hero-layout"><aside className="rp-visit" aria-label="Your visit"><Gallery photos={data.photos} name={data.name} preview={data.preview} /><div className="rp-visit-info"><p>Your visit</p><h2>{data.name}</h2><p>Located at {data.address}</p></div></aside>
 
       {/* The booking comes right after the identity: nothing has to be scrolled past to reserve. */}
