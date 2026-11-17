@@ -11,7 +11,7 @@ como integrações de produção.
 | WhatsApp / SMS | Pendente | Consentimento por canal, outbox idempotente, lembretes, resposta confirmar/cancelar, webhooks autenticados, fornecedor e credenciais reais. |
 | Garantia / depósito | Pendente | Checkout alojado, política explícita, webhook assinado, cancelamento/reembolso, estados; requer conta de pagamentos. Nunca guardar dados de cartão. |
 | PT / EN / ES / FR | Pendente | Seleção persistente, interface pública, conta, reserva, mensagens e datas localizadas. |
-| Menu e preços | Pendente | Edição pelo dono, categorias, preço em cêntimos, moeda e publicação pública. |
+| Menu e preços | Implementado | Edição pelo dono, categorias, preço em cêntimos, moeda e publicação pública. |
 | Ocasião e alimentação | Implementado | Campos próprios no formulário, reserva, gestão e sala. Alergias distinguem-se de preferências e exigem confirmação pelo restaurante. |
 | Distribuição | Pendente | Widget incorporável, código de instalação e link Instagram; Google depende de parceiro e contrato, não simular ativação. |
 | Ficha de cliente | Histórico implementado | Acesso exclusivo do staff do restaurante, visitas concluídas, notas, histórico e política de privacidade. |
@@ -41,5 +41,6 @@ O checkout gravável está em `tmp/seatplan-work`, branch `codex/finish-restaura
 O checkout ativo `C:/Users/marti/seatplan-rux` não permite escrita nesta sessão.
 A publicação GitHub falhou anteriormente por falta de resolução de rede. É obrigatório
 distinguir código local, bundle de transporte e alterações efetivamente publicadas.
+
 
 

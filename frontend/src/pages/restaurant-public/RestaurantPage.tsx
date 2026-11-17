@@ -18,6 +18,7 @@ import { useLoad } from "../restaurant/useLoad";
 import { Gallery, GalleryCredits } from "./Gallery";
 import { RestaurantReviews } from "./RestaurantReviews";
 import { FavoriteButton } from "./FavoriteButton";
+import { RestaurantMenu } from "./RestaurantMenu";
 import { instagramHref, metersBetween, shortDate, telHref, websiteHref } from "./pageModel";
 import { weeklyRows } from "./scheduleText";
 import "../restaurant/restaurant.css";
@@ -55,7 +56,9 @@ function Page({ data }: { data: PublicRestaurant }) {
   const { pathname, search, hash } = useLocation();
   const book = useRef<HTMLElement>(null);
   const reviewSection = useRef<HTMLElement>(null);
+  const menuSection = useRef<HTMLElement>(null);
   const showReviews = !data.preview && hash === "#reviews";
+  const showMenu = !data.preview && hash === "#menu";
   const linked = new URLSearchParams(search).has("date");
   // Coming from a search with a time chosen: take the diner to the booking.
   useEffect(() => {
@@ -64,6 +67,7 @@ function Page({ data }: { data: PublicRestaurant }) {
   useEffect(() => {
     if (showReviews) reviewSection.current?.scrollIntoView?.();
   }, [showReviews]);
+  useEffect(() => { if (showMenu) menuSection.current?.scrollIntoView?.(); }, [showMenu]);
 
   // The button moves keyboard focus with the page, so the next Tab lands in the booking, not back at the top.
   const goToBooking = (event: MouseEvent<HTMLAnchorElement>): void => {
@@ -137,13 +141,15 @@ function Page({ data }: { data: PublicRestaurant }) {
 
       </div>
       {!data.preview && <nav className="rp-section-nav" aria-label="Restaurant sections">
-        <Link to={{ pathname, search, hash: "#details" }} aria-current={!showReviews ? "page" : undefined}>Details</Link>
+        <Link to={{ pathname, search, hash: "#details" }} aria-current={!showReviews && !showMenu ? "page" : undefined}>Details</Link>
+        <Link to={{ pathname, search, hash: "#menu" }} aria-current={showMenu ? "page" : undefined}>Menu</Link>
         <Link to={{ pathname, search, hash: "#reviews" }} aria-current={showReviews ? "page" : undefined}>Reviews</Link>
       </nav>}
+      {showMenu && data.slug && <section id="menu" ref={menuSection} aria-label="Restaurant menu"><RestaurantMenu key={data.slug} slug={data.slug} /></section>}
       {showReviews && data.slug && <section id="reviews" ref={reviewSection} aria-label="Restaurant reviews">
         <RestaurantReviews key={data.slug} slug={data.slug} summary={data.reviews} />
       </section>}
-      <div id="details" className="rp-columns" hidden={showReviews}>
+      <div id="details" className="rp-columns" hidden={showReviews || showMenu}>
         <div>
           {data.description && (
             <section aria-labelledby="rp-about">

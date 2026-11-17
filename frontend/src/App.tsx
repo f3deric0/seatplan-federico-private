@@ -29,6 +29,7 @@ import RestaurantPage from "./pages/restaurant-public/RestaurantPage";
 import ManageBookingPage from "./pages/restaurant/ManageBookingPage";
 import StaffPage from "./pages/restaurant/StaffPage";
 import HoursPage from "./pages/owner/HoursPage";
+import MenuPage from "./pages/owner/MenuPage";
 import PublishReview from "./pages/owner/PublishReview";
 const RoomEditorPage = lazy(() => import("./pages/room-editor/RoomEditorPage"));
 
@@ -46,6 +47,7 @@ export default function App() {
       <Route path="/owner/:venueId/profile" element={<ProfilePage />} />
       <Route path="/owner/:venueId/photos" element={<PhotoEditorPage />} />
       <Route path="/owner/:venueId/hours" element={<HoursPage />} />
+      <Route path="/owner/:venueId/menu" element={<MenuPage />} />
       <Route path="/owner/:venueId/review" element={<PublishReview />} />
       <Route path="/owner/sign-in" element={<Login defaultNext="/owner" />} />
       <Route path="/owner/:venueId/dashboard" element={<StaffPage />} />

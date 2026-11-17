@@ -523,6 +523,18 @@ class DinerFavorite(Base):
     created_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utc_now)
 
 
+class RestaurantMenu(Base):
+    __tablename__ = "restaurant_menus"
+
+    venue_id: Mapped[int] = mapped_column(
+        ForeignKey("venues.id", ondelete="CASCADE"), primary_key=True
+    )
+    version: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
+    items: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSON, default=list, server_default=text("'[]'")
+    )
+
+
 class RestaurantReview(Base):
     """One public review per customer and restaurant."""
 

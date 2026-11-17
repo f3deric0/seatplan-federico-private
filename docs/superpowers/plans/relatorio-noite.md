@@ -978,3 +978,12 @@ continua bloqueada pela resolução de rede desta sessão.
 - Na sala, selecionar reserva e abrir Customer history. O componente é remontado ao mudar de cliente para impedir mostrar dados da seleção anterior.
 - Testes de autorização e separação de dados passaram, juntamente com 20 testes de staff. Typecheck, 127 testes frontend de restaurante, build, Ruff e proteção de caminhos de eventos passaram.
 - Chromium + FastAPI real: selecionar reserva na sala, abrir histórico vazio e verificar alergias/previsão de chegada passou. Notas internas editáveis pelo staff ainda não foram acrescentadas.
+
+## 2026-11-17 — Menu e preços
+
+- Dono tem a nova página Menu and prices, com até 100 pratos: categoria, descrição, preço exato em cêntimos, alergénios e disponibilidade.
+- Nova tabela restaurant_menus. Saves usam versão e UPDATE condicional; gravações antigas dão 409 em vez de apagar alterações de outra janela.
+- Página pública tem uma aba Menu; mostra só pratos disponíveis de restaurantes publicados, preços EUR e informação de alergénios fornecida pelo dono.
+- Validação: teste de autorização/publicação/preços/versões e seis testes de migração passaram. Typecheck, 44 testes frontend de owner/página pública, build, Ruff e proteção de eventos passaram.
+- Chromium + API real: editar prato e preço 4,50, guardar, recarregar e consultar o menu público com preço e alergénios passou. Os percursos de necessidades alimentares, ETA e ficha do cliente também passaram no mesmo smoke.
+- Os menus de restaurantes reais não foram inventados. Donos têm de introduzir os respetivos pratos/preços.
