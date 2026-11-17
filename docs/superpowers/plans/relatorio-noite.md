@@ -987,3 +987,10 @@ continua bloqueada pela resolução de rede desta sessão.
 - Validação: teste de autorização/publicação/preços/versões e seis testes de migração passaram. Typecheck, 44 testes frontend de owner/página pública, build, Ruff e proteção de eventos passaram.
 - Chromium + API real: editar prato e preço 4,50, guardar, recarregar e consultar o menu público com preço e alergénios passou. Os percursos de necessidades alimentares, ETA e ficha do cliente também passaram no mesmo smoke.
 - Os menus de restaurantes reais não foram inventados. Donos têm de introduzir os respetivos pratos/preços.
+
+## 2026-11-17 — Integração solicitada por Martim
+
+- Tentativa de acesso normal a C:/Users/marti/seatplan-rux continuou bloqueada: Permission denied. Nenhuma alteração aplicada à pasta ativa.
+- Criado scripts/Integrate-RestaurantExpansion.ps1 para execução no terminal de Martim: recusa main/detached HEAD/alterações locais/dependências em falta/base remota, valida bundle, faz backup consistente SQLite, merge fast-forward, migração local e build.
+- Validado numa cópia descartável de 035c530 com dados demo: backup, avanço até 580e4ad, adição das cinco colunas, nova tabela do menu e build de produção passaram. Segunda execução também passou (idempotência). Sintaxe PowerShell e git diff --check passaram.
+- Bundle regenerado com o instalador e documentação. WhatsApp, SMS e pagamentos adiados por instrução explícita do utilizador. Não houve push nesta tarefa.

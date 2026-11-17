@@ -6,6 +6,18 @@ na branch `codex/finish-restaurants`. A lista integral e os estados estão em
 
 ## Integrar no checkout de Martim
 
+Comando recomendado no PowerShell de Martim:
+
+```powershell
+& "$env:USERPROFILE/Documents/ChatGPT/Tese/tmp/seatplan-work/scripts/Integrate-RestaurantExpansion.ps1"
+```
+
+O script verifica a branch e alterações locais, valida o bundle, cria um backup
+consistente do SQLite, integra apenas por fast-forward, migra a base local e
+compila o frontend. Não altera WhatsApp, SMS ou pagamentos, nem faz push.
+Recusa bases remotas e não descarta alterações locais. Se faltar acesso ao
+checkout nesta sessão, tem de ser executado pelo utilizador no seu terminal.
+
 O bundle `C:/Users/marti/Documents/ChatGPT/Tese/SeatPlan_Expansao.bundle` contém
 as alterações a partir de `035c530`. O checkout ativo foi confirmado nesse commit.
 A sessão não tem autorização de escrita nessa pasta. O push direto falhou com
