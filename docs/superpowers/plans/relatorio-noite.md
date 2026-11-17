@@ -928,3 +928,25 @@ A escala das reviews passou de 0–5 para 0–10. A migração duplica uma únic
 vez as notas antigas. Os cartões apresentam grupos de uma a quatro cadeiras,
 com o grupo completo a partir de 8,5. Os filtros de reviews e pesquisa usam
 o mesmo estilo e os créditos das fotos estão no rodapé da ficha.
+
+## Validação da versão integrada em 17 de novembro
+
+Validação a partir de 035c530, incluindo as alterações posteriores ao mapa
+e à marca. Build, 571 testes Vitest, 182 verificações de contraste, Ruff e
+123 testes de API passaram. A seleção de API cobriu reviews, descoberta,
+migrações, reservas, gestão da reserva, equipa, perfis do dono, publicação
+e o percurso integrado das duas verticais. A suite completa de backend foi
+interrompida para executar essa seleção e não foi concluída.
+
+No Chromium com backend real em processo e SQLite temporário, verificámos
+25 restaurantes com ratings, login e regresso a Reviews, publicação 10/10,
+persistência após reload, edição 0/10, filtros, remoção e atualização dos
+totais. A comunicação usou stdin/stdout porque as portas dos servidores
+Playwright são bloqueadas pelo ambiente. O teste permanente
+restaurant-reviews.spec.ts cobre esse percurso para o runner normal.
+O Playwright listou o novo teste e o TypeScript verificou-o. A execução
+do runner normal com portas locais continua pendente.
+
+Leitura da base local do checkout seatplan-rux confirmou 340 reviews nos
+25 restaurantes com a migração de 0–10 aplicada. A publicação GitHub
+continua bloqueada pela resolução de rede desta sessão.
