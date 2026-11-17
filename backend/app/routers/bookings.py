@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from app import db
 from app.core.errors import ApiError, SeatTaken
 from app.core.text import PlainText
-from app.models import Venue
+from app.models import Venue, utc_now
 from app.restaurant_service import booking_rows, manage_flow, waitlist
 from app.restaurant_service.alternatives import conflict_response
 from app.restaurant_service.availability import MAX_ONLINE_PARTY, check_party_size, max_party
@@ -51,6 +51,10 @@ class WaitlistIn(Strict):
     party: int = Field(ge=1, le=MAX_ONLINE_PARTY)
     name: PlainText = Field(min_length=1, max_length=120)
     email: EmailStr
+
+
+class ArrivalIn(Strict):
+    delay_minutes: int = Field(ge=0, le=120, strict=True)
 
 
 def _limit(session: db.SessionDep, request: Request, name: str, limit: int) -> None:
@@ -151,3 +155,38 @@ def join_waitlist(
         "position": position,
         "estimated_wait_minutes": waitlist.estimate_wait(session, venue, body.party, position),
     }
+
+
+@router.post("/b/{manage_token}/arrival")
+def arrival_notice(
+    manage_token: str, body: ArrivalIn, request: Request, session: db.SessionDep
+) -> dict[str, Any]:
+    _limit(session, request, "manage", MANAGE_LIMIT)
+    booking = booking_rows.load_by_token(session, manage_token)
+    venue = _venue_of(session, booking.venue_id)
+    if booking.status != "confirmed" or booking.end_at <= utc_now():
+        raise ApiError(
+            409,
+            "conflict",
+            "An arrival update is only available for an upcoming confirmed booking.",
+        )
+    arrival = booking.start_at + dt.timedelta(minutes=body.delay_minutes)
+    if arrival >= booking.end_at:
+        raise ApiError(
+            422,
+            "validation",
+            "This arrival is after your table's service. Please contact the restaurant.",
+        )
+    booking.arrival_at = arrival
+    record_change(
+        session,
+        venue,
+        [booking.date],
+        actor="diner",
+        action="booking.arrival",
+        entity="booking",
+        entity_id=booking.public_id,
+        detail={"delay_minutes": body.delay_minutes},
+    )
+    session.commit()
+    return booking_rows.describe(session, venue, booking)

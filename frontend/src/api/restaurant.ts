@@ -149,7 +149,14 @@ export interface BookingSeat {
 export type BookingStatus = "confirmed" | "seated" | "finishing" | "completed" | "cancelled" | "no_show";
 
 /** One booking as the diner sees it (confirmation page and manage page). */
-export interface BookingView {
+export interface BookingPreferences {
+  occasion?: string | null;
+  dietary_requirements?: string;
+  allergies?: string;
+  arrival_time?: string | null;
+}
+
+export interface BookingView extends BookingPreferences {
   public_id: string;
   venue_public_id: string;
   venue_name: string;
@@ -177,6 +184,9 @@ export interface ContactDetails {
   email: string;
   phone: string;
   notes: string;
+  occasion?: string | null;
+  dietary_requirements?: string;
+  allergies?: string;
 }
 
 /** `manage_url` is a path such as "/b/<token>"; `email` is where the confirmation goes. */
@@ -227,7 +237,7 @@ export interface StaffTable extends MapTable {
 
 export type BookingSource = "diner" | "walk_in" | "staff";
 
-export interface StaffBooking {
+export interface StaffBooking extends BookingPreferences {
   id: string; // public_id
   name: string;
   party_size: number;
@@ -443,7 +453,7 @@ export interface ServerHold {
 }
 
 /** One booking (backend restaurant_service/booking_rows.describe). Never the email or the token. */
-export interface ServerBooking {
+export interface ServerBooking extends BookingPreferences {
   id: string;
   restaurant: { public_id: string; name: string };
   date: IsoDate;
@@ -544,8 +554,14 @@ export function toHold(server: ServerHold): HoldResponse {
   return { hold_id: server.hold_id, table, table_ids: server.table.table_ids, expires_at: server.expires_at };
 }
 
+function bookingPreferences(server: ServerBooking): BookingPreferences {
+  return Object.fromEntries(["occasion", "dietary_requirements", "allergies", "arrival_time"]
+    .filter(key => key in server).map(key => [key, server[key as keyof BookingPreferences]]));
+}
+
 export function toBookingView(server: ServerBooking): BookingView {
   return {
+    ...bookingPreferences(server),
     public_id: server.id,
     venue_public_id: server.restaurant.public_id,
     venue_name: server.restaurant.name,
@@ -568,6 +584,7 @@ export function toBookingView(server: ServerBooking): BookingView {
 
 export function toStaffBooking(server: ServerBooking): StaffBooking {
   return {
+    ...bookingPreferences(server),
     id: server.id,
     name: server.name,
     party_size: server.party_size,
@@ -719,6 +736,10 @@ export async function changeSeat(token: string, seatId: number | null): Promise<
 
 export async function cancelBooking(token: string): Promise<BookingView> {
   return toBookingView(await api.delete<ServerBooking>(manage(token)));
+}
+
+export async function reportArrival(token: string, delayMinutes: number): Promise<BookingView> {
+  return toBookingView(await api.post<ServerBooking>(`${manage(token)}/arrival`, { delay_minutes: delayMinutes }));
 }
 
 // ---------- Staff calls (need a signed-in session) ----------

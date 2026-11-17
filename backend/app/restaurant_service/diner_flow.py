@@ -48,6 +48,9 @@ class Contact:
     email: str
     phone: str | None
     notes: str
+    occasion: str | None = None
+    dietary_requirements: str = ""
+    allergies: str = ""
 
 
 def _auto_choices(
@@ -160,6 +163,9 @@ def confirm_booking(
         email=contact.email,
         phone=contact.phone,
         notes=contact.notes,
+        occasion=contact.occasion,
+        dietary_requirements=contact.dietary_requirements,
+        allergies=contact.allergies,
         needs_accessible=needs.needs_accessible,
         high_chairs=needs.high_chairs,
         status="confirmed",

@@ -961,3 +961,12 @@ continua bloqueada pela resolução de rede desta sessão.
 - Chromium com API FastAPI real e DB descartável: login, histórico vazio, guardar restaurante, persistência após reload e remoção passaram. Execução por ponte local devido à restrição de sockets; suite Playwright normal não foi executada nesta tarefa.
 - Ainda falta registo independente de eventos, repetir mesa exata e restantes módulos do âmbito. Nenhuma integração WhatsApp/SMS/pagamentos foi ativada.
 - Trabalho no checkout gravável, não aplicado ao checkout ativo nem publicado no GitHub nesta tarefa.
+
+## 2026-11-17 — Ocasião, necessidades alimentares e previsão de chegada
+
+- Reserva com ocasião tipificada, preferências alimentares e alergias separadas. Formulário, confirmação, gestão e sala apresentam os campos; alergias recebem destaque para o staff.
+- `/b/{token}/arrival` aceita um atraso de 0–120 minutos em relação à hora reservada, apenas em reservas confirmadas ainda dentro do serviço. Recusa chegada no fim ou após o serviço. Não muda a reserva nem prolonga a ocupação.
+- Aviso de chegada fica persistido e dispara auditoria/atualização ao vivo. Alteração de data/hora limpa o aviso anterior.
+- Validação: 22 testes backend (novos campos, segurança do aviso, live floor, migração e gestão de reservas); teste de limpeza do ETA acrescentado e passado. Typecheck, 571 Vitest e build passaram. Ruff e verificação de caminhos protegidos passaram. Contraste não repetido porque não houve novas cores.
+- Chromium com API real: criar reserva com os campos, ler no link de gestão, enviar atraso de 15 minutos e verificar persistência após reload passou.
+- Migração necessária em bases existentes. Não publicado nem aplicado ao checkout ativo nesta tarefa.

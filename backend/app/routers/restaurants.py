@@ -88,6 +88,11 @@ class BookingIn(Strict):
     email: EmailStr
     phone: PlainText | None = Field(default=None, max_length=40)
     notes: PlainText = Field(default="", max_length=500)
+    occasion: (
+        Literal["birthday", "anniversary", "proposal", "business", "date", "celebration"] | None
+    ) = None
+    dietary_requirements: PlainText = Field(default="", max_length=500)
+    allergies: PlainText = Field(default="", max_length=500)
     party: int = Field(ge=1, le=MAX_PARTY)
     needs_accessible: bool = False
     high_chairs: int = Field(default=0, ge=0, le=6)
@@ -274,7 +279,15 @@ def book(
     needs = PartyNeeds(
         body.party, body.needs_accessible, body.high_chairs, prefs=clean_prefs(body.prefs)
     )
-    contact = diner_flow.Contact(body.name, str(body.email), body.phone, body.notes)
+    contact = diner_flow.Contact(
+        body.name,
+        str(body.email),
+        body.phone,
+        body.notes,
+        body.occasion,
+        body.dietary_requirements,
+        body.allergies,
+    )
     try:
         booking, token = diner_flow.confirm_booking(
             session, venue, held, needs, contact, seat_id=body.seat_id

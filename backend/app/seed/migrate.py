@@ -61,6 +61,10 @@ NEW_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("bookings", "chosen_seat_id", "INTEGER REFERENCES seats (id)"),
     ("bookings", "prefs", "JSON NOT NULL DEFAULT '[]'"),
     ("bookings", "account_id", "INTEGER REFERENCES guest_accounts (id) ON DELETE SET NULL"),
+    ("bookings", "occasion", "VARCHAR(30)"),
+    ("bookings", "dietary_requirements", "VARCHAR(500) NOT NULL DEFAULT ''"),
+    ("bookings", "allergies", "VARCHAR(500) NOT NULL DEFAULT ''"),
+    ("bookings", "arrival_at", "TIMESTAMP"),
 )
 
 # (index name, statement). Both databases understand "IF NOT EXISTS" here.

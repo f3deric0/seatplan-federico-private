@@ -76,6 +76,10 @@ function BookingDetails({ booking }: { booking: StaffBooking }) {
       {booking.seat && <p className="st-note">Chair requested: {booking.seat.label}</p>}
       {prefWords(booking.prefs) && <p className="st-note">Guest wished for: {prefWords(booking.prefs)}</p>}
       {booking.notes && <p className="st-note">Note: {booking.notes}</p>}
+      {booking.occasion && <p className="st-note">Occasion: {booking.occasion}</p>}
+      {booking.dietary_requirements && <p className="st-note">Dietary preferences: {booking.dietary_requirements}</p>}
+      {booking.allergies && <p className="rb-notice rb-notice-error"><strong>Food allergies:</strong> {booking.allergies}</p>}
+      {booking.arrival_time && <p className="st-note"><strong>Expected arrival: {booking.arrival_time}</strong></p>}
     </div>
   );
 }

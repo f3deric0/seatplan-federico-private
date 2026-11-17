@@ -13,6 +13,7 @@ import { ChangeSeat } from "./ChangeSeat";
 import { errorMessage, formatDate, people } from "./format";
 import { DirectionsLink, VenueCard, usePublicVenue } from "./VenueCard";
 import { useLoad } from "./useLoad";
+import { ArrivalNotice } from "./ArrivalNotice";
 import "./restaurant.css";
 
 export default function ManageBookingPage() {
@@ -87,6 +88,7 @@ function ManageBooking({ token, booking, onUpdate }: { token: string; booking: B
         <div className="rb5-manage-side">
           <VenueCard booking={booking} venue={venue} />
           {renderActions()}
+          {booking.status === "confirmed" && <ArrivalNotice token={token} booking={booking} onUpdate={update} />}
         </div>
       </div>
       <p>

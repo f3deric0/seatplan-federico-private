@@ -503,6 +503,12 @@ class Booking(Base):
     account_id: Mapped[int | None] = mapped_column(
         ForeignKey("guest_accounts.id", ondelete="SET NULL"), index=True
     )
+    occasion: Mapped[str | None] = mapped_column(String(30))
+    dietary_requirements: Mapped[str] = mapped_column(
+        String(500), default="", server_default=text("''")
+    )
+    allergies: Mapped[str] = mapped_column(String(500), default="", server_default=text("''"))
+    arrival_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
 
 
 class DinerFavorite(Base):

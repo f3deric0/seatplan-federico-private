@@ -53,6 +53,10 @@ export function BookingRows({ booking }: { booking: BookingView }) {
         <dt>Table</dt>
         <dd>{tableText(booking)}</dd>
       </div>
+      {booking.occasion && <div><dt>Occasion</dt><dd>{booking.occasion}</dd></div>}
+      {booking.dietary_requirements && <div><dt>Dietary preferences</dt><dd>{booking.dietary_requirements}</dd></div>}
+      {booking.allergies && <div><dt>Food allergies</dt><dd>{booking.allergies}</dd></div>}
+      {booking.arrival_time && <div><dt>Expected arrival</dt><dd>{booking.arrival_time}</dd></div>}
       {booking.seat && (
         <div>
           <dt>Chair request</dt>

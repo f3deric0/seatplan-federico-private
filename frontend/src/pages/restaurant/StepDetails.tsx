@@ -8,7 +8,7 @@ import type { FormEvent } from "react";
 import { ApiError } from "../../api/client";
 import { createBooking } from "../../api/restaurant";
 import type { BookingConfirmation, ContactDetails, PartyNeeds } from "../../api/restaurant";
-import { Button, Field } from "../../design/components";
+import { Button, Field, Select } from "../../design/components";
 import { errorMessage } from "./format";
 import { HoldCountdown } from "./HoldCountdown";
 import type { Hold } from "./StepTable";
@@ -77,7 +77,7 @@ export function StepDetails(props: StepDetailsProps) {
     }
   };
 
-  const bind = (field: keyof ContactDetails) => ({
+  const bind = (field: "name" | "email" | "phone" | "notes") => ({
     id: `rb-${field}`,
     value: contact[field],
     error: shown(field),
@@ -109,8 +109,12 @@ export function StepDetails(props: StepDetailsProps) {
       >
         <summary>Add a phone number or a note for the restaurant</summary>
         <Field label="Phone (optional)" hint="Only used if we need to reach you on the day." type="tel" autoComplete="tel" placeholder="Phone number" {...bind("phone")} />
-        <Field label="Notes for the restaurant (optional)" hint="Allergies, a birthday, a pram..." placeholder="Add a note" {...bind("notes")} />
+        <Field label="Notes for the restaurant (optional)" hint="Anything else we should know about your visit." placeholder="Add a note" {...bind("notes")} />
       </details>
+      <Select label="Occasion (optional)" value={contact.occasion ?? ""} onChange={event => onContactChange({ ...contact, occasion: event.target.value || null })}
+        options={[{ value: "", label: "Just a meal" }, { value: "birthday", label: "Birthday" }, { value: "anniversary", label: "Anniversary" }, { value: "proposal", label: "Marriage proposal" }, { value: "business", label: "Business meal" }, { value: "date", label: "Date night" }, { value: "celebration", label: "Celebration" }]} />
+      <Field label="Dietary preferences (optional)" maxLength={500} placeholder="Vegetarian, vegan…" value={contact.dietary_requirements ?? ""} onChange={event => onContactChange({ ...contact, dietary_requirements: event.target.value })} />
+      <Field label="Food allergies (optional)" maxLength={500} hint="The staff will see this. Please confirm safe preparation directly with the restaurant." placeholder="Tell us about any food allergies" value={contact.allergies ?? ""} onChange={event => onContactChange({ ...contact, allergies: event.target.value })} />
       {panel && onChooseSeat && <ChairRequest seatId={seatId} seatLabel={seatLabel ?? null} onChoose={onChooseSeat} onClear={onClearSeat} disabled={busy} />}
       {problem && (
         <p className="rb-notice rb-notice-error" role="alert">
@@ -166,7 +170,10 @@ function ChairRequest({ seatId, seatLabel, onChoose, onClear, disabled }: { seat
 }
 
 function trimmed(contact: ContactDetails): ContactDetails {
-  return { name: contact.name.trim(), email: contact.email.trim(), phone: contact.phone.trim(), notes: contact.notes.trim() };
+  return { ...contact, name: contact.name.trim(), email: contact.email.trim(), phone: contact.phone.trim(), notes: contact.notes.trim(),
+    ...(contact.dietary_requirements !== undefined ? { dietary_requirements: contact.dietary_requirements.trim() } : {}),
+    ...(contact.allergies !== undefined ? { allergies: contact.allergies.trim() } : {}),
+  };
 }
 
 /** Moves focus to the first field with a problem; returns true if there was one. */

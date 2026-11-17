@@ -56,6 +56,8 @@ def set_times(venue: Venue, booking: Booking, day: date, window: tuple[int, int]
     booking.date = day
     booking.start_at = slot_moment(venue, day, window[0])
     booking.end_at = slot_moment(venue, day, window[1])
+    # A different service time invalidates the customer's previous arrival notice.
+    booking.arrival_at = None
 
 
 def check_tables(
@@ -110,6 +112,12 @@ def describe(
         "party_size": booking.party_size,
         "name": booking.name,
         "notes": booking.notes,
+        "occasion": booking.occasion,
+        "dietary_requirements": booking.dietary_requirements,
+        "allergies": booking.allergies,
+        "arrival_time": hhmm(booking.arrival_at.astimezone(zone).time())
+        if booking.arrival_at
+        else None,
         "needs_accessible": booking.needs_accessible,
         "high_chairs": booking.high_chairs,
         "prefs": list(booking.prefs or []),
