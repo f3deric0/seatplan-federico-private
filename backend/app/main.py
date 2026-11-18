@@ -24,6 +24,7 @@ from app.config import APP_VERSION, Settings, get_settings
 from app.core import live
 from app.core.errors import ApiError
 from app.routers import (
+    account,
     attendee,
     auth,
     bookings,
@@ -35,6 +36,7 @@ from app.routers import (
     guest_accounts,
     guest_events,
     health,
+    members,
     menus,
     owner_payments,
     owner_rooms,
@@ -139,6 +141,8 @@ async def _add_security_headers(
 def _register_routers(app: FastAPI) -> None:
     for module in (
         health,
+        account,
+        members,
         owners,
         owner_rooms,
         photos,

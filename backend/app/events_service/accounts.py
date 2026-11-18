@@ -22,7 +22,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.core import audit
+from app.core import audit, members
 from app.core.errors import ApiError
 from app.core.privacy import mask_email
 from app.events_service import share
@@ -40,6 +40,7 @@ from app.models import (
     Event,
     Guest,
     GuestAccount,
+    Organiser,
     Seat,
     Venue,
     VenueTable,
@@ -241,14 +242,17 @@ def may_show_code(session: Session, email: str) -> bool:
 
     Only in a demo that sends no real email (DEMO_MODE=1 and the console
     provider), only for made-up example.com addresses, and never for an
-    address an organiser invited: showing that code would let anyone take
-    over the invitation by typing the address. Password reset codes are
-    never shown (see routers/guest_accounts.py).
+    address an organiser invited or an owner added to a venue's team:
+    showing that code would let anyone take over the invitation, or the
+    staff access, by typing the address. Password reset codes are never
+    shown (see routers/guest_accounts.py).
     """
     settings = get_settings()
     if not (settings.demo_mode and settings.email_provider == "console"):
         return False
     if not email.endswith(DEMO_DOMAIN):
+        return False
+    if members.is_member_anywhere(session, email):
         return False
     return not share.invited_anywhere(session, email)
 
@@ -313,13 +317,16 @@ class SignUp:
 
 
 def start_sign_up(
-    session: Session, event: Event, form: SignUp, show_code: bool
+    session: Session, event: Event | None, form: SignUp, show_code: bool
 ) -> tuple[str, str | None, str]:
     """Store a pending sign-up and queue its code, or warn an existing account.
 
     Returns (the outbox key to send now, the code or None, the sign-up id).
     Commits. The caller answers the same 202 either way, so nobody learns
     who has an account. The code is returned only when `show_code` is true.
+    `event` is None for a sign-up from the account page (POST /account/register):
+    its pending row has no event, and /guest/verify then also makes the work
+    account (finish_sign_up).
     """
     # A random id that only this browser gets back. A pending sign-up can be
     # finished only with it, so whoever starts a sign-up must finish it too.
@@ -332,7 +339,10 @@ def start_sign_up(
         hour = utc_now().strftime("%Y%m%d%H")
         # A keyed hash, not the address: keys outlive a deleted account.
         key = f"account-exists:{keyed_hash('mailbox:' + mailbox(form.email))[:32]}:{hour}"
-        parts = templates.account_exists(existing.name, event.name, sign_in_link())
+        if event is None:
+            parts = templates.account_exists_general(existing.name, sign_in_link())
+        else:
+            parts = templates.account_exists(existing.name, event.name, sign_in_link())
         _queue(session, key, "account_exists", form.email, parts)
         session.commit()
         return key, None, signup_id
@@ -340,15 +350,18 @@ def start_sign_up(
         session,
         form.email,
         "register",
-        event_id=event.id,
+        event_id=event.id if event is not None else None,
         name=form.name,
         password_hash=password_hash,
         needs_accessible=form.needs_accessible,
         signup_hash=_signup_hash(signup_id),
-        share_version=event.share_version,
+        share_version=event.share_version if event is not None else None,
         code_shown=show_code,
     )
-    parts = templates.account_code(event.name, code, sign_in_link())
+    if event is None:
+        parts = templates.account_code_general(code, sign_in_link())
+    else:
+        parts = templates.account_code(event.name, code, sign_in_link())
     _queue(session, _code_key(row), CODE_KIND["register"], form.email, parts)
     session.commit()
     return _code_key(row), (code if show_code else None), signup_id
@@ -376,6 +389,40 @@ def _create_account(session: Session, row: EmailCode) -> GuestAccount:
     return account
 
 
+def _create_work_identity(
+    session: Session, row: EmailCode, account: GuestAccount
+) -> Organiser | None:
+    """The work account of an account-page sign-up: same address, name and password.
+
+    None when a work account with this address already exists: it is never
+    changed here (its owner proved nothing new). Made in a savepoint, so a
+    work account written by someone else at the same moment costs only the
+    work half, never the guest account. No commit.
+    """
+    if session.scalar(select(Organiser.id).where(Organiser.email == row.email)) is not None:
+        return None
+    user = Organiser(
+        email=row.email,
+        name=row.name or "",
+        password_hash=row.password_hash or "",
+        role="organiser",
+    )
+    try:
+        with session.begin_nested():
+            session.add(user)
+            session.flush()
+    except IntegrityError:
+        return None
+    audit.record(
+        session,
+        actor=f"account:{account.id}",
+        action="account.work_create",
+        entity="organiser",
+        entity_id=str(user.id),
+    )
+    return user
+
+
 def _event_to_join(session: Session, row: EmailCode) -> Event | None:
     """The event of the sign-up, or None when its link was replaced since."""
     event = session.get(Event, row.event_id) if row.event_id is not None else None
@@ -386,28 +433,34 @@ def _event_to_join(session: Session, row: EmailCode) -> Event | None:
 
 def finish_sign_up(
     session: Session, email: str, code: str, signup_id: str
-) -> tuple[GuestAccount, dict[str, Any]]:
+) -> tuple[GuestAccount, dict[str, Any], Organiser | None]:
     """Right code from the right browser: make the account, drop the code, join. Commits.
 
     The account is made in every case; only a successful join adds a guest
     row. A sign-up id from another browser is answered like an expired code
-    and does not use up a try.
+    and does not use up a try. A sign-up with no event (the account page)
+    joins nothing and also makes the work account when the address has none;
+    that work account is the third value, else None.
     """
     row = _live_code(session, email, "register")
     if not tokens_match(row.signup_hash or "", _signup_hash(signup_id)):
         raise ApiError(404, "not_found", EXPIRED)
     _check_code(session, row, code)
+    account_only = row.event_id is None
     event = _event_to_join(session, row)
     if event is not None:
         share.count_new_join(session, event, email, None)  # commits; before our writes
     account = _create_account(session, row)
+    work = _create_work_identity(session, row, account) if account_only else None
     needs_accessible = row.needs_accessible
     _drop_code(session, row)
     result: dict[str, Any] = {"status": "link_closed", "event_id": None}
-    if event is not None:
+    if account_only:
+        result = {"status": "account_only", "event_id": None}
+    elif event is not None:
         result = share.join(session, event, account, needs_accessible)
     session.commit()
-    return account, result
+    return account, result, work
 
 
 # ---------------------------------------------------------------- sign-in and password
@@ -431,18 +484,52 @@ def log_in(session: Session, request: Request, email: str, password: str) -> Gue
     blocks only that network, not the owner at home.
     """
     rate_limit(session, f"guest-login:{client_ip(request)}", LOGINS_PER_MINUTE, 60)
-    fail_keys = _fail_keys(request, email)
-    if any(limit_reached(session, key, limit, HOUR) for key, limit in fail_keys):
+    keys = _fail_keys(request, email)
+    if any(limit_reached(session, key, limit, HOUR) for key, limit in keys):
         raise ApiError(429, "rate_limited", TOO_MANY_FAILS)
     account = find_account(session, email)
     password_ok = verify_password(password, account.password_hash if account else _DUMMY_HASH)
     if account is None or not password_ok:
-        for key, limit in fail_keys:
+        for key, limit in keys:
             rate_limit(session, key, limit, HOUR)
         raise ApiError(401, "unauthorised", "Email or password is not correct.")
     account.last_login_at = utc_now()
     session.commit()
     return account
+
+
+def log_in_both(
+    session: Session, request: Request, email: str, password: str
+) -> tuple[GuestAccount | None, Organiser | None]:
+    """POST /account/login: the guest account and the work account this password opens.
+
+    Both limits of the two sign-in doors apply (per address: the work login's
+    and the guest login's), and the guest failed-login caps are checked
+    before any password. Both passwords are always checked, against a dummy
+    hash when an identity is missing, so the time taken does not tell which
+    identities exist. A failure is counted only when neither opens; then the
+    answer is the same 401 as the two other sign-in doors.
+    """
+    address = client_ip(request)
+    rate_limit(session, f"login:{address}", LOGINS_PER_MINUTE, 60)
+    rate_limit(session, f"guest-login:{address}", LOGINS_PER_MINUTE, 60)
+    keys = _fail_keys(request, email)
+    if any(limit_reached(session, key, limit, HOUR) for key, limit in keys):
+        raise ApiError(429, "rate_limited", TOO_MANY_FAILS)
+    account = find_account(session, email)
+    user = session.scalars(select(Organiser).where(Organiser.email == email)).first()
+    guest_ok = verify_password(password, account.password_hash if account else _DUMMY_HASH)
+    work_ok = verify_password(password, user.password_hash if user else _DUMMY_HASH)
+    account = account if guest_ok else None
+    user = user if work_ok else None
+    if account is None and user is None:
+        for key, limit in keys:
+            rate_limit(session, key, limit, HOUR)
+        raise ApiError(401, "unauthorised", "Email or password is not correct.")
+    if account is not None:
+        account.last_login_at = utc_now()
+        session.commit()
+    return account, user
 
 
 def start_reset(session: Session, email: str) -> tuple[str | None, str | None]:

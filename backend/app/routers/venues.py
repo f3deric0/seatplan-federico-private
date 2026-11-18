@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import db
-from app.core import audit
+from app.core import audit, members
 from app.core.errors import ApiError
 from app.core.layout import LayoutItem, save_layout
 from app.core.text import PlainText
@@ -132,10 +132,16 @@ def _venue_detail(session: Session, venue: Venue) -> dict[str, Any]:
     return detail
 
 
-def load_venue(session: Session, public_id: str, user: Organiser) -> Venue:
+def load_venue(
+    session: Session, public_id: str, user: Organiser, *, owner_only: bool = False
+) -> Venue:
     """The venue if this user may see it. Staff may see every venue; an
-    organiser only their own. Missing and forbidden look the same (404)."""
+    organiser their own, and a member (core/members.py) the venues whose owner
+    added their address, unless `owner_only` (the floor plan editor).
+    Missing and forbidden look the same (404)."""
     venue = session.scalars(select(Venue).where(Venue.public_id == public_id)).first()
+    if venue is not None and not owner_only and members.is_member(session, venue.id, user.email):
+        return venue
     if (
         venue is None
         or (user.role != "staff" and venue.organiser_id != user.id)
@@ -199,7 +205,7 @@ def put_layout(
     user: CurrentOrganiser,
     session: db.SessionDep,
 ) -> dict[str, Any]:
-    venue = load_venue(session, venue_public_id, user)
+    venue = load_venue(session, venue_public_id, user, owner_only=True)
     try:
         counts = save_layout(
             session,

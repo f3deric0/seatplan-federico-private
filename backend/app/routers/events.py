@@ -14,7 +14,7 @@ from app import db
 from app.core import audit, live
 from app.core.errors import ApiError
 from app.core.holds import commit_or_seat_taken
-from app.events_service import chart, csv_io, exact_check, guests, optimise, plans, share
+from app.events_service import chart, csv_io, exact_check, guests, optimise, plans, share, work
 from app.events_service.access import (
     attendee_link,
     deadline_passed,
@@ -23,6 +23,7 @@ from app.events_service.access import (
     load_event_guest,
     load_venue,
 )
+from app.events_service.event_types import event_type_label
 from app.events_service.problem import active_guests, current_rows
 from app.events_service.schemas import (
     EmptyIn,
@@ -50,7 +51,8 @@ from app.security import CurrentOrganiser
 router = APIRouter(tags=["events"])
 
 
-def event_dict(event: Event) -> dict[str, Any]:
+def event_dict(session: Session, event: Event) -> dict[str, Any]:
+    venue = session.get(Venue, event.venue_id)
     return {
         "public_id": event.public_id,
         "name": event.name,
@@ -60,6 +62,10 @@ def event_dict(event: Event) -> dict[str, Any]:
         "change_deadline": event.change_deadline,
         "deadline_passed": deadline_passed(event),
         "live_scope": event_scope(event),
+        "event_type": event.event_type,
+        "event_type_label": event_type_label(event.event_type),
+        "listed": event.listed,
+        "venue_name": venue.name if venue is not None else None,
     }
 
 
@@ -102,13 +108,16 @@ def create_event(body: EventIn, user: CurrentOrganiser, session: db.SessionDep) 
     session.flush()
     _changed(session, event, user, "event.create", event.public_id)
     session.commit()
-    return event_dict(event)
+    return event_dict(session, event)
 
 
 @router.get("/events")
 def list_events(user: CurrentOrganiser, session: db.SessionDep) -> list[dict[str, Any]]:
-    query = select(Event).where(Event.organiser_id == user.id).order_by(Event.starts_at)
-    return [event_dict(event) for event in session.scalars(query)]
+    """The organiser's events, then those at venues where they are a member (`role`)."""
+    return [
+        {**event_dict(session, event), "role": role}
+        for event, _venue, role in work.runnable_events(session, user)
+    ]
 
 
 @router.get("/events/{eid}")
@@ -124,7 +133,7 @@ def get_event(eid: str, user: CurrentOrganiser, session: db.SessionDep) -> dict[
         if g.id not in rows or rows[g.id].source != "self"
     ]
     return {
-        "event": event_dict(event),
+        "event": event_dict(session, event),
         "venue": {"public_id": venue.public_id, "name": venue.name},
         "map": organiser_map(session, event, venue),
         "not_chosen": not_chosen,
@@ -150,7 +159,7 @@ def patch_event(
         raise ApiError(422, "validation", "The event must end after it starts.")
     _changed(session, event, user, "event.update", event.public_id, {"fields": sorted(changes)})
     session.commit()
-    return event_dict(event)
+    return event_dict(session, event)
 
 
 # ---------------------------------------------------------------- guests

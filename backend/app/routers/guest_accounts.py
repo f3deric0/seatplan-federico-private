@@ -21,6 +21,7 @@ from app.events_service.schemas import (
     VerifyIn,
 )
 from app.models import GuestAccount
+from app.routers.account import work_session
 from app.security import (
     CurrentGuestAccount,
     client_ip,
@@ -40,11 +41,19 @@ def _session_out(account: GuestAccount) -> dict[str, Any]:
 
 @router.post("/verify", status_code=201)
 def verify(body: VerifyIn, request: Request, session: db.SessionDep) -> dict[str, Any]:
-    """The emailed code: the account is made, signed in, and joins the event if it can."""
+    """The emailed code: the account is made, signed in, and joins the event if it can.
+
+    A sign-up from the account page (no event) also gets `work`, the work
+    session, when this verify made the work account. When the address had a
+    work account already, `work` is absent: sign in with /account/login.
+    """
     accounts.count_code_check(session, request)
     email = accounts.normalise_email(body.email)
-    account, join = accounts.finish_sign_up(session, email, body.code, body.signup_id)
-    return {**_session_out(account), "join": join}
+    account, join, work = accounts.finish_sign_up(session, email, body.code, body.signup_id)
+    answer = {**_session_out(account), "join": join}
+    if work is not None:
+        answer["work"] = work_session(work)
+    return answer
 
 
 @router.post("/login")
