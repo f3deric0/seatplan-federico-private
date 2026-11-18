@@ -31,6 +31,7 @@ Additive only, through `seed/migrate.py` (`NEW_COLUMNS`, server defaults word fo
 | `events` | `listed` | `BOOLEAN NOT NULL DEFAULT FALSE` | Shown on the public pages, together with the shared link on, a future start and a published event venue with a slug |
 | `venues` | `venue_type` | `VARCHAR(20)` NULL | Event venues: `hall` or `quinta`. `kind` keeps its two values |
 | `organisers` | `session_version` | `INTEGER NOT NULL DEFAULT 0` | Signed into every work session token; a new password (guest reset, same address) adds one and ends older sessions |
+| `venues` | `parent_venue_id` | `INTEGER REFERENCES venues (id)` NULL | Set only on an event's own copy of a hall or quinta (its room setup, `events_service/layouts.py`): the venue it copies. The copy is `kind` `event`, `status` `draft`, no slug, the parent's owner; its name, public page, photos and team are the parent's (`core/parent_venue.py`). NULL for every other venue |
 
 New table `venue_members`: `id`, `venue_id` (FK `venues`, `ON DELETE CASCADE`), `email` (trimmed,
 lower case, indexed), `role` (`staff`), `added_by` (FK `organisers`, NULL allowed), `created_at`, and

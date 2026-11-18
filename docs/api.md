@@ -57,9 +57,51 @@ owner (work session, role organiser) gets **404** `not_found`, as for a missing 
 A member (signed in with a work account whose email is on the list) passes the same checks as staff:
 `/staff/{vid}/...` for a restaurant, every `/events/{eid}/...` route for the events at an event venue
 (organiser role), and `GET /venues/{vid}`. Still owner-only: owner profile, photos, rooms, payments,
-publishing, the team list, `PUT /venues/{vid}/layout` and `POST /events` (creating events).
+publishing, the team list, `PUT /venues/{vid}/layout` (except on an event's setup copy, below) and
+`POST /events` (creating events).
 `GET /events` lists the organiser's events then those at member venues (each part by start); each row now also has
 `event_type`, `event_type_label`, `listed`, `venue_name` and, in the list only, `role`.
+
+**Event room layouts (work session, organiser role: the event's organiser or its hall's team).**
+Each event can run on its own private copy of its hall or quinta (a "setup" venue: `kind` `event`,
+`status` `draft`, no slug, `parent_venue_id` = the hall), so changing one event never changes
+another at the same hall. Names, public pages, photos, emails and the venue team stay the hall's:
+`venue_name` everywhere, `/public-events`, `/event-venues`, `/account/work`, `/guest/me` events,
+`/j/{token}` and the attendee page show the parent. The copy is never listed (`GET /venues`,
+`/account/work`), is no venue for `POST /events` (404) and has no team of its own
+(`/owner/venues/{vid}/members` is 404). Events without a setup keep using the hall's own plan.
+
+- `GET /events/{eid}/layouts` -> `{current, own_layout, venue_id, capacity, guests, seated, presets}`.
+  `current` is the preset key the event's copy still matches by geometry (a save in the editor that
+  moves nothing keeps it), else `"custom"` (always `"custom"` on the hall's own plan, `own_layout:
+  false`). `venue_id` is the public id of the venue holding the event's map: open it in the editor.
+  `capacity` counts its seats that are not blocked; `guests` the guests still coming; `seated` those
+  with a seat. `presets` is `[{key, label, description, capacity, preview}]` in this order: `banquet`
+  Banquet, `cabaret` Cabaret, `theatre` Theatre, `classroom` Classroom, `u_shape` U-shape, `boardroom`
+  Boardroom, `cocktail` Cocktail, each fitted to the hall's width and height (cm, front at the top).
+  `preview = {width, height, zones: [{kind, x, y, w, h}], tables: [{shape, x, y, w, h, rotation,
+  seats: [{x, y}]}]}`, whole centimetres, enough for an SVG thumbnail (`x, y` the top-left of the
+  unrotated box, `rotation` in degrees around its centre, as in the editor).
+- `POST /events/{eid}/layout` `{preset, confirm?: false}` (unknown preset or field 422). Checks, in
+  this order, before writing anything:
+  - **422** `too_small` when the room fits none of that setup;
+  - **409** `guests_seated` when anyone has a seat and `confirm` is not true, with
+    `error.details = {seated, capacity, guests}` (the new setup's capacity);
+  - **422** `not_enough_seats` when the setup has fewer seats than guests coming and `confirm` is not
+    true, with the same `details`.
+  Then, under the event lock: a new copy of the hall with the preset; every seated guest is re-seated
+  on it by the optimiser (auto-fill's search: groups and acquaintances kept), anyone who cannot fit
+  loses their seat; holds on the old seats are dropped; each guest whose seat changed gets the usual
+  "seat changed" email (and its reminder moves), those who lost their seat the "seat cancelled" one;
+  old scenarios and undo steps are retired (they name seats that no longer exist) and history starts
+  again ("Room set up as Banquet"); the live scope is bumped and `event.layout` audited. A previous
+  copy is removed and the new one takes over its public id, so the editor link stays. Re-seated
+  guests who had chosen or been placed become `organiser` placements (auto-fill never moves them),
+  the rest `optimiser`. Answer **200**: the `GET` body plus `{applied, reseated, unseated}`.
+- Fine-tune: `GET /venues/{vid}` and `PUT /venues/{vid}/layout` on a setup copy are open to its
+  owner, a member of the parent's team and the organiser of the event on it (others 404; the demo
+  `staff` role 404 on read, 403 on write). On every other venue the editor stays owner-only. A save
+  on a copy bumps the event's live scope.
 
 **Public events (anyone, one read limit per address).**
 
@@ -139,8 +181,8 @@ database and does not touch the local application database:
 .\.venv\Scripts\python.exe scripts/export_openapi.py
 ```
 
-What the last run (2026-11-18, after the events parity work) reported: OpenAPI `3.1.0`, title
-`SeatPlan API`, version `0.1.0`, **121 paths, 142 operations, 71 schemas**. Run the command again after
+What the last run (2026-11-18, after the event room layouts) reported: OpenAPI `3.1.0`, title
+`SeatPlan API`, version `0.1.0`, **123 paths, 144 operations, 72 schemas**. Run the command again after
 changing any router, so the file never drifts from the code.
 
 ## Restaurant platform API implemented on this branch
@@ -249,6 +291,9 @@ Every error has the same shape:
 {"error": {"code": "seat_taken", "message": "Seat B4 was just taken by someone else. ..."}}
 ```
 
+An error may also carry `details` with facts the page needs (today only the
+room setup errors above); without them the key is absent.
+
 | Code | HTTP status | Usual cause |
 |---|---|---|
 | `validation` | 400, 413, 422 | A field is missing, too long, or unknown; a body too large |
@@ -262,6 +307,9 @@ Every error has the same shape:
 | `hold_expired` | 409 | The 5-minute hold ran out before confirming |
 | `deadline_passed` | 409 | The event's change deadline has passed (also: joining with the shared link after it) |
 | `conflict` | 409 | Any other clash, including "please try again" after a Postgres deadlock |
+| `guests_seated` | 409 | Applying a room setup would re-seat guests: send `confirm: true` (`details: {seated, capacity, guests}`) |
+| `not_enough_seats` | 422 | The room setup has fewer seats than guests coming: send `confirm: true` to seat as many as fit (`details` as above) |
+| `too_small` | 422 | The room fits none of that setup |
 | `rate_limited` | 429 | Too many calls in this minute, too many live streams, too many held tables, or a booking cap (4 upcoming bookings per mailbox, 10 booking attempts per address and day at one restaurant) |
 | `internal` | 500 | A bug; the message never shows a stack trace |
 

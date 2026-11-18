@@ -2755,6 +2755,138 @@
         }
       }
     },
+    "/api/events/{eid}/layouts": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Get Layouts",
+        "description": "The seven one-click setups fitted to the hall, and the one in use.",
+        "operationId": "get_layouts_api_events__eid__layouts_get",
+        "parameters": [
+          {
+            "name": "eid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Eid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Layouts Api Events  Eid  Layouts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/events/{eid}/layout": {
+      "post": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Apply Layout",
+        "description": "Give the event its own copy of the hall laid out as a preset.\n\nWith guests seated it needs confirm=true (else 409 guests_seated); then\neveryone is re-seated and told. See events_service/layouts.py.",
+        "operationId": "apply_layout_api_events__eid__layout_post",
+        "parameters": [
+          {
+            "name": "eid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Eid"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayoutPresetIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Apply Layout Api Events  Eid  Layout Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/events/{eid}/share": {
       "get": {
         "tags": [
@@ -9955,6 +10087,35 @@
           "guest_ids"
         ],
         "title": "KnowsIn"
+      },
+      "LayoutPresetIn": {
+        "properties": {
+          "preset": {
+            "type": "string",
+            "enum": [
+              "banquet",
+              "cabaret",
+              "theatre",
+              "classroom",
+              "u_shape",
+              "boardroom",
+              "cocktail"
+            ],
+            "title": "Preset"
+          },
+          "confirm": {
+            "type": "boolean",
+            "title": "Confirm",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "preset"
+        ],
+        "title": "LayoutPresetIn",
+        "description": "POST /events/{eid}/layout: one of events_service/layout_presets.PRESET_KEYS."
       },
       "LoginIn": {
         "properties": {

@@ -33,7 +33,17 @@ through Resend, usability sessions with real users.
   Rita Rossi (`rita@example.com`, `DEMO_MEMBER_PASSWORD`), staff at Casa Lumen and Quinta da Serra Azul,
   booking at Tagus Terrace and the Lisbon Product Conference.
 
+- Event room layouts: `GET /api/events/{eid}/layouts` lists seven one-click setups (banquet, cabaret,
+  theatre, classroom, U-shape, boardroom, cocktail) fitted to the hall, each with a preview and its
+  capacity; `POST /api/events/{eid}/layout` puts the event on its own private copy of the hall laid out
+  that way, re-seating seated guests (with `confirm`) and emailing whoever moved. Fine-tuning that copy
+  in `/editor/<id>` is open to the event's organiser and the hall's team. The ten listed demo events
+  each run on their own setup. New column `venues.parent_venue_id` (additive).
+
 ### Changed (2026-11-18, events parity)
+
+- An error answer may carry `error.details` (today only the layout errors); without details the
+  body is unchanged.
 
 - `GET /api/events` and every event answer add `event_type`, `event_type_label`, `listed` and
   `venue_name`; the list adds `role` and includes the events at venues where the person is a member.

@@ -25,6 +25,8 @@ The routers check the request and call one function from here.
 | `event_types.py` | The closed lists: event types (key and English label) and event venue types (`hall`, `quinta`) |
 | `public.py` | The public pages: what counts as a public event (listed, link on, upcoming, published event venue with a slug), the events list, the event venues and one venue's page |
 | `work.py` | `GET /account/work`: the venues and events a work account runs, with its role; `runnable_events` also feeds `GET /events` |
+| `layout_presets.py` | Pure geometry: the seven one-click room setups (banquet, cabaret, theatre, classroom, U-shape, boardroom, cocktail) fitted to a room's width and height, with step-free places and a capacity; `matches` tells a preset from an edited room |
+| `layouts.py` | The Layout tab: `overview` (presets, previews, the one in use) and `apply_preset`, which moves the event to its own private copy of the hall (`venues.parent_venue_id`), re-seats seated guests with the optimiser, drops holds, queues seat emails and retires old plans |
 | `csv_io.py` | CSV import (validated, all or nothing) and safe CSV export |
 | `plans.py` | Plan snapshots: scenarios, `apply_plan`, undo and redo |
 | `optimise.py` | Auto-fill, re-plan, compare, what-if (calls the optimiser) |
@@ -72,6 +74,22 @@ POST /events/{eid}/scenarios/{sid}/apply
                                        the seat they have: never deleted without a replacement)
 POST /events/{eid}/undo | /redo        move along the history snapshots, never touching "self"
 ```
+
+## Data flow: the organiser picks a room setup
+
+```
+GET  /events/{eid}/layouts   load_event -> 7 x layout_presets.build(hall size) -> previews + current
+POST /events/{eid}/layout    load_event -> build -> lock_event -> checks (too_small, guests_seated
+                             without confirm, not_enough_seats without confirm) -> new setup copy
+                             -> drop holds and old assignments -> event.venue_id = copy -> solve()
+                             -> new assignments -> seat emails -> retire old plans, new history
+                             -> remove the previous copy (the new one keeps its public id) -> one commit
+```
+
+An event's setup copy is private: its name, public page and team are its
+hall's (`core/parent_venue.py`, `core/members.is_member`), so the public
+pages, emails and "my events" keep showing the hall, and the hall's team runs
+the event as before.
 
 ## Three likely walkthrough questions
 
