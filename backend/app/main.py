@@ -11,6 +11,7 @@ api/index.py calls create_app() itself.
 """
 
 from collections.abc import Awaitable, Callable
+from typing import Any
 
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -87,7 +88,10 @@ def error_body(code: str, message: str) -> dict[str, dict[str, str]]:
 
 async def _api_error(_request: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, ApiError)
-    return JSONResponse(error_body(exc.code, exc.message), status_code=exc.status)
+    body: dict[str, Any] = error_body(exc.code, exc.message)
+    if exc.details is not None:
+        body["error"]["details"] = exc.details
+    return JSONResponse(body, status_code=exc.status)
 
 
 async def _http_error(_request: Request, exc: Exception) -> JSONResponse:

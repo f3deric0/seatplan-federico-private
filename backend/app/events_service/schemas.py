@@ -110,6 +110,17 @@ Code = Field(pattern=r"^[0-9]{6}$")
 Password = Field(min_length=1, max_length=200)
 
 
+class LayoutPresetIn(Strict):
+    """POST /events/{eid}/layout: one of events_service/layout_presets.PRESET_KEYS."""
+
+    preset: Literal[
+        "banquet", "cabaret", "theatre", "classroom", "u_shape", "boardroom", "cocktail"
+    ]
+    # Needed when guests already have seats, or the setup has fewer seats than
+    # guests coming: the page asks first, then sends confirm=true.
+    confirm: bool = False
+
+
 class EmptyIn(Strict):
     """A body of {} for actions that need nothing more."""
 

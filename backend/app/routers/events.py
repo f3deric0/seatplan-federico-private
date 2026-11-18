@@ -15,7 +15,17 @@ from app.core import audit, live
 from app.core.errors import ApiError
 from app.core.holds import commit_or_seat_taken
 from app.core.parent_venue import shown_venue, shown_venue_of
-from app.events_service import chart, csv_io, exact_check, guests, optimise, plans, share, work
+from app.events_service import (
+    chart,
+    csv_io,
+    exact_check,
+    guests,
+    layouts,
+    optimise,
+    plans,
+    share,
+    work,
+)
 from app.events_service.access import (
     attendee_link,
     deadline_passed,
@@ -33,6 +43,7 @@ from app.events_service.schemas import (
     ExactCheckIn,
     GuestIn,
     GuestPatch,
+    LayoutPresetIn,
     OptimiseIn,
     SeatChoice,
     SharePatch,
@@ -269,6 +280,37 @@ def export_guests(eid: str, user: CurrentOrganiser, session: db.SessionDep) -> R
 @router.get("/events/{eid}/chart")
 def get_chart(eid: str, user: CurrentOrganiser, session: db.SessionDep) -> dict[str, Any]:
     return chart.chart(session, load_event(session, eid, user))
+
+
+# ---------------------------------------------------------------- room setup
+
+
+@router.get("/events/{eid}/layouts")
+def get_layouts(eid: str, user: CurrentOrganiser, session: db.SessionDep) -> dict[str, Any]:
+    """The seven one-click setups fitted to the hall, and the one in use."""
+    return layouts.overview(session, load_event(session, eid, user))
+
+
+@router.post("/events/{eid}/layout")
+def apply_layout(
+    eid: str, body: LayoutPresetIn, user: CurrentOrganiser, session: db.SessionDep
+) -> dict[str, Any]:
+    """Give the event its own copy of the hall laid out as a preset.
+
+    With guests seated it needs confirm=true (else 409 guests_seated); then
+    everyone is re-seated and told. See events_service/layouts.py.
+    """
+    event = load_event(session, eid, user)
+    result = layouts.apply_preset(session, event, body.preset, body.confirm, user.email)
+    detail = {
+        "preset": body.preset,
+        "venue_id": result["venue_id"],
+        "reseated": result["reseated"],
+        "unseated": result["unseated"],
+    }
+    _changed(session, event, user, "event.layout", event.public_id, detail)
+    commit_or_seat_taken(session)
+    return result
 
 
 # ---------------------------------------------------------------- shared link
