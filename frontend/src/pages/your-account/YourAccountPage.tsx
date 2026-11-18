@@ -105,7 +105,7 @@ export default function YourAccountPage() {
                 ) : (
                   <MissingSide
                     title="Your bookings are on the personal side of your account"
-                    text="This sign-in opened your staff tools only. Sign in with the email and password you book with to see your bookings and event seats, or create an account for them."
+                    text="This sign-in opened your staff tools only. Sign in with the email and password you book with to see your bookings and event seats."
                     onSignedIn={signedIn}
                   />
                 ))}
