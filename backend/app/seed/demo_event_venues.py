@@ -233,7 +233,7 @@ VENUES = (
         lat=38.6050,
         lng=-7.9500,
         phone="+351 266 000 205",
-        description="A farmhouse among cork oaks in the Alentejo plain, with long summer evenings and eight round tables under the trees.",
+        description="A farmhouse among cork oaks in the Alentejo plain, with long summer evenings and ten round tables under the trees.",
         photos=(
             ("cork_oaks", "An illustration of a white farmhouse among cork oaks at sunset"),
             ("garden_quinta", "An illustration of round tables on a lawn"),

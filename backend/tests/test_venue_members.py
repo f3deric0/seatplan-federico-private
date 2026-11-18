@@ -5,6 +5,7 @@ loses access the moment the owner removes them, and the owner never learns
 whether an account exists for the address they typed.
 """
 
+import base64
 from typing import Any
 
 from conftest import auth_header, make_user
@@ -15,6 +16,7 @@ from test_events_setup import make_event
 
 from app.events_service import accounts
 from app.models import Organiser, Venue
+from app.seed import demo_photos
 
 
 def _restaurant(session: Session, owner: Organiser, name: str) -> str:
@@ -51,18 +53,32 @@ def test_a_member_of_one_restaurant_works_there_and_nowhere_else(
     assert client.get(f"/api/staff/{a}/schedule", headers=headers).status_code == 200
     assert client.get(f"/api/staff/{b}/schedule", headers=headers).status_code == 404
 
-    # Owner-only pages stay with the owner.
-    for method, path in (
-        ("GET", f"/api/owner/restaurants/{a}/profile"),
-        ("GET", f"/api/owner/restaurants/{a}/photos"),
-        ("POST", f"/api/owner/restaurants/{a}/publish"),
-        ("GET", f"/api/owner/restaurants/{a}/publish-check"),
-        ("GET", f"/api/owner/restaurants/{a}/payments"),
-        ("GET", f"/api/owner/venues/{a}/members"),
-        ("POST", f"/api/owner/venues/{a}/members"),
+    # Owner-only pages stay with the owner. Each write gets a valid body, so a
+    # 404 here is the access check, not body validation. (PUT .../rooms uses
+    # the same owner loader as GET .../rooms.)
+    picture = base64.b64encode(demo_photos.scene("tasca")).decode()
+    photo = {"kind": "gallery", "content_type": "image/png", "data_base64": picture}
+    for method, path, body in (
+        ("GET", f"/api/owner/restaurants/{a}/profile", None),
+        ("PATCH", f"/api/owner/restaurants/{a}/profile", {"name": "Taken over"}),
+        ("GET", f"/api/owner/restaurants/{a}/photos", None),
+        ("POST", f"/api/owner/restaurants/{a}/photos", photo),
+        ("POST", f"/api/owner/restaurants/{a}/publish", None),
+        ("POST", f"/api/owner/restaurants/{a}/unpublish", None),
+        ("GET", f"/api/owner/restaurants/{a}/publish-check", None),
+        ("GET", f"/api/owner/restaurants/{a}/payments", None),
+        ("GET", f"/api/owner/restaurants/{a}/rooms", None),
+        ("GET", f"/api/owner/restaurants/{a}/ambience-preview", None),
+        ("GET", f"/api/owner/restaurants/{a}/menu", None),
+        ("PUT", f"/api/owner/restaurants/{a}/menu", {"version": 0, "items": []}),
+        ("GET", f"/api/owner/venues/{a}/members", None),
+        ("POST", f"/api/owner/venues/{a}/members", {"email": "x@example.com"}),
     ):
-        answer = client.request(method, path, headers=headers, json={"email": "x@example.com"})
+        answer = client.request(method, path, headers=headers, json=body)
         assert answer.status_code == 404, (method, path, answer.text)
+        if body is not None:  # the same body works for the owner
+            owner_answer = client.request(method, path, headers=auth_header(organiser), json=body)
+            assert owner_answer.status_code < 300, (method, path, owner_answer.text)
 
     member_id = added.json()["id"]
     removed = client.delete(f"{_members(a)}/{member_id}", headers=auth_header(organiser))
