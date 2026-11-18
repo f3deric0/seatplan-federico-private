@@ -325,9 +325,12 @@ def apply_preset(
     Raises 422 too_small, 409 guests_seated or 422 not_enough_seats (see the
     module docstring) before writing anything.
     """
+    lock_event(session, event)
+    # Read the room only now: a second apply that waited at the lock must see
+    # the copy the first one made, not the one it removed.
+    session.refresh(event)
     room, hall = _rooms(session, event)
     layout = build(key, hall.width, hall.height)
-    lock_event(session, event)
     rows = current_rows(session, event)
     coming = active_guests(session, event)
     _check(key, layout, len(rows), len(coming), confirm)
