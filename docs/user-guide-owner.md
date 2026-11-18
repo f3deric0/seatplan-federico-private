@@ -85,3 +85,14 @@ bookings; bookings already made stay, and their manage links keep working.
 | "No sun" everywhere | Set the north with the **compass** at the top right of the plan and place the pin on the map |
 | The map does not load | Type the latitude and longitude in the location step; the rest works without the map |
 | "Someone saved a newer version" | Another tab saved first. Your work is kept; reload to see theirs, then re-apply what you need |
+
+## Your team
+
+**Team** in the owner menu (`/owner/<restaurant>/team`) gives other people
+access to the service floor. Type their email and press **Add to team**. They
+need a SeatPlan account with that email address; if they have none yet, they
+can create it later with the same address. The restaurant then appears under
+**Staff** in their account, with **Open service floor**. Members run the floor,
+the bookings and the schedule; only you change the profile, photos, opening
+hours, menu, deposits, floor plan, publishing and the team itself. **Remove**
+takes the access away again (it asks first).

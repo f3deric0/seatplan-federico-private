@@ -42,6 +42,8 @@ npm run contrast   # WCAG contrast check of every colour pair in tokens.css
 | `src/pages/events/` | Attendee flow (`/e/:token`) and organiser screens (`/organiser/:eventId`). Start with `pages/events/READ_ME_FIRST.md` |
 | `src/pages/join/` | The event's shared link (`/j/:token`): the visitor's map, creating a guest account with an emailed code, signing in to join. Start with `pages/join/READ_ME_FIRST.md` |
 | `src/pages/account/` | The guest account area (`/my`, `/my/:eventId`, sign-in, password reset, delete account). Start with `pages/account/READ_ME_FIRST.md` |
+| `src/pages/events-public/` | Event booking (`/events`), halls and quintas (`/venues`, `/venues/:slug`) and Event staff (`/events/staff`). Start with `pages/events-public/READ_ME_FIRST.md` |
+| `src/pages/your-account/` | `/account`: one sign-in for bookings and staff work, Booking \| Staff. Start with `pages/your-account/READ_ME_FIRST.md` |
 | `src/pages/restaurant/` | Diner booking (`/r/:venueId`), manage-booking link (`/b/:token`) and the staff page (`/staff/:venueId`) with four tabs: Floor, Dashboard, Schedule and Optimise. Start with `pages/restaurant/READ_ME_FIRST.md` |
 
 ## Data flow

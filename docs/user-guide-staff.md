@@ -3,6 +3,13 @@
 The staff pages need a login. Staff accounts can open every restaurant; an
 organiser account only their own. All times are the restaurant's local time.
 
+## Getting in
+
+Use your SeatPlan account: **My account** (`/account`), then **Staff**. Every
+restaurant whose owner added your email to the team is listed there with your
+role; **Open service floor** opens it. If your sign-in opened only your
+bookings, the Staff side says so and lets you sign in again.
+
 ## Live floor
 
 Pick a date and time (default: now). Every table shows one status:

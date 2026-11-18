@@ -47,3 +47,10 @@ button. `PublishReview.tsx` (`/owner/:venueId/review`) shows the seven-row check
 `GET .../publish-check`: every row says Done, To do or Recommended in words next to its mark, with a link to fix
 it. Publish is off until every required row is done, and the server checks again and may still answer 422 with
 the problems, which the page lists. A published restaurant shows "View public page" and Unpublish.
+
+## Team (events parity, 2026-11-18)
+
+`TeamPage.tsx` (`/owner/:venueId/team`, "Team" in the shell's lower menu) lists the members, adds one by
+email and removes one after a dialog (`GET|POST|DELETE /owner/venues/{vid}/members`, in `api/account.ts`).
+The server never says whether an email has an account, so the page only explains that the person needs
+one with that address. A 404 means "not your restaurant".
