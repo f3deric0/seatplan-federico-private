@@ -47,8 +47,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* The floor under the glass: grain, the floor-plan dot grid (fading out down the
-   page) and the lamp pools, fixed to the window so panels slide over the light. */
+/* The floor under the glass: grain and the lamp pools, fixed to the window so
+   panels slide over the light. */
 body::before {
   content: "";
   position: fixed;
@@ -57,9 +57,29 @@ body::before {
   pointer-events: none;
   background:
     var(--grain),
-    radial-gradient(circle, var(--grid-dot) 1px, transparent 1.5px) 0 0 / var(--grid-step) var(--grid-step),
     var(--page-lamps),
     var(--c-bg);
+}
+
+/* The floor plan: the editor's dot grid, drawn once under the hero and faded out
+   before the content begins. It scrolls away with the page. */
+body::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--grid-height);
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(circle, var(--grid-dot) 1px, transparent 1.5px) 0 0 / var(--grid-step) var(--grid-step);
+  -webkit-mask-image: var(--grid-fade);
+  mask-image: var(--grid-fade);
+}
+
+/* Placeholders read as muted text, never the browser's light grey (#757575 fails
+   4.5:1 on the glass). Firefox dims them with opacity; this undoes it. */
+::placeholder {
+  color: var(--c-text-muted);
+  opacity: 1;
 }
 
 /* Gloock has one weight; a bold heading would be a smeared fake bold. */

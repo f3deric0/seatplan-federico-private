@@ -37,12 +37,12 @@
   --c-ops-bg: #f6f5fa;
   --c-ops-nav: #2a2150;
   --c-ops-nav-text: #ffffff;
-  --c-bg: #f8f7fc;
+  --c-bg: #fbfaff;
   --c-surface: #ffffff;
   --c-surface-sunk: #f0eef6;   /* the floor under a plan */
   --c-surface-strong: #dcd8ea; /* tables drawn on the floor */
   --c-text: #1f1b33;
-  --c-text-muted: #5f5a75;
+  --c-text-muted: #555070;   /* a step darker so it holds 4.5:1 on the apricot pool and on clear glass */
   --c-border: #e3e0ec;
   --c-border-strong: #857f9c;
 
@@ -66,19 +66,21 @@
   --c-heading: #2b2160;        /* deep indigo: between the ink and the purple */
 
   /* ---------- Glass: Lisbon at dusk over a floor plan ---------- */
-  /* Apricot sun low over the river, a rose sky, violet shade. The violet is the
-     darkest pool, so it is --c-bg-deep; --c-glass-floor is white glass over it. */
+  /* An apricot sun low over the river (top right) and a faint violet shade (left).
+     The apricot is the darker pool, so it is --c-bg-deep; --c-glass-floor and
+     --c-glass-soft-floor are the white glass over it. */
   --c-lamp-warm: #fbdcc4;
-  --c-lamp-cool: #f5d2e3;
-  --c-bg-deep: #ddd3f6;
-  --c-glass-floor: #f2eefc;
-  --glass-fill: rgb(255 255 255 / 0.62);
+  --c-lamp-cool: #ebe3fb;
+  --c-bg-deep: #fbdcc4;
+  --c-glass-floor: #fdefe4;
+  --c-glass-soft-floor: #fdebdd;
+  --glass-fill: rgb(255 255 255 / 0.55);
   --glass-fill-strong: rgb(255 255 255 / 0.9);
-  --glass-fill-soft: rgb(255 255 255 / 0.5);
+  --glass-fill-soft: rgb(255 255 255 / 0.42);
   --glass-fill-hover: rgb(255 255 255 / 0.8);
   --glass-edge: rgb(255 255 255 / 0.8);
   --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.95), inset 0 0 0 1px rgb(255 255 255 / 0.4);
-  --grid-dot: rgb(43 33 96 / 0.08);
+  --grid-dot: rgb(43 33 96 / 0.11);
 
   --seat-free-fill: #ffffff;
   --seat-free-stroke: #3f3a55;
@@ -103,13 +105,11 @@
   --shadow-md: 0 6px 18px rgb(31 27 51 / 0.08), 0 1px 3px rgb(31 27 51 / 0.06);
   --shadow-lg: 0 18px 48px rgb(31 27 51 / 0.18);
   --shadow-glass:
-    0 1px 1px rgb(31 27 51 / 0.04),
-    0 12px 32px -14px rgb(43 33 96 / 0.22),
-    0 32px 64px -32px rgb(176 52 122 / 0.22);
+    0 1px 1px rgb(31 27 51 / 0.03),
+    0 16px 40px -20px rgb(43 33 96 / 0.18);
   --shadow-glass-hover:
-    0 1px 2px rgb(31 27 51 / 0.06),
-    0 18px 40px -14px rgb(43 33 96 / 0.3),
-    0 40px 80px -30px rgb(176 52 122 / 0.3);
+    0 1px 2px rgb(31 27 51 / 0.05),
+    0 20px 44px -18px rgb(43 33 96 / 0.24);
   --shadow-press: 0 8px 18px -8px rgb(176 52 122 / 0.7);
 }
 
@@ -151,6 +151,7 @@
     --c-lamp-cool: #1f1a3a;
     --c-bg-deep: #2c2152;
     --c-glass-floor: #2f1d33;
+    --c-glass-soft-floor: #512b48;
     --glass-fill: rgb(30 26 43 / 0.62);
     --glass-fill-strong: rgb(20 17 29 / 0.9);
     --glass-fill-soft: rgb(255 255 255 / 0.04);
