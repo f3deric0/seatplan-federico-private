@@ -44,7 +44,9 @@ CONSENT_VERSION = "2026-11-10"  # the guest accounts' version (events_service/ac
 
 def _newest(session: Session, kind: str, name: str) -> Venue:
     venue = session.scalars(
-        select(Venue).where(Venue.kind == kind, Venue.name == name).order_by(Venue.id.desc())
+        select(Venue)
+        .where(Venue.kind == kind, Venue.name == name, Venue.parent_venue_id.is_(None))
+        .order_by(Venue.id.desc())
     ).first()
     if venue is None:
         raise RuntimeError(f"Seed {name} before the member demo.")

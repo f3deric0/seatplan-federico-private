@@ -13,8 +13,13 @@ and picture is invented. The pictures are drawn by seed/demo_photos.py.
 | Quinta dos Sobreiros   | quinta | Alentejo (Évora)   | round tables of 8                 |
 | Quinta do Vale Dourado | quinta | Douro (Régua)      | round tables of 8                 |
 
-Every venue is published with a slug, so it has a public page. Its events are
-listed, with the shared link on and a cap, and start 9 to 54 days from today,
+Every venue is published with a slug, so it has a public page. The floor
+plan above is the hall's own; each of its events runs on its own copy of the
+hall (a private "setup" venue, events_service/layouts.py) laid out with the
+one-click setup that suits it: banquet for weddings, galas, birthdays and
+christenings, cabaret for the corporate dinner, theatre for the conferences at
+Tagus Forum and classroom for the workshop at Armazém da Ribeira. Its events
+are listed, with the shared link on and a cap, and start 9 to 54 days from today,
 so they are always upcoming. About a third of the places already have a guest
 and some of those chose a seat, so the maps look alive. Every event type has
 at least one event.
@@ -34,7 +39,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.layout import rebuild_neighbours
-from app.events_service import share
+from app.events_service import layouts, share
+from app.events_service.layout_presets import build
 from app.events_service.problem import event_guests, venue_seats
 from app.models import Event, Organiser, Seat, SeatAssignment, Venue, VenueTable, Zone, utc_now
 from app.seed import demo_photos
@@ -462,8 +468,22 @@ def _invite(session: Session, event: Event, spec: DemoEvent, rng: random.Random)
     session.flush()
 
 
+def setup_for(venue_layout: str, event_type: str) -> str:
+    """The one-click setup a seeded event uses (see the module docstring)."""
+    if event_type == "conference":
+        return "classroom" if venue_layout == "classroom" else "theatre"
+    if event_type == "corporate_dinner":
+        return "cabaret"
+    return "banquet"
+
+
 def _event(
-    session: Session, venue: Venue, owner: Organiser, spec: DemoEvent, rng: random.Random
+    session: Session,
+    venue: Venue,
+    owner: Organiser,
+    spec: DemoEvent,
+    rng: random.Random,
+    venue_layout: str,
 ) -> Event:
     today = datetime.now(ZONE)
     starts_at = _local(today + timedelta(days=spec.days_ahead), spec.start)
@@ -480,6 +500,9 @@ def _event(
         share_cap=spec.share_cap,
     )
     session.add(event)
+    session.flush()
+    layout = build(setup_for(venue_layout, spec.event_type), venue.width, venue.height)
+    event.venue_id = layouts.new_setup(session, event, venue, layout).id
     session.flush()
     share.switch_on(event)
     _invite(session, event, spec, rng)
@@ -525,7 +548,7 @@ def seed(session: Session) -> dict[str, str]:
         _floor_plan(session, venue, spec.layout)
         demo_photos.add_photos(session, venue, spec.photos)
         for event_spec in spec.events:
-            _event(session, venue, owner, event_spec, rng)
+            _event(session, venue, owner, event_spec, rng, spec.layout)
         if spec.linked:
             links[f"showcase_venue_{spec.slug.replace('-', '_')}"] = f"/venues/{slug}"
     session.flush()

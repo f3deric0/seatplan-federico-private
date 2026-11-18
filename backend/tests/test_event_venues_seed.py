@@ -2,7 +2,8 @@
 
 Six invented event venues (three halls, three quintas), ten listed events
 covering every event type, every one open to join through its public link;
-the two older demo events get a type but stay unlisted; Rita is staff at
+each listed event runs on its own private copy of its venue laid out with a
+one-click setup; the two older demo events get a type but stay unlisted; Rita is staff at
 Casa Lumen and Quinta da Serra Azul and books at Tagus Terrace and the Lisbon
 Product Conference with one sign-in.
 """
@@ -16,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.events_service import accounts, share
+from app.events_service import accounts, layouts, share
 from app.events_service.problem import current_rows, event_guests, venue_seats
 from app.models import Event, GuestAccount, Venue, VenueMember, VenuePhoto, utc_now
 from app.seed import demo_event_venues, demo_member
@@ -29,6 +30,19 @@ SEATS = {
     "Quinta da Serra Azul": 80,
     "Quinta dos Sobreiros": 80,
     "Quinta do Vale Dourado": 80,
+}
+# Each listed event's own setup: (preset, seats).
+SETUPS = {
+    "Lisbon Product Conference": ("theatre", 100),
+    "Cities and Climate Forum": ("theatre", 100),
+    "Cascais Charity Gala": ("banquet", 120),
+    "Blue Harbour year-end dinner": ("cabaret", 84),
+    "Porto Data Workshop": ("classroom", 40),
+    "Sofia and Tiago's wedding": ("banquet", 80),
+    "Leonor's christening lunch": ("banquet", 80),
+    "Helena's 50th birthday": ("banquet", 80),
+    "Inês and Duarte's wedding": ("banquet", 80),
+    "Douro harvest gala": ("banquet", 80),
 }
 
 
@@ -51,7 +65,9 @@ def test_six_event_venues_with_ten_listed_events_of_every_type(
         "showcase_venue_quinta_da_serra_azul": "/venues/quinta-da-serra-azul",
         "showcase_venue_quinta_dos_sobreiros": "/venues/quinta-dos-sobreiros",
     }
-    venues = session.scalars(select(Venue).order_by(Venue.id)).all()
+    venues = session.scalars(
+        select(Venue).where(Venue.parent_venue_id.is_(None)).order_by(Venue.id)
+    ).all()
     assert {v.name: len(venue_seats(session, v.id)) for v in venues} == SEATS
     assert Counter(v.venue_type for v in venues) == {"hall": 3, "quinta": 3}
     assert all(
@@ -70,8 +86,26 @@ def test_six_event_venues_with_ten_listed_events_of_every_type(
         "birthday": 1,
     }
     assert all(e.listed and e.share_enabled and e.share_cap for e in events)
+    copies = {e.name: session.get(Venue, e.venue_id) for e in events}
+    assert {
+        name: (layouts.current_preset(session, copy), len(venue_seats(session, copy.id)))
+        for name, copy in copies.items()
+    } == SETUPS
+    halls = {v.id: v for v in venues}
+    for copy in copies.values():
+        hall = halls[copy.parent_venue_id]
+        assert (copy.kind, copy.status, copy.slug, copy.is_demo) == ("event", "draft", None, True)
+        assert (copy.width, copy.height, copy.organiser_id) == (
+            hall.width,
+            hall.height,
+            hall.organiser_id,
+        )
+    assert len(session.scalars(select(Venue)).all()) == 16
     assert sum(len(event_guests(session, e)) for e in events) == 330
     assert sum(len(current_rows(session, e)) for e in events) == 149
+    for event in events:  # every seated guest sits in the event's own copy
+        seat_ids = {seat.id for seat in venue_seats(session, event.venue_id)}
+        assert {row.seat_id for row in current_rows(session, event).values()} <= seat_ids
     now = utc_now()
     for event in events:
         assert event.change_deadline is not None and event.change_deadline > now
