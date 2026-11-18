@@ -82,11 +82,16 @@ def image(
     result = session.execute(
         select(VenuePhoto, Venue)
         .join(Venue, VenuePhoto.venue_id == Venue.id)
-        .where(VenuePhoto.public_id == photo_public_id, Venue.kind == "restaurant")
+        .where(VenuePhoto.public_id == photo_public_id, Venue.kind.in_(("restaurant", "event")))
     ).first()
     if result is None:
         raise ApiError(404, "not_found", "Photo not found.")
     photo, venue = result
+    # An event venue shows its pictures only on its public page: published
+    # and with a slug (older event venues are "published" by default but have
+    # no page). There is no owner preview for them.
+    if venue.kind == "event" and (venue.status != "published" or venue.slug is None):
+        raise ApiError(404, "not_found", "Photo not found.")
     if venue.status != "published":
         token = authorization[7:] if authorization and authorization.startswith("Bearer ") else ""
         user_id = verify_session_token(token) if token else None
