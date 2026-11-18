@@ -20,6 +20,7 @@ specific vertical (events or restaurants).
 | `privacy.py` | `display_name(name, mode, wants_anonymous)` | `full_name` / `first_initial` ("Ana S.") / `anonymous` ("Guest") |
 | `layout.py` | `save_layout(...)` | Upsert by id, delete what is missing, rebuild `seat_neighbours` |
 | `neighbours.py` | `neighbour_pairs(table, seats)` | Pure geometry: who sits next to whom at one table |
+| `members.py` | `is_member`, `member_venue_ids`, the owner's team list (`add`, `remove`, `listing`) | A venue's team is a list of addresses (`venue_members`); a work account with one of them works at that venue as staff. Used by every venue and event loader |
 | `text.py` | `PlainText` | Request text a person types (names, notes, labels) never holds a control character such as NUL, which Postgres refuses; such text gets a 422 instead of a 500 |
 
 ## Data flow: a person picks a seat

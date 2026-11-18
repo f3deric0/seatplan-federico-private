@@ -6,7 +6,8 @@ owner_accounts.py handles owner sign-up with purpose owner in email_codes.
 Codes are bound to a browser signup id and consumed under a write lock.
 Existing accounts receive the same registration response shape, and only the
 approved demo conditions expose a code. Owner accounts reuse organiser login.
-venue_access limits staff to demo restaurants and owners to their restaurants.
+venue_access limits staff to demo restaurants and owners to their restaurants;
+a member of the restaurant's team (core/members.py) passes load_for_staff too.
 The shared venues router enforces the same rule for restaurants while keeping
 event access unchanged.
 

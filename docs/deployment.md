@@ -92,6 +92,7 @@ Set these for **Production** in the Vercel project. Every name is read by
 | `DEMO_KEY` | A new secret | The only way to call `POST /api/demo/reset` (header `X-Demo-Key`). Empty means nobody can reset |
 | `DEMO_ORGANISER_PASSWORD` | A private password | The public local defaults never apply on Postgres |
 | `DEMO_STAFF_PASSWORD` | A private password | Same as above |
+| `DEMO_MEMBER_PASSWORD` | A private password | Same as above (Rita Rossi, the "one account" demo member) |
 | `CRON_SECRET` | A new secret | The email cron sends it as `X-Cron-Secret`. Empty rejects every call |
 | `EMAIL_PROVIDER` | `console` until step 6, then `resend` | `console` only writes one log line per email |
 | `RESEND_API_KEY` | Empty until step 6 | Needed only for `resend` |
@@ -124,7 +125,7 @@ Then, for the demo only:
 
 ```bash
 cd backend
-DATABASE_URL='PASTE THE NEON URL HERE' SECRET_KEY='PASTE THE SAME SECRET_KEY AS ON VERCEL' DEMO_MODE=1 DEMO_ORGANISER_PASSWORD='PASTE IT' DEMO_STAFF_PASSWORD='PASTE IT' ../.venv/bin/python -m app.seed.run
+DATABASE_URL='PASTE THE NEON URL HERE' SECRET_KEY='PASTE THE SAME SECRET_KEY AS ON VERCEL' DEMO_MODE=1 DEMO_ORGANISER_PASSWORD='PASTE IT' DEMO_STAFF_PASSWORD='PASTE IT' DEMO_MEMBER_PASSWORD='PASTE IT' ../.venv/bin/python -m app.seed.run
 ```
 
 It prints the demo links (`/e/...`, `/organiser/...`, `/r/...`, `/staff/...`).

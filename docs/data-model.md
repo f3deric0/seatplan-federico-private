@@ -20,6 +20,24 @@ without creating rooms. Photos store bounded bytes and an optional opening
 reference. The diagram below records the frozen 2026-11-10 baseline. These
 additions follow specification section 11.
 
+## Events parity and venue teams (2026-11-18)
+
+Additive only, through `seed/migrate.py` (`NEW_COLUMNS`, server defaults word for word as in
+`models.py`); the new table comes from `create_all`.
+
+| Where | Column | Type | Meaning |
+|---|---|---|---|
+| `events` | `event_type` | `VARCHAR(20)` NULL | One of `wedding`, `conference`, `birthday`, `gala_dinner`, `corporate_dinner`, `christening` (`events_service/event_types.py`) |
+| `events` | `listed` | `BOOLEAN NOT NULL DEFAULT FALSE` | Shown on the public pages, together with the shared link on, a future start and a published event venue with a slug |
+| `venues` | `venue_type` | `VARCHAR(20)` NULL | Event venues: `hall` or `quinta`. `kind` keeps its two values |
+
+New table `venue_members`: `id`, `venue_id` (FK `venues`, `ON DELETE CASCADE`), `email` (trimmed,
+lower case, indexed), `role` (`staff`), `added_by` (FK `organisers`, NULL allowed), `created_at`, and
+`uq_venue_members_venue_email` UNIQUE (`venue_id`, `email`). A work account (an `organisers` row)
+whose `email` is on a venue's list works there as staff (`core/members.py`). The address, not an
+account id, is the key, so an owner can add someone before they sign up. A demo reset wipes the
+table (the seed adds the demo rows again).
+
 ## Restaurant extension in use (2026-11-13)
 
 The original diagram below is retained as historical context. The added
@@ -447,6 +465,7 @@ These do not stop double booking of a seat, but they stop other duplicates.
 | `guest_accounts` | UNIQUE | `email` | Two accounts for one address (two verifies at once: one gets 409 "Please try again.") |
 | `email_codes` | `uq_email_codes_email_purpose` | `email, purpose` | Two live codes for one address and purpose |
 | `organisers` | UNIQUE | `email` | Two accounts with the same email |
+| `venue_members` | `uq_venue_members_venue_email` (UNIQUE) | `venue_id, email` | The same address twice on one venue's team |
 | `live_versions` | Primary key | `scope` | Two counters for one event or one restaurant day |
 | `rate_limits` | Primary key | `key, window_start` | Two counters for the same client in the same minute |
 | `acquaintances` | Primary key | `guest_id, knows_guest_id` | The same "knows" pair twice |

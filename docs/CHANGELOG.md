@@ -16,6 +16,37 @@ Security. "Not released" means it has not been deployed anywhere.
 Things planned but not done yet: the first Vercel deployment, real email
 through Resend, usability sessions with real users.
 
+### Added (2026-11-18, events parity)
+
+- One account: `POST /api/account/register` signs up without an event; the emailed code then makes the
+  booking identity (guest account) and the work identity (organiser) with the same address and
+  password. `POST /api/account/login` opens both with one password; `GET /api/account/work` lists the
+  restaurants, event venues and events the person runs, with their role.
+- Venue teams: an owner adds staff to a restaurant or an event venue by email
+  (`/api/owner/venues/{vid}/members`). A member works there like staff (restaurant floor, the events at
+  an event venue) and nowhere else; owner pages stay with the owner.
+- Public events: `GET /api/event-types`, `/api/public-events`, `/api/event-venues` and
+  `/api/event-venues/{slug}`. Only listed events with the link on, upcoming, at published event venues
+  appear. Events have an optional `event_type`; event venues a `venue_type` (`hall`, `quinta`).
+- Demo: six invented event venues (three halls, three quintas) with drawn pictures and ten listed
+  events covering every type; links `event_booking`, `event_staff` and four `showcase_venue_<slug>`;
+  Rita Rossi (`rita@example.com`, `DEMO_MEMBER_PASSWORD`), staff at Casa Lumen and Quinta da Serra Azul,
+  booking at Tagus Terrace and the Lisbon Product Conference.
+
+### Changed (2026-11-18, events parity)
+
+- `GET /api/events` and every event answer add `event_type`, `event_type_label`, `listed` and
+  `venue_name`; the list adds `role` and includes the events at venues where the person is a member.
+- `POST /api/guest/verify` answers `join.status = "account_only"` and `work` for an account-page sign-up.
+- The demo seed needs `DEMO_MEMBER_PASSWORD` on Postgres, like the two other demo passwords.
+
+### Security (2026-11-18, events parity)
+
+- The demo never shows a sign-up code on screen for an address on a venue team.
+- A member cannot edit the floor plan, create events, or open owner, photo, payment, publishing or team
+  routes; removing the address ends access at once. Tests: `test_venue_members.py`, `test_one_account.py`,
+  `test_public_events.py`.
+
 ### Added (2026-11-18)
 
 - Deposits for restaurant bookings. The owner sets, per service, a deposit per person and a free-cancellation

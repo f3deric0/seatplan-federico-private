@@ -138,7 +138,7 @@ locally `export` the ones you need before starting it.
 | `PUBLIC_BASE_URL` | Base of the links written in emails | `http://localhost:5173` |
 | `DEMO_MODE` | `1` turns on `/api/demo/*` (demo links and reset) | off |
 | `DEMO_KEY` | The only way to call `POST /api/demo/reset` (header `X-Demo-Key`); empty means nobody can | empty |
-| `DEMO_ORGANISER_PASSWORD`, `DEMO_STAFF_PASSWORD` | Demo account passwords; required on Postgres and whenever `DEMO_MODE` is off | public demo values (local SQLite only) |
+| `DEMO_ORGANISER_PASSWORD`, `DEMO_STAFF_PASSWORD`, `DEMO_MEMBER_PASSWORD` | Demo account passwords; required on Postgres and whenever `DEMO_MODE` is off | public demo values (local SQLite only) |
 | `CRON_SECRET` | Header `X-Cron-Secret` for `POST /api/internal/email/process`; empty rejects every call | empty |
 | `EMAIL_PROVIDER` | `console` (prints emails) or `resend` | `console` |
 | `RESEND_API_KEY` | Only for `EMAIL_PROVIDER=resend` | empty |

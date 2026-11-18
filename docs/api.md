@@ -1,5 +1,76 @@
 # API guide
 
+## Events parity: one account, venue team, public events (2026-11-18)
+
+All paths have the `/api` prefix. Errors keep the usual `{"error": {"code", "message"}}`.
+"Work session" is the organiser token (`<id>.<expiry>.<sig>`, from `/auth/login`, `/owner/verify`
+or the routes below); "guest session" is the `g.<id>.<version>.<expiry>.<sig>` token. Neither ever
+opens the other's routes (401).
+
+**One account.**
+
+- `POST /account/register` `{name, email, password, consent: true}` (unknown fields 422, password at
+  least 10 characters and not the email) -> **202** `{status: "code_sent", sent_to, expires_in_seconds,
+  signup_id, demo_code?}`, the same shape as `/j/{token}/register`. `demo_code` only under
+  `may_show_code` (demo, console email, `@example.com`, not invited anywhere, not a venue member).
+  An address that already has a guest account gets the same answer (and an email saying so).
+  Limits: the guest code-send limits (429 `rate_limited`).
+- `POST /guest/verify` (unchanged body `{email, code, signup_id}`) -> **201** `{token, account, join,
+  work?}`. For a sign-up started by `/account/register`, `join` is `{status: "account_only",
+  event_id: null}`, and `work: {token, user: {email, name, role: "organiser"}}` is present only when
+  this verify created the work account (same email, name and password). When the address already had
+  a work account it is left untouched and `work` is absent: sign in with `/account/login`.
+- `POST /account/login` `{email, password}` -> **200** `{guest?: {token, account: {name, email,
+  created_at}}, work?: {token, user: {email, name, role}}}`, only the identities this password opens.
+  Neither: **401** `unauthorised` "Email or password is not correct.". Limits: the work login's and the
+  guest login's per-address limits (10 a minute each), and the guest failed-login caps, checked before
+  any password (**429** `rate_limited`).
+- `GET /account/work` (work session, any role) -> `{user: {email, name, role}, restaurants: [{public_id,
+  name, slug, status, role}], event_venues: [{public_id, name, slug, status, role, venue_type}],
+  events: [{public_id, name, starts_at, ends_at, event_type, event_type_label, listed,
+  venue_public_id, venue_name, role}]}`. Venue `role` is `owner` or `staff`; event `role` is
+  `organiser` (their own) or `staff` (at a member venue). Owner rows first, then by id; events by
+  start. A `staff`-role account (the demo staff) sees every demo restaurant as `staff` and no events.
+
+**Venue team (owner only).** `vid` is a restaurant's or an event venue's `public_id`; anyone but its
+owner (work session, role organiser) gets **404** `not_found`, as for a missing venue.
+
+- `GET /owner/venues/{vid}/members` -> `{items: [{id, email, role: "staff", created_at}]}` (oldest first).
+- `POST /owner/venues/{vid}/members` `{email}` -> **201** `{id, email, role, created_at}`. The address
+  is trimmed and lower-cased; adding it again returns the same row; your own address is **422**; at most
+  50 per venue (**422**). The answer never says whether an account exists for the address.
+- `DELETE /owner/venues/{vid}/members/{member_id}` -> `{removed: true}`, or **404** when that id is not on
+  this venue's list. Access ends at once.
+
+A member (signed in with a work account whose email is on the list) passes the same checks as staff:
+`/staff/{vid}/...` for a restaurant, every `/events/{eid}/...` route for the events at an event venue
+(organiser role), and `GET /venues/{vid}`. Still owner-only: owner profile, photos, rooms, payments,
+publishing, the team list, `PUT /venues/{vid}/layout` and `POST /events` (creating events).
+`GET /events` lists the organiser's events then those at member venues; each row now also has
+`event_type`, `event_type_label`, `listed`, `venue_name` and, in the list only, `role`.
+
+**Public events (anyone, one read limit per address).**
+
+- `GET /event-types` -> `[{key, label}]`: `wedding` Wedding, `conference` Conference, `birthday`
+  Birthday, `gala_dinner` Gala dinner, `corporate_dinner` Corporate dinner, `christening` Christening.
+- `GET /public-events?type=&venue=&limit=&offset=` (`type` one of the keys, else 422; `venue` a venue
+  slug; `limit` 1 to 50, default 20) -> `{items: [PublicEvent], total}`, soonest first.
+  `PublicEvent = {public_id, name, event_type, event_type_label, starts_at, ends_at, venue: {name, slug,
+  venue_type, address, cover_url}, places_left, join_path}`; `join_path` is `/j/<token>`, the existing
+  visitor flow (`GET /j/{token}`, then register or sign in and join).
+- `GET /event-venues?type=hall|quinta` -> `{items: [{slug, name, venue_type, venue_type_label,
+  description, address, lat, lng, cover_url, cover_alt, capacity, event_types: [key], upcoming_count}]}`
+  by name.
+- `GET /event-venues/{slug}` -> `{slug, name, venue_type, venue_type_label, description, address, lat,
+  lng, phone, website, instagram, maps_url, timezone, photos: [{url, alt, is_cover}], capacity, tables,
+  event_types: [{key, label}], upcoming: [PublicEvent]}`; **404** for anything not public.
+
+An event is public only when it is `listed`, its shared link is on, it starts in the future, and its
+venue is an event venue that is published and has a slug. A shared but unlisted event never appears.
+`capacity` counts seats that are not blocked. `GET /photos/{id}` now also serves the pictures of a
+published event venue with a slug. There is no route yet to set `listed` or `venue_type`: the seed
+sets them.
+
 ## Finding restaurants and the public page
 
 `GET /api/restaurants` is public (same read limit as the booking page). Query: `q` (name or cuisine, accents and capitals
@@ -44,8 +115,8 @@ database and does not touch the local application database:
 .\.venv\Scripts\python.exe scripts/export_openapi.py
 ```
 
-What that run reported: OpenAPI `3.1.0`, title `SeatPlan API`, version
-`0.1.0`, **93 paths, 108 operations, 62 schemas**. Run the command again after
+What the last run (2026-11-18, after the events parity work) reported: OpenAPI `3.1.0`, title
+`SeatPlan API`, version `0.1.0`, **121 paths, 142 operations, 71 schemas**. Run the command again after
 changing any router, so the file never drifts from the code.
 
 ## Restaurant platform API implemented on this branch

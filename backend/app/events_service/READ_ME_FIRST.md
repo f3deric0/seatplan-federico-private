@@ -13,7 +13,7 @@ The routers check the request and call one function from here.
 | File | One job |
 |---|---|
 | `schemas.py` | Request bodies (Pydantic, unknown fields refused, lengths capped) |
-| `access.py` | Find the event (organiser) or the guest (token hash); deadline rule |
+| `access.py` | Find the event (its organiser, or a member of its venue: `core/members.py`) or the guest (token hash); deadline rule |
 | `problem.py` | Database rows to optimiser dataclasses (`EventProblem`); the current plan |
 | `seatmap.py` | The map payload: attendee view (privacy-filtered) and organiser view |
 | `seating.py` | Attendee hold, confirm, change and release; the shared seat rules; `lock_event` (one lock order); `drop_assignment(notify=False)` frees a seat without an email |
@@ -21,7 +21,10 @@ The routers check the request and call one function from here.
 | `mailer.py` | Queue confirmation, change and cancellation emails (outbox). Account holders get the email with the seat picture (`picture_room`, `account_link`) |
 | `guests.py` | Organiser guest list: add, change, GDPR erase (`actor` is the organiser's email or `account:<id>`; an erased row keeps its `account_id` so that account cannot rejoin), new link. `guest_dict` adds `source` and `has_account` |
 | `share.py` | The shared link: derived token (`derive_token`), `places_left` (seats reserved for a tag are not for newcomers), `room_to_come_back` (a "no" turning "yes"), the visitor map (four states, filtered names), and `join()`, the one step that puts an account on a guest list (answers `removed` for an account the organiser removed) |
-| `accounts.py` | Guest accounts: emailed 6-digit codes (stored as keyed hashes, tries counted before the compare), the sign-up id that ties a code to one browser, `may_show_code` (the demo rule), sign-up, sign-in (failed logins per address and network), password reset, my events, account deletion |
+| `accounts.py` | Guest accounts: emailed 6-digit codes (stored as keyed hashes, tries counted before the compare), the sign-up id that ties a code to one browser, `may_show_code` (the demo rule; never for an invited or team address), sign-up (with an event, or from the account page with none: then verify also makes the work account), sign-in, `log_in_both` (`/account/login`), password reset, my events, account deletion |
+| `event_types.py` | The closed lists: event types (key and English label) and event venue types (`hall`, `quinta`) |
+| `public.py` | The public pages: what counts as a public event (listed, link on, upcoming, published event venue with a slug), the events list, the event venues and one venue's page |
+| `work.py` | `GET /account/work`: the venues and events a work account runs, with its role; `runnable_events` also feeds `GET /events` |
 | `csv_io.py` | CSV import (validated, all or nothing) and safe CSV export |
 | `plans.py` | Plan snapshots: scenarios, `apply_plan`, undo and redo |
 | `optimise.py` | Auto-fill, re-plan, compare, what-if (calls the optimiser) |
