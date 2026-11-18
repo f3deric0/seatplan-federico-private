@@ -143,7 +143,7 @@ def patch_event(
     event = load_event(session, eid, user)
     changes = body.model_dump(exclude_unset=True)
     for name, value in changes.items():
-        if value is None and name != "change_deadline":
+        if value is None and name not in ("change_deadline", "event_type"):
             raise ApiError(422, "validation", f"{name} cannot be empty.")
         setattr(event, name, value)
     if event.ends_at <= event.starts_at:

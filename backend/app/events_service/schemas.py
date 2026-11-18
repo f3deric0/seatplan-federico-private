@@ -10,6 +10,7 @@ from typing import Literal
 from pydantic import AwareDatetime, BaseModel, ConfigDict, EmailStr, Field
 
 from app.core.text import PlainText
+from app.events_service.event_types import EventType
 
 PrivacyMode = Literal["full_name", "first_initial", "anonymous"]
 ReservedTag = Literal["vip", "family", "speaker"]
@@ -30,6 +31,7 @@ class EventIn(Strict):
     ends_at: AwareDatetime
     privacy_mode: PrivacyMode = "first_initial"
     change_deadline: AwareDatetime | None = None
+    event_type: EventType | None = None
 
 
 class EventPatch(Strict):
@@ -38,6 +40,7 @@ class EventPatch(Strict):
     ends_at: AwareDatetime | None = None
     privacy_mode: PrivacyMode | None = None
     change_deadline: AwareDatetime | None = None
+    event_type: EventType | None = None  # null clears it
 
 
 class GuestIn(Strict):

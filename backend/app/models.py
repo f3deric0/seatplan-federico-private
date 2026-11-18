@@ -115,6 +115,27 @@ class Venue(Base):
     )
     layout_version: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
     published_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
+    # Event venues only: "hall" or "quinta" (events_service/event_types.py).
+    venue_type: Mapped[str | None] = mapped_column(String(20))
+
+
+class VenueMember(Base):
+    """An address the venue's owner lets work there as staff (core/members.py).
+
+    Matched against the email of a signed-in work account, which was proven by
+    an emailed code at sign-up. One row per venue and address.
+    """
+
+    __tablename__ = "venue_members"
+    __table_args__ = (UniqueConstraint("venue_id", "email", name="uq_venue_members_venue_email"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    venue_id: Mapped[int] = mapped_column(ForeignKey("venues.id", ondelete="CASCADE"))
+    # Lower case and trimmed.
+    email: Mapped[str] = mapped_column(String(254), index=True)
+    role: Mapped[str] = mapped_column(String(20), default="staff")
+    added_by: Mapped[int | None] = mapped_column(ForeignKey("organisers.id"))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utc_now)
 
 
 class Zone(Base):
@@ -298,6 +319,10 @@ class Event(Base):
     share_version: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
     share_token_hash: Mapped[str | None] = mapped_column(String(64))
     share_cap: Mapped[int | None] = mapped_column(Integer)
+    # One key of events_service/event_types.EVENT_TYPES, or NULL.
+    event_type: Mapped[str | None] = mapped_column(String(20))
+    # Only listed events (with the shared link on) appear on the public pages.
+    listed: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("FALSE"))
 
 
 class GuestGroup(Base):
