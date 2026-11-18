@@ -30,13 +30,16 @@ Additive only, through `seed/migrate.py` (`NEW_COLUMNS`, server defaults word fo
 | `events` | `event_type` | `VARCHAR(20)` NULL | One of `wedding`, `conference`, `birthday`, `gala_dinner`, `corporate_dinner`, `christening` (`events_service/event_types.py`) |
 | `events` | `listed` | `BOOLEAN NOT NULL DEFAULT FALSE` | Shown on the public pages, together with the shared link on, a future start and a published event venue with a slug |
 | `venues` | `venue_type` | `VARCHAR(20)` NULL | Event venues: `hall` or `quinta`. `kind` keeps its two values |
+| `organisers` | `session_version` | `INTEGER NOT NULL DEFAULT 0` | Signed into every work session token; a new password (guest reset, same address) adds one and ends older sessions |
 
 New table `venue_members`: `id`, `venue_id` (FK `venues`, `ON DELETE CASCADE`), `email` (trimmed,
 lower case, indexed), `role` (`staff`), `added_by` (FK `organisers`, NULL allowed), `created_at`, and
 `uq_venue_members_venue_email` UNIQUE (`venue_id`, `email`). A work account (an `organisers` row)
 whose `email` is on a venue's list works there as staff (`core/members.py`). The address, not an
 account id, is the key, so an owner can add someone before they sign up. A demo reset wipes the
-table (the seed adds the demo rows again).
+table (the seed adds the demo rows again), and also deletes the work accounts that share an address
+with a guest account (except the three seeded users), so the two halves of one account never end up
+with two passwords.
 
 ## Restaurant extension in use (2026-11-13)
 
@@ -164,6 +167,7 @@ erDiagram
         string name
         string password_hash
         string role
+        int session_version
     }
     rate_limits {
         string key PK

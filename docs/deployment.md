@@ -128,10 +128,26 @@ cd backend
 DATABASE_URL='PASTE THE NEON URL HERE' SECRET_KEY='PASTE THE SAME SECRET_KEY AS ON VERCEL' DEMO_MODE=1 DEMO_ORGANISER_PASSWORD='PASTE IT' DEMO_STAFF_PASSWORD='PASTE IT' DEMO_MEMBER_PASSWORD='PASTE IT' ../.venv/bin/python -m app.seed.run
 ```
 
+Run it once, on an empty database. Run again on a seeded database, it adds a
+second copy of every demo venue and event (slugs end in `-2`), and the public
+`/events` page then shows each event twice. To bring new demo data to a demo
+database that is already seeded, call `POST /api/demo/reset` (header
+`X-Demo-Key`) instead: it wipes the demo data and seeds it once.
+
 It prints the demo links (`/e/...`, `/organiser/...`, `/r/...`, `/staff/...`).
 They contain secret tokens: share them only with the people who need them.
 Type the values in your own terminal; do not paste them into chats or files
 that get committed.
+
+### Upgrading an existing database (events parity, 2026-11-18)
+
+The events parity code reads `events.event_type`, `events.listed`,
+`venues.venue_type`, `organisers.session_version` and the new table
+`venue_members`. Run the same migrate command below **before** that code goes
+live: without `organisers.session_version` every work sign-in fails. On a demo
+database, also set `DEMO_MEMBER_PASSWORD` in Vercel first (`POST
+/api/demo/reset` fails without it on Postgres), then reset the demo instead of
+running `app.seed.run` again. Not tried on Postgres yet.
 
 ### Upgrading an existing database (guest accounts, 2026-11-10)
 

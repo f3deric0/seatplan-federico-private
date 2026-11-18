@@ -125,7 +125,7 @@ so records cannot be enumerated. Secret tokens are stored as SHA-256 hashes.
 All timestamps are UTC, timezone-aware.
 
 Shared
-- `organisers` id, email (unique), name, password_hash (scrypt), role (`organiser` or `staff`)
+- `organisers` id, email (unique), name, password_hash (scrypt), role (`organiser` or `staff`), session_version (signed into the session token)
 - `venues` id, public_id, organiser_id, kind (`event` or `restaurant`), name, timezone, width, height
 - `zones` id, venue_id, name, kind (`general`, `window`, `terrace`, `bar`, `quiet`, `vip`, `accessible`, `stage`), x, y, w, h
 - `tables` id, venue_id, zone_id, label, shape (`round`, `rect`, `row`), x, y, w, h, rotation, min_party, max_party, is_accessible, high_chair_ok, combine_group (nullable text: tables with the same value may be combined)

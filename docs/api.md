@@ -24,13 +24,24 @@ opens the other's routes (401).
   created_at}}, work?: {token, user: {email, name, role}}}`, only the identities this password opens.
   Neither: **401** `unauthorised` "Email or password is not correct.". Limits: the work login's and the
   guest login's per-address limits (10 a minute each), and the guest failed-login caps, checked before
-  any password (**429** `rate_limited`).
+  any password (**429** `rate_limited`). A guest account from before one sign-up (no work account
+  with that address) whose address is proven and is on a venue's team gets its work account here, with
+  the same name and password, and the answer then carries `work` too. Without a team, such an
+  account still signs in with `guest` only.
+- One password. A new password (`POST /guest/password/reset`) also becomes the password of the work
+  account with the same address and ends every older work session (401 on the next call). Deleting
+  the account (`POST /guest/me/delete`, answer unchanged `{deleted: true}`) also deletes the work
+  account with that address when it runs nothing (no venue, no event, no team member added); one that
+  runs something stays, with its password, and the venue teams that list the address stay too.
+- Work session tokens keep their shape `<id>.<expiry>.<sig>`; the signature now also covers the
+  account's session version, so tokens made before this change still work until the first new
+  password.
 - `GET /account/work` (work session, any role) -> `{user: {email, name, role}, restaurants: [{public_id,
   name, slug, status, role}], event_venues: [{public_id, name, slug, status, role, venue_type}],
   events: [{public_id, name, starts_at, ends_at, event_type, event_type_label, listed,
   venue_public_id, venue_name, role}]}`. Venue `role` is `owner` or `staff`; event `role` is
-  `organiser` (their own) or `staff` (at a member venue). Owner rows first, then by id; events by
-  start. A `staff`-role account (the demo staff) sees every demo restaurant as `staff` and no events.
+  `organiser` (their own) or `staff` (at a member venue). Owner rows first, then by id; events:
+  their own first, then those at member venues, each part by start. A `staff`-role account (the demo staff) sees every demo restaurant as `staff` and no events.
 
 **Venue team (owner only).** `vid` is a restaurant's or an event venue's `public_id`; anyone but its
 owner (work session, role organiser) gets **404** `not_found`, as for a missing venue.
@@ -46,7 +57,7 @@ A member (signed in with a work account whose email is on the list) passes the s
 `/staff/{vid}/...` for a restaurant, every `/events/{eid}/...` route for the events at an event venue
 (organiser role), and `GET /venues/{vid}`. Still owner-only: owner profile, photos, rooms, payments,
 publishing, the team list, `PUT /venues/{vid}/layout` and `POST /events` (creating events).
-`GET /events` lists the organiser's events then those at member venues; each row now also has
+`GET /events` lists the organiser's events then those at member venues (each part by start); each row now also has
 `event_type`, `event_type_label`, `listed`, `venue_name` and, in the list only, `role`.
 
 **Public events (anyone, one read limit per address).**
@@ -68,8 +79,20 @@ publishing, the team list, `PUT /venues/{vid}/layout` and `POST /events` (creati
 An event is public only when it is `listed`, its shared link is on, it starts in the future, and its
 venue is an event venue that is published and has a slug. A shared but unlisted event never appears.
 `capacity` counts seats that are not blocked. `GET /photos/{id}` now also serves the pictures of a
-published event venue with a slug. There is no route yet to set `listed` or `venue_type`: the seed
-sets them.
+published event venue with a slug. There is no route yet to set `listed` or `venue_type` (`PATCH
+/events/{eid}` with `listed` is a 422), and event venue slugs also come only from the seed: today the
+public pages show demo data only.
+
+Known demo risks (only with `DEMO_MODE=1`, the console email provider and `@example.com` addresses;
+never in production, where codes are only emailed):
+- `demo_code` is present for a new address and absent for one that has an account, was invited or is
+  on a venue team, so the answer tells whether an `@example.com` address is known. The same was
+  already true of `/j/{token}/register` and `/owner/register`.
+- A work account made with a code shown on screen proved no inbox, and membership matches the address
+  only. So whoever first signs up `x@example.com` in the demo works at every demo venue whose owner
+  adds `x@example.com`. Kept on purpose: in the demo no inbox can ever be proven, so requiring a
+  proven address would switch the venue team off for everyone but the seeded Rita, including the
+  acceptance path (sign up first, then be added).
 
 ## Finding restaurants and the public page
 
