@@ -106,6 +106,18 @@
   transform: translateX(3px);
 }
 
+/* The small "Browse ..." link under each demo card's two entries. */
+.home-browse {
+  margin: var(--space-3) 0 0;
+  font-size: var(--fs-sm);
+}
+
+.home-browse a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+}
+
 .home-steps {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
