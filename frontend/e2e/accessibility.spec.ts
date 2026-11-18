@@ -85,3 +85,25 @@ test("guest sign-in page", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
   await expectNoViolations(page, "the guest sign-in page");
 });
+
+// Events parity (plan 2026-11-18): the public event pages and the one account panel.
+test("event booking page", async ({ page }) => {
+  await page.goto("/events");
+  await expect(page.locator("article.ep-event-card").first()).toBeVisible();
+  await expectNoViolations(page, "the event booking page");
+});
+
+test("event venue page", async ({ page }) => {
+  await page.goto("/venues/quinta-da-serra-azul");
+  await expect(page.getByRole("heading", { level: 1, name: "Quinta da Serra Azul" })).toBeVisible();
+  await expectNoViolations(page, "the venue page");
+});
+
+test("account panel, signed out and on the create-account step", async ({ page }) => {
+  await page.goto("/account");
+  await expect(page.getByRole("form", { name: "Sign in" })).toBeVisible();
+  await expectNoViolations(page, "the account sign-in");
+  await page.goto("/account?mode=create");
+  await expect(page.getByRole("button", { name: "Send my code" })).toBeVisible();
+  await expectNoViolations(page, "the create-account form");
+});
