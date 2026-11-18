@@ -99,6 +99,29 @@ describe("/account signed in", () => {
     expect(screen.getByText("Owner", { selector: ".badge" })).toBeTruthy();
   });
 
+  it("says when the staff tools belong to another sign-in than the header", async () => {
+    // /login sets only the work session, /my/sign-in only the personal one: two people can meet here.
+    setGuestToken("g.1.0.9.sig");
+    setSessionToken("1.9.sig");
+    const server = startFakeServer();
+    bookingRoutes(server);
+    server.routes.set("GET /account/work", () => ({ body: { ...WORK, user: { email: "organiser@example.com", name: "Olivia Organiser", role: "organiser" } } }));
+    renderAt("/account?tab=staff");
+    expect(await screen.findByText(/signed in as Olivia Organiser \(organiser@example.com\), not as rita@example.com/)).toBeTruthy();
+  });
+
+  it("says nothing extra when both sides are the same person", async () => {
+    setGuestToken("g.1.0.9.sig");
+    setSessionToken("3.9.sig");
+    const server = startFakeServer();
+    bookingRoutes(server);
+    server.routes.set("GET /account/work", () => ({ body: WORK }));
+    renderAt("/account?tab=staff");
+    await screen.findByRole("heading", { name: "Restaurants" });
+    await screen.findByRole("heading", { level: 1, name: "Rita Rossi" });
+    expect(screen.queryByText(/not as rita@example.com/)).toBeNull();
+  });
+
   it("explains a missing work side instead of sending the person away", async () => {
     setGuestToken("g.1.0.9.sig");
     const server = startFakeServer();

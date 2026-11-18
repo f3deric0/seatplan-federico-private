@@ -175,6 +175,15 @@ test("Event staff: sign in, pick a type, open the organiser workspace", async ({
   await expect(page.locator(".ev-org-header .ev-eyebrow")).toHaveText("Wedding");
   await expect(page.locator(".ev-org-header .ev-when")).toContainText("Quinta da Serra Azul");
   await expect(page.getByRole("tab", { name: "Guests" })).toBeVisible();
+
+  // The same sign-in opened Rita's personal side: her seeded table booking and event seat.
+  await page.goto("/account");
+  await expect(page.getByRole("heading", { level: 1, name: "Rita Rossi" })).toBeVisible();
+  await expect(page.locator(".diner-booking-list").first().getByRole("listitem")).not.toHaveCount(0);
+  await expect(page.getByRole("list", { name: "Your events" }).getByText("Lisbon Product Conference")).toBeVisible();
+  await page.getByRole("button", { name: "Staff" }).click();
+  await expect(page.locator(".ep-staff-row", { hasText: "Casa Lumen" })).toBeVisible();
+  await expect(page.locator(".ep-staff-row", { hasText: "Quinta da Serra Azul" }).first()).toBeVisible();
 });
 
 test("the new public pages fit a phone without sideways scrolling", async ({ page }) => {

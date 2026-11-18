@@ -10,7 +10,11 @@ import { errorMessage } from "../restaurant/format";
 import { useLoad } from "../restaurant/useLoad";
 import { shortDateTime, workRoleLabel } from "../events-public/eventsModel";
 
-export function StaffPanel({ onSessionGone }: { onSessionGone: () => void }) {
+/**
+ * `shownEmail` is the personal sign-in the page header shows. The older sign-in pages (/login,
+ * /my/sign-in) set only one session, so the two halves can belong to different people; then say so.
+ */
+export function StaffPanel({ onSessionGone, shownEmail = null }: { onSessionGone: () => void; shownEmail?: string | null }) {
   const work = useLoad(getAccountWork, "account-work");
   const gone = work.state.status === "error" && work.state.error instanceof ApiError && work.state.error.code === "unauthorised";
   useEffect(() => {
@@ -23,9 +27,15 @@ export function StaffPanel({ onSessionGone }: { onSessionGone: () => void }) {
   if (work.state.status === "error") {
     return gone ? null : <ErrorState title="Could not load your staff tools" message={errorMessage(work.state.error)} onRetry={() => work.reload()} />;
   }
-  const { restaurants, event_venues: venues, events } = work.state.data;
+  const { restaurants, event_venues: venues, events, user } = work.state.data;
+  const someoneElse = shownEmail !== null && shownEmail.toLowerCase() !== user.email.toLowerCase();
   return (
     <div className="ya-panel">
+      {someoneElse && (
+        <p className="acc-notice" role="status">
+          These staff tools are signed in as {user.name} ({user.email}), not as {shownEmail}. Sign out and sign in once to see one person’s account.
+        </p>
+      )}
       <section aria-labelledby="ya-restaurants-title" className="ya-section">
         <h2 id="ya-restaurants-title">Restaurants</h2>
         {restaurants.length === 0 ? (

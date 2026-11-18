@@ -3,7 +3,7 @@
 // Signed in: who it is, Sign out (both sessions), and a Booking | Staff switch (?tab=staff).
 // Either half can be missing: a work-only sign-in has no bookings, a guest-only one no staff
 // tools. Each side then says why and offers the right sign-in, instead of sending the person away.
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import type { AccountSessions } from "../../api/account";
 import { accountSignOut, getAccountWork } from "../../api/account";
@@ -34,6 +34,8 @@ export default function YourAccountPage() {
   const [params, setParams] = useSearchParams();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
+  // The address the header shows, so the Staff side can say when its sign-in is someone else's.
+  const [shownEmail, setShownEmail] = useState<string | null>(null);
   const refresh = useCallback(() => setSigned(readSessions()), []);
   const setParam = (key: string, value: string | null): void => {
     const next = new URLSearchParams(params);
@@ -90,7 +92,7 @@ export default function YourAccountPage() {
             </div>
           ) : (
             <>
-              <WhoBar signed={signed} busy={busy} onSignOut={() => void signOut()} />
+              <WhoBar signed={signed} busy={busy} onSignOut={() => void signOut()} onWho={setShownEmail} />
               <div className="discover-view-switch ya-switch" role="group" aria-label="Account side">
                 <Button variant={tab === "booking" ? "primary" : "secondary"} aria-pressed={tab === "booking"} onClick={() => setParam("tab", null)}>
                   Booking
@@ -111,7 +113,7 @@ export default function YourAccountPage() {
                 ))}
               {tab === "staff" &&
                 (signed.work ? (
-                  <StaffPanel onSessionGone={refresh} />
+                  <StaffPanel onSessionGone={refresh} shownEmail={signed.guest ? shownEmail : null} />
                 ) : (
                   <MissingSide
                     title="Sign in again to open your staff tools"
@@ -128,12 +130,14 @@ export default function YourAccountPage() {
 }
 
 /** Who is signed in, from whichever half is open, and Sign out for both. */
-function WhoBar({ signed, busy, onSignOut }: { signed: Signed; busy: boolean; onSignOut: () => void }) {
+function WhoBar({ signed, busy, onSignOut, onWho }: { signed: Signed; busy: boolean; onSignOut: () => void; onWho: (email: string | null) => void }) {
   const me = useLoad<{ name: string; email: string }>(
     () => (signed.guest ? getMyAccount().then((m) => m.account) : getAccountWork().then((w) => w.user)),
     `${signed.guest}-${signed.work}`,
   );
   const who = me.state.status === "ready" ? me.state.data : null;
+  const whoEmail = who?.email ?? null;
+  useEffect(() => onWho(whoEmail), [whoEmail, onWho]);
   return (
     <header className="ya-who">
       <div>
