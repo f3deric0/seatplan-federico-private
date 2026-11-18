@@ -63,6 +63,22 @@
 
   --c-focus: #005fcc;
   --c-overlay: rgb(31 27 51 / 0.45);
+  --c-heading: #2b2160;        /* deep indigo: between the ink and the purple */
+
+  /* ---------- Glass: Lisbon at dusk over a floor plan ---------- */
+  /* Apricot sun low over the river, a rose sky, violet shade. The violet is the
+     darkest pool, so it is --c-bg-deep; --c-glass-floor is white glass over it. */
+  --c-lamp-warm: #fbdcc4;
+  --c-lamp-cool: #f5d2e3;
+  --c-bg-deep: #ddd3f6;
+  --c-glass-floor: #f2eefc;
+  --glass-fill: rgb(255 255 255 / 0.62);
+  --glass-fill-strong: rgb(255 255 255 / 0.9);
+  --glass-fill-soft: rgb(255 255 255 / 0.5);
+  --glass-fill-hover: rgb(255 255 255 / 0.8);
+  --glass-edge: rgb(255 255 255 / 0.8);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.95), inset 0 0 0 1px rgb(255 255 255 / 0.4);
+  --grid-dot: rgb(43 33 96 / 0.08);
 
   --seat-free-fill: #ffffff;
   --seat-free-stroke: #3f3a55;
@@ -76,8 +92,7 @@
   --seat-blocked-soft: #e6e3ef;
   --seat-highlight: #a12f6f;
 
-  /* ---------- Type: one sans family; headings bold, as in the references ---------- */
-  --font-display: var(--font-body);
+  /* ---------- Type: Gloock for names and headings (tokens.css), the sans for everything else ---------- */
 
   /* ---------- Shape: soft, 12 px controls, 16 to 20 px surfaces ---------- */
   --radius-sm: 8px;
@@ -87,6 +102,15 @@
   --shadow-sm: 0 1px 2px rgb(31 27 51 / 0.06);
   --shadow-md: 0 6px 18px rgb(31 27 51 / 0.08), 0 1px 3px rgb(31 27 51 / 0.06);
   --shadow-lg: 0 18px 48px rgb(31 27 51 / 0.18);
+  --shadow-glass:
+    0 1px 1px rgb(31 27 51 / 0.04),
+    0 12px 32px -14px rgb(43 33 96 / 0.22),
+    0 32px 64px -32px rgb(176 52 122 / 0.22);
+  --shadow-glass-hover:
+    0 1px 2px rgb(31 27 51 / 0.06),
+    0 18px 40px -14px rgb(43 33 96 / 0.3),
+    0 40px 80px -30px rgb(176 52 122 / 0.3);
+  --shadow-press: 0 8px 18px -8px rgb(176 52 122 / 0.7);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -121,6 +145,19 @@
 
     --c-focus: #9ac2ff;
     --c-overlay: rgb(0 0 0 / 0.6);
+    --c-heading: #ece7fb;
+
+    --c-lamp-warm: #4a2240;
+    --c-lamp-cool: #1f1a3a;
+    --c-bg-deep: #2c2152;
+    --c-glass-floor: #2f1d33;
+    --glass-fill: rgb(30 26 43 / 0.62);
+    --glass-fill-strong: rgb(20 17 29 / 0.9);
+    --glass-fill-soft: rgb(255 255 255 / 0.04);
+    --glass-fill-hover: rgb(255 255 255 / 0.08);
+    --glass-edge: rgb(255 255 255 / 0.1);
+    --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.09), inset 0 0 0 1px rgb(255 255 255 / 0.03);
+    --grid-dot: rgb(241 238 249 / 0.06);
 
     --seat-free-fill: #1e1a2b;
     --seat-free-stroke: #cfc9e2;
@@ -137,6 +174,26 @@
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-md: 0 4px 14px rgb(0 0 0 / 0.45);
     --shadow-lg: 0 18px 48px rgb(0 0 0 / 0.6);
+    --shadow-glass: 0 1px 1px rgb(0 0 0 / 0.3), 0 16px 40px -16px rgb(0 0 0 / 0.7);
+    --shadow-glass-hover: 0 1px 2px rgb(0 0 0 / 0.35), 0 22px 48px -16px rgb(0 0 0 / 0.8);
+    --shadow-press: 0 6px 16px -6px rgb(0 0 0 / 0.7);
+  }
+}
+
+/* The solid fallback for the restaurant glass (tokens.css explains it). */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root[data-surface="restaurants"] {
+    --glass-fill: var(--c-surface);
+    --glass-fill-strong: var(--c-surface);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root[data-surface="restaurants"] {
+    --glass-fill: var(--c-surface);
+    --glass-fill-strong: var(--c-surface);
+    --glass-fill-soft: var(--c-surface);
+    --glass-fill-hover: var(--c-primary-soft);
   }
 }
 
@@ -152,10 +209,10 @@
   border-color: var(--c-cta-hover);
 }
 
-/* Headings: the body sans, heavy, slightly tight, as in the references. */
+/* Headings: Gloock at its one weight, slightly tight. */
 :root[data-surface="restaurants"] :is(h1, h2, h3) {
-  font-weight: 800;
-  letter-spacing: -0.015em;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 /* Ordinary actions are rounded rectangles; capsules stay for filters and indicators. */
@@ -163,14 +220,14 @@
   border-radius: var(--radius-md);
 }
 
-/* Purple carries the structure, as in the references: headings, restaurant names, chips and times.
+/* Deep indigo carries the names and headings; purple carries the controls (chips, times, links).
    Pink stays for the one main action and for what we recommend. */
 :root[data-surface="restaurants"] :is(h1, h2, h3) {
-  color: var(--c-primary);
+  color: var(--c-heading);
 }
 
 :root[data-surface="restaurants"] .discover-card h3 a {
-  color: var(--c-primary);
+  color: var(--c-heading);
 }
 
 :root[data-surface="restaurants"] .discover-card-number {
@@ -184,7 +241,7 @@
 
 :root[data-surface="restaurants"] .discover-chip {
   color: var(--c-primary);
-  border-color: #d9d3ee;
+  border-color: transparent;
 }
 
 :root[data-surface="restaurants"] .discover-chip.is-on {

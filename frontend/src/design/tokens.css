@@ -44,6 +44,33 @@
 
   --c-focus: #b0450c;         /* rust focus ring, never used for state */
   --c-overlay: rgb(30 39 36 / 0.45);
+  --c-heading: #17201d;       /* display headings: a shade deeper than the ink */
+
+  /* ---------- Glass ---------- */
+  /* The page is a floor seen from above at dusk: a faint floor-plan dot grid
+     (the editor's grid) with warm pools of lamp light where tables would stand.
+     Frosted panels float over it. Each lamp colour below is the strongest value
+     the gradient ever paints, so scripts/contrast.mjs checks the real worst case;
+     --c-glass-floor is the glass fill composited over the worst lamp. */
+  --c-lamp-warm: #efdcb2;     /* brass lamp */
+  --c-lamp-cool: #d3e2d6;     /* sage, light through a window */
+  --c-bg-deep: #ecd6ca;       /* blush linen: the darkest pool */
+  --c-glass-floor: #f5ebe3;   /* glass at its alpha over --c-bg-deep */
+  --glass-fill: rgb(251 248 242 / 0.62);
+  --glass-fill-strong: rgb(251 248 242 / 0.9);  /* header: content scrolls under it */
+  --glass-fill-soft: rgb(255 255 255 / 0.42);   /* rows inside a panel, never blurred again */
+  --glass-fill-hover: rgb(255 255 255 / 0.72);
+  --glass-edge: rgb(255 255 255 / 0.75);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.9), inset 0 0 0 1px rgb(255 255 255 / 0.35);
+  --glass-blur: blur(18px) saturate(160%);
+  --glass-blur-strong: blur(24px) saturate(180%);
+  --grid-dot: rgb(30 39 36 / 0.075);
+  --grid-step: 28px;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --page-lamps:
+    radial-gradient(circle at 86% 4%, var(--c-lamp-warm) 0, var(--c-lamp-warm) 6rem, transparent 40rem),
+    radial-gradient(circle at 2% 40%, var(--c-lamp-cool) 0, var(--c-lamp-cool) 5rem, transparent 34rem),
+    radial-gradient(circle at 60% 100%, var(--c-bg-deep) 0, var(--c-bg-deep) 8rem, transparent 44rem);
 
   /* Seat states. Colour is a helper only: every state also has a shape,
      icon or pattern (see src/seatmap/glyphs.tsx). */
@@ -64,10 +91,12 @@
   --seat-highlight: #a06a12;
 
   /* ---------- Type ---------- */
-  /* Display: an old-style book serif that ships with macOS and iOS (Iowan),
-     with Charter, Cambria and Georgia as close fallbacks elsewhere.
+  /* Display: Gloock, a high-contrast serif by the Portuguese designer Duarte
+     Pinto (Google Fonts, one weight: 400, never faux-bolded). It reads like the
+     name painted on a Lisbon restaurant's glass door. Iowan, Charter and Georgia
+     stand in while it loads or offline.
      Body: a humanist sans that ships with the platform. No web-font download. */
-  --font-display: "Iowan Old Style", "Charter", "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+  --font-display: "Gloock", "Iowan Old Style", "Charter", "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
   --font-body: "Avenir Next", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
@@ -119,6 +148,17 @@
   --shadow-sm: 0 1px 2px rgb(30 39 36 / 0.08);
   --shadow-md: 0 4px 14px rgb(30 39 36 / 0.1), 0 1px 3px rgb(30 39 36 / 0.08);
   --shadow-lg: 0 18px 48px rgb(30 39 36 / 0.18);
+  --shadow-glass:
+    0 1px 1px rgb(30 39 36 / 0.04),
+    0 12px 32px -14px rgb(30 39 36 / 0.22),
+    0 32px 64px -32px rgb(31 90 72 / 0.28);
+  --shadow-glass-hover:
+    0 1px 2px rgb(30 39 36 / 0.06),
+    0 18px 40px -14px rgb(30 39 36 / 0.28),
+    0 40px 80px -30px rgb(31 90 72 / 0.34);
+  --shadow-press: 0 6px 16px -6px rgb(31 90 72 / 0.55);
+  /* A filled button is a pressed key: a lit top edge and a shaded bottom edge. */
+  --btn-sheen: inset 0 1px 0 rgb(255 255 255 / 0.24), inset 0 -1px 0 rgb(0 0 0 / 0.14);
 
   /* ---------- Layers ---------- */
   --z-base: 0;
@@ -171,6 +211,20 @@
 
     --c-focus: #f4a259;
     --c-overlay: rgb(0 0 0 / 0.6);
+    --c-heading: #f4efe4;
+
+    /* Glass at night: emerald and brass embers under smoked glass. */
+    --c-lamp-warm: #3a2c15;
+    --c-lamp-cool: #173a2d;
+    --c-bg-deep: #122a2a;
+    --c-glass-floor: #192b24;   /* the lightest composite: worst for light text */
+    --glass-fill: rgb(26 33 30 / 0.62);
+    --glass-fill-strong: rgb(18 23 21 / 0.9);
+    --glass-fill-soft: rgb(255 255 255 / 0.04);
+    --glass-fill-hover: rgb(255 255 255 / 0.08);
+    --glass-edge: rgb(255 255 255 / 0.1);
+    --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.09), inset 0 0 0 1px rgb(255 255 255 / 0.03);
+    --grid-dot: rgb(236 230 218 / 0.06);
 
     --seat-free-fill: #1a211e;
     --seat-free-stroke: #c9c2b4;
@@ -191,6 +245,9 @@
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
     --shadow-md: 0 4px 14px rgb(0 0 0 / 0.45);
     --shadow-lg: 0 18px 48px rgb(0 0 0 / 0.6);
+    --shadow-glass: 0 1px 1px rgb(0 0 0 / 0.3), 0 16px 40px -16px rgb(0 0 0 / 0.7);
+    --shadow-glass-hover: 0 1px 2px rgb(0 0 0 / 0.35), 0 22px 48px -16px rgb(0 0 0 / 0.8);
+    --shadow-press: 0 6px 16px -6px rgb(0 0 0 / 0.7);
   }
 }
 
@@ -204,5 +261,26 @@
     --dur-base: 0.01ms;
     --dur-slow: 0.01ms;
     --dur-pulse: 0.01ms;
+  }
+}
+
+/* ---------- Glass fallback ---------- */
+/* Without backdrop-filter, or when the system asks for less transparency, every
+   panel becomes the solid surface it imitates: same text contrast, no see-through. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass-fill: var(--c-surface);
+    --glass-fill-strong: var(--c-surface);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-fill: var(--c-surface);
+    --glass-fill-strong: var(--c-surface);
+    --glass-fill-soft: var(--c-surface);
+    --glass-fill-hover: var(--c-primary-soft);
+    --glass-blur: none;
+    --glass-blur-strong: none;
   }
 }
