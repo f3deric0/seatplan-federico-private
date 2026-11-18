@@ -132,6 +132,20 @@ def test_deleting_the_account_keeps_a_work_identity_that_owns_a_venue(
     assert sorted(_login(client, "owner.too@example.com", TEST_PASSWORD).json()) == ["work"]
 
 
+def test_an_unproven_account_never_deletes_the_work_account_of_its_address(
+    client: TestClient, session: Session
+) -> None:
+    # Demo: whoever types staff@example.com gets its code on screen. Deleting
+    # that guest account must not delete the real work account of the address.
+    make_user(session, "idle.worker@example.com")
+    account = make_account(session, "idle.worker@example.com")
+    account.email_proven = False
+    session.commit()
+    guest_token = _login(client, "idle.worker@example.com", TEST_PASSWORD).json()["guest"]["token"]
+    assert _delete(client, guest_token, TEST_PASSWORD).json() == {"deleted": True}
+    assert sorted(_login(client, "idle.worker@example.com", TEST_PASSWORD).json()) == ["work"]
+
+
 def test_a_guest_added_to_a_team_gets_work_access_when_signing_in(
     client: TestClient, session: Session, organiser: Organiser
 ) -> None:

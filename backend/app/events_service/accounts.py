@@ -693,11 +693,17 @@ def delete_account(session: Session, account: GuestAccount) -> None:
     The work account with the same address goes too when it runs nothing (no
     venue, no event, no team member added). One that runs something is a
     business's account and stays, with its own password; the venue teams
-    that list the address are their owners' lists and stay as well.
+    that list the address are their owners' lists and stay as well. It goes
+    only when this account proved the inbox, or shares the very same password
+    hash (made by its own sign-up or reset): a demo account made with a code
+    shown on screen must not delete someone else's work account.
     """
     actor = f"account:{account.id}"
     user = _work_identity(session, account.email)
-    if user is not None and not _runs_something(session, user):
+    linked = user is not None and (
+        account.email_proven or tokens_match(user.password_hash, account.password_hash)
+    )
+    if user is not None and linked and not _runs_something(session, user):
         session.delete(user)
         audit.record(
             session,

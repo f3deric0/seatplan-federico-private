@@ -31,7 +31,8 @@ opens the other's routes (401).
 - One password. A new password (`POST /guest/password/reset`) also becomes the password of the work
   account with the same address and ends every older work session (401 on the next call). Deleting
   the account (`POST /guest/me/delete`, answer unchanged `{deleted: true}`) also deletes the work
-  account with that address when it runs nothing (no venue, no event, no team member added); one that
+  account with that address when it runs nothing (no venue, no event, no team member added) and the
+  guest account proved its address or has the very same password hash (its own sign-up); one that
   runs something stays, with its password, and the venue teams that list the address stay too.
 - Work session tokens keep their shape `<id>.<expiry>.<sig>`; the signature now also covers the
   account's session version, so tokens made before this change still work until the first new
