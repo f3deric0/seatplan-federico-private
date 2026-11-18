@@ -18,6 +18,18 @@ compila o frontend. Não altera WhatsApp, SMS ou pagamentos, nem faz push.
 Recusa bases remotas e não descarta alterações locais. Se faltar acesso ao
 checkout nesta sessão, tem de ser executado pelo utilizador no seu terminal.
 
+Se parar por haver alterações locais, usar a opção de preservação:
+
+```powershell
+& "$env:USERPROFILE/Documents/ChatGPT/Tese/tmp/seatplan-work/scripts/Integrate-RestaurantExpansion.ps1" -PreserveLocalChanges
+```
+
+Esta opção guarda ficheiros modificados e novos num stash, integra os commits e
+repõe os ficheiros e o estado de staging antes da migração e do build. O stash
+não é apagado. Se houver conflitos, o script para sem migrar; guardar o hash
+impresso e enviar `git status --short` para rever. Não repetir o stash apply nem
+apagar o stash enquanto houver conflitos. A base SQLite tem backup separado.
+
 O bundle `C:/Users/marti/Documents/ChatGPT/Tese/SeatPlan_Expansao.bundle` contém
 as alterações a partir de `035c530`. O checkout ativo foi confirmado nesse commit.
 A sessão não tem autorização de escrita nessa pasta. O push direto falhou com

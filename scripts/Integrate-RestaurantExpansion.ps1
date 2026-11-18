@@ -2,7 +2,8 @@
 param(
     [string]$Checkout = (Join-Path $env:USERPROFILE 'seatplan-rux'),
     [string]$Bundle = (Join-Path $env:USERPROFILE 'Documents\ChatGPT\Tese\SeatPlan_Expansao.bundle'),
-    [string]$Python = (Join-Path $env:USERPROFILE 'seatplan\.venv\Scripts\python.exe')
+    [string]$Python = (Join-Path $env:USERPROFILE 'seatplan\.venv\Scripts\python.exe'),
+    [switch]$PreserveLocalChanges
 )
 
 $ErrorActionPreference = 'Stop'
@@ -25,6 +26,8 @@ $bundlePath = (Resolve-Path -LiteralPath $Bundle).Path
 $pythonPath = (Resolve-Path -LiteralPath $Python).Path
 $previousDirectory = Get-Location
 $previousDatabaseUrl = [Environment]::GetEnvironmentVariable('DATABASE_URL', 'Process')
+$savedChanges = $null
+$restoreAttempted = $false
 
 try {
     Set-Location -LiteralPath $checkoutPath
@@ -40,8 +43,13 @@ try {
     }
     $changes = @(& git status --porcelain --untracked-files=normal)
     Assert-CommandSucceeded 'Checking local changes'
-    if ($changes.Count -gt 0) {
+    if ($changes.Count -gt 0 -and -not $PreserveLocalChanges) {
         throw 'There are local changes. Commit or preserve them before running this script again; nothing was overwritten.'
+    }
+    $unmerged = @(& git ls-files --unmerged)
+    Assert-CommandSucceeded 'Checking unresolved conflicts'
+    if ($unmerged.Count -gt 0) {
+        throw 'There are unresolved merge conflicts. Resolve them before running this script.'
     }
     if (-not (Test-Path -LiteralPath (Join-Path $checkoutPath 'frontend\node_modules\.bin\tsc.cmd'))) {
         throw 'Frontend dependencies are missing. Run npm ci in the frontend folder, then run this script again.'
@@ -77,8 +85,27 @@ finally:
 
     & git fetch --no-tags $bundlePath refs/heads/codex/finish-restaurants
     Assert-CommandSucceeded 'Importing commits'
+    & git merge-base --is-ancestor HEAD FETCH_HEAD
+    if ($LASTEXITCODE -ne 0) {
+        throw 'The branches have diverged. Stopped before moving local changes; integration needs a merge review.'
+    }
+    if ($changes.Count -gt 0) {
+        & git -c user.name=Codex -c user.email=codex@openai.com stash push --include-untracked -m ('SeatPlan before expansion ' + [Guid]::NewGuid().ToString('N'))
+        Assert-CommandSucceeded 'Preserving local changes'
+        $savedChanges = (& git rev-parse refs/stash).Trim()
+        Assert-CommandSucceeded 'Recording preserved changes'
+        Write-Host "Your local changes are preserved in stash $savedChanges. This script will not delete that stash."
+    }
     & git merge --ff-only --no-edit FETCH_HEAD
     Assert-CommandSucceeded 'Integrating commits'
+    if ($savedChanges) {
+        $restoreAttempted = $true
+        & git stash apply --index $savedChanges
+        if ($LASTEXITCODE -ne 0) {
+            throw "Local changes need conflict resolution. They remain saved in stash $savedChanges. Do not apply it again or drop it; send the output of git status --short for review. Migration and build have not run."
+        }
+        Write-Host "Local changes restored, including staged files. Safety copy retained in stash $savedChanges."
+    }
 
     $env:DATABASE_URL = $localDatabaseUrl
     Set-Location -LiteralPath (Join-Path $checkoutPath 'backend')
@@ -92,6 +119,15 @@ finally:
     Write-Host 'Integration and migrations completed. Restart the backend if it does not use --reload, then refresh the browser.'
     Write-Host 'WhatsApp, SMS and payments remain deferred. No GitHub push was made by this script.'
 } finally {
+    # If fast-forward itself failed, restore on the original tree. Never retry
+    # a failed apply: it may already have restored files and left conflicts.
+    if ($savedChanges -and -not $restoreAttempted) {
+        Set-Location -LiteralPath $checkoutPath
+        & git stash apply --index $savedChanges
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Could not fully restore local changes. They are safe in stash $savedChanges. Inspect git status before continuing."
+        }
+    }
     [Environment]::SetEnvironmentVariable('DATABASE_URL', $previousDatabaseUrl, 'Process')
     Set-Location -LiteralPath $previousDirectory.Path
 }

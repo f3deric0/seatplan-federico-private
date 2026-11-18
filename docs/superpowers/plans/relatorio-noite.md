@@ -994,3 +994,12 @@ continua bloqueada pela resolução de rede desta sessão.
 - Criado scripts/Integrate-RestaurantExpansion.ps1 para execução no terminal de Martim: recusa main/detached HEAD/alterações locais/dependências em falta/base remota, valida bundle, faz backup consistente SQLite, merge fast-forward, migração local e build.
 - Validado numa cópia descartável de 035c530 com dados demo: backup, avanço até 580e4ad, adição das cinco colunas, nova tabela do menu e build de produção passaram. Segunda execução também passou (idempotência). Sintaxe PowerShell e git diff --check passaram.
 - Bundle regenerado com o instalador e documentação. WhatsApp, SMS e pagamentos adiados por instrução explícita do utilizador. Não houve push nesta tarefa.
+
+## 2026-11-18 — Preservar alterações locais durante integração
+
+- O utilizador executou o instalador e encontrou alterações locais; o instalador parou sem as modificar.
+- Acrescentado -PreserveLocalChanges: após validar o bundle, a base e a possibilidade de fast-forward, guarda alterações tracked/untracked em stash, faz a integração e aplica o stash com --index antes da migração/build. Nunca apaga o stash. Recusa conflitos preexistentes e divergência de branches.
+- Se houver conflitos ao repor alterações, não tenta aplicar outra vez e não executa migração/build. Se o fast-forward falhar depois de guardar o stash, tenta repor as alterações na árvore original, mantendo a cópia.
+- Teste real numa cópia do projeto: conteúdos de ficheiro staged, ficheiro unstaged e ficheiro novo preservados byte a byte; staging reposto; stash mantido; migração idempotente e build passaram.
+- Teste de conflito num repositório descartável: conflito detetado, execução interrompida antes de migração/build, conteúdo original acessível no stash mantido. Sintaxe PowerShell e git diff --check passaram.
+- Checkout ativo continua inacessível nesta sessão. A execução da integração real depende do comando no PowerShell do utilizador. WhatsApp/SMS/pagamentos continuam adiados.
