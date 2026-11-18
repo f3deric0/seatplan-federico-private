@@ -43,6 +43,7 @@ from app.models import (
     Organiser,
     Seat,
     Venue,
+    VenueMember,
     VenueTable,
     utc_now,
 )
@@ -399,14 +400,16 @@ def _create_work_identity(
     work account written by someone else at the same moment costs only the
     work half, never the guest account. No commit.
     """
-    if session.scalar(select(Organiser.id).where(Organiser.email == row.email)) is not None:
+    return _make_work_identity(session, account, row.email, row.name or "", row.password_hash or "")
+
+
+def _make_work_identity(
+    session: Session, account: GuestAccount, email: str, name: str, password_hash: str
+) -> Organiser | None:
+    """A work account with this address and password hash, unless one exists. No commit."""
+    if session.scalar(select(Organiser.id).where(Organiser.email == email)) is not None:
         return None
-    user = Organiser(
-        email=row.email,
-        name=row.name or "",
-        password_hash=row.password_hash or "",
-        role="organiser",
-    )
+    user = Organiser(email=email, name=name, password_hash=password_hash, role="organiser")
     try:
         with session.begin_nested():
             session.add(user)
@@ -421,6 +424,19 @@ def _create_work_identity(
         entity_id=str(user.id),
     )
     return user
+
+
+def _work_identity(session: Session, email: str) -> Organiser | None:
+    """The work account with this address, if any: the work half of one account."""
+    return session.scalars(select(Organiser).where(Organiser.email == email)).first()
+
+
+def _runs_something(session: Session, user: Organiser) -> bool:
+    """Does this work account own a venue or an event, or did it add a team member?"""
+    for column in (Venue.organiser_id, Event.organiser_id, VenueMember.added_by):
+        if session.scalar(select(column).where(column == user.id).limit(1)) is not None:
+            return True
+    return False
 
 
 def _event_to_join(session: Session, row: EmailCode) -> Event | None:
@@ -517,16 +533,20 @@ def log_in_both(
     if any(limit_reached(session, key, limit, HOUR) for key, limit in keys):
         raise ApiError(429, "rate_limited", TOO_MANY_FAILS)
     account = find_account(session, email)
-    user = session.scalars(select(Organiser).where(Organiser.email == email)).first()
+    found = _work_identity(session, email)
     guest_ok = verify_password(password, account.password_hash if account else _DUMMY_HASH)
-    work_ok = verify_password(password, user.password_hash if user else _DUMMY_HASH)
+    work_ok = verify_password(password, found.password_hash if found else _DUMMY_HASH)
     account = account if guest_ok else None
-    user = user if work_ok else None
+    user = found if work_ok else None
     if account is None and user is None:
         for key, limit in keys:
             rate_limit(session, key, limit, HOUR)
         raise ApiError(401, "unauthorised", "Email or password is not correct.")
     if account is not None:
+        if found is None and account.email_proven and members.is_member_anywhere(session, email):
+            # A guest account from before one sign-up made both identities,
+            # now on a venue's team: its work half, with the same password.
+            user = _make_work_identity(session, account, email, account.name, account.password_hash)
         account.last_login_at = utc_now()
         session.commit()
     return account, user
@@ -548,7 +568,13 @@ def start_reset(session: Session, email: str) -> tuple[str | None, str | None]:
 def finish_reset(
     session: Session, request: Request, email: str, code: str, new_password: str
 ) -> GuestAccount:
-    """Right code: new password, every older session ends. Commits."""
+    """Right code: new password, every older session ends. Commits.
+
+    The work account with the same address gets the same new password, and
+    its older sessions end too: one account, one password. The emailed code
+    (never shown on screen, not even in the demo) proves the inbox, which is
+    what a work account rests on as well.
+    """
     row = _live_code(session, email, "reset")
     _check_code(session, row, code)
     account = find_account(session, email)
@@ -556,6 +582,17 @@ def finish_reset(
         raise ApiError(404, "not_found", EXPIRED)
     account.password_hash = hash_password(new_password)
     account.session_version += 1
+    user = _work_identity(session, email)
+    if user is not None:
+        user.password_hash = account.password_hash
+        user.session_version += 1
+        audit.record(
+            session,
+            actor=f"account:{account.id}",
+            action="account.work_password",
+            entity="organiser",
+            entity_id=str(user.id),
+        )
     _drop_code(session, row)
     # The owner proved the inbox, so the failed-login counts start again.
     for key, _limit in _fail_keys(request, email):
@@ -651,8 +688,24 @@ def _forget_account_emails(session: Session, email: str) -> None:
 
 
 def delete_account(session: Session, account: GuestAccount) -> None:
-    """GDPR erasure of the account and what it owns. Commits."""
+    """GDPR erasure of the account and what it owns. Commits.
+
+    The work account with the same address goes too when it runs nothing (no
+    venue, no event, no team member added). One that runs something is a
+    business's account and stays, with its own password; the venue teams
+    that list the address are their owners' lists and stay as well.
+    """
     actor = f"account:{account.id}"
+    user = _work_identity(session, account.email)
+    if user is not None and not _runs_something(session, user):
+        session.delete(user)
+        audit.record(
+            session,
+            actor=actor,
+            action="account.work_delete",
+            entity="organiser",
+            entity_id=str(user.id),
+        )
     guests = session.scalars(
         select(Guest).where(Guest.account_id == account.id).order_by(Guest.event_id)
     ).all()

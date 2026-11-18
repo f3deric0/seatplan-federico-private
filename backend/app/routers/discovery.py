@@ -19,7 +19,7 @@ from app.restaurant_service import discovery, reviews
 from app.restaurant_service.availability import MAX_ONLINE_PARTY
 from app.restaurant_service.profiles import CUISINES
 from app.routers.restaurants import READ_LIMIT, Strict
-from app.security import CurrentGuestAccount, _bearer, client_ip, rate_limit, verify_session_token
+from app.security import CurrentGuestAccount, _bearer, client_ip, rate_limit, session_user
 
 router = APIRouter(tags=["discovery"])
 
@@ -89,8 +89,7 @@ def search(
 def _optional_user(session: db.SessionDep, authorization: str | None) -> Organiser | None:
     """Who is asking, if they are signed in. A bad token is just an anonymous visitor."""
     token = _bearer(authorization)
-    user_id = verify_session_token(token) if token else None
-    return session.get(Organiser, user_id) if user_id is not None else None
+    return session_user(session, token) if token else None
 
 
 @router.get("/restaurants/{slug}")

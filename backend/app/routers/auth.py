@@ -10,10 +10,10 @@ from app.models import Organiser
 from app.security import (
     CurrentUser,
     client_ip,
-    create_session_token,
     hash_password,
     rate_limit,
     verify_password,
+    work_session_token,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -54,7 +54,7 @@ def login(body: LoginIn, request: Request, session: db.SessionDep) -> LoginOut:
     if user is None or not password_ok:
         # Same message for both cases: never confirm that an email exists.
         raise ApiError(401, "unauthorised", "Email or password is not correct.")
-    return LoginOut(token=create_session_token(user.id), user=_user_out(user))
+    return LoginOut(token=work_session_token(user), user=_user_out(user))
 
 
 @router.get("/me")

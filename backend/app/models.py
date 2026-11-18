@@ -79,6 +79,9 @@ class Organiser(Base):
     name: Mapped[str] = mapped_column(String(120))
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(20), default="organiser")
+    # Signed into every work session (security.py). A new password adds one,
+    # which ends every older session.
+    session_version: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
 
 
 class Venue(Base):
@@ -122,8 +125,10 @@ class Venue(Base):
 class VenueMember(Base):
     """An address the venue's owner lets work there as staff (core/members.py).
 
-    Matched against the email of a signed-in work account, which was proven by
-    an emailed code at sign-up. One row per venue and address.
+    Matched against the email of a signed-in work account. Outside the demo
+    that address was proven by an emailed code at sign-up; in the demo a code
+    shown on screen proves nothing (docs/api.md, "Known demo risks"). One row
+    per venue and address.
     """
 
     __tablename__ = "venue_members"

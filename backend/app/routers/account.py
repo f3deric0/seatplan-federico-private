@@ -20,7 +20,7 @@ from app.core.text import PlainText
 from app.events_service import accounts, work
 from app.events_service.schemas import GuestLoginIn
 from app.models import GuestAccount, Organiser
-from app.security import CurrentUser, create_guest_session, create_session_token
+from app.security import CurrentUser, create_guest_session, work_session_token
 
 router = APIRouter(prefix="/account", tags=["account"])
 
@@ -37,7 +37,7 @@ class AccountRegisterIn(BaseModel):
 def work_session(user: Organiser) -> dict[str, Any]:
     """The work half of an answer: an organiser session and who it is."""
     return {
-        "token": create_session_token(user.id),
+        "token": work_session_token(user),
         "user": {"email": user.email, "name": user.name, "role": user.role},
     }
 

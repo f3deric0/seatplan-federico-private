@@ -9,9 +9,9 @@ from sqlalchemy import select
 from app import db
 from app.core.errors import ApiError
 from app.core.text import PlainText
-from app.models import Organiser, Venue, VenuePhoto
+from app.models import Venue, VenuePhoto
 from app.restaurant_service import photos, profiles
-from app.security import CurrentOrganiser, rate_limit, verify_session_token
+from app.security import CurrentOrganiser, rate_limit, session_user
 
 router = APIRouter(tags=["photos"])
 
@@ -94,8 +94,7 @@ def image(
         raise ApiError(404, "not_found", "Photo not found.")
     if venue.status != "published":
         token = authorization[7:] if authorization and authorization.startswith("Bearer ") else ""
-        user_id = verify_session_token(token) if token else None
-        user = session.get(Organiser, user_id) if user_id is not None else None
+        user = session_user(session, token) if token else None
         if user is None or user.role != "organiser" or user.id != venue.organiser_id:
             raise ApiError(404, "not_found", "Photo not found.")
     cache = (

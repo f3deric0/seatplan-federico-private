@@ -68,6 +68,7 @@ NEW_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("events", "event_type", "VARCHAR(20)"),
     ("events", "listed", "BOOLEAN NOT NULL DEFAULT FALSE"),
     ("venues", "venue_type", "VARCHAR(20)"),
+    ("organisers", "session_version", "INTEGER NOT NULL DEFAULT 0"),
 )
 
 # (index name, statement). Both databases understand "IF NOT EXISTS" here.

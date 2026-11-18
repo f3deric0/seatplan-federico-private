@@ -77,10 +77,13 @@ def runnable_events(session: Session, user: Organiser) -> list[tuple[Event, Venu
         .where(condition)
         .order_by(Event.starts_at, Event.id)
     ).all()
-    return [
+    found = [
         (event, venue, "organiser" if event.organiser_id == user.id else "staff")
         for event, venue in rows
     ]
+    # Their own events first; the sort is stable, so each part keeps its time order.
+    found.sort(key=lambda item: item[2] != "organiser")
+    return found
 
 
 def overview(session: Session, user: Organiser) -> dict[str, Any]:

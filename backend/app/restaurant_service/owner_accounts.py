@@ -16,7 +16,7 @@ from app.events_service import accounts
 from app.mail import templates
 from app.mail.outbox import CODE_REMOVED, enqueue
 from app.models import EmailCode, EmailOutbox, Organiser, utc_now
-from app.security import create_session_token, hash_password, keyed_hash, new_token, tokens_match
+from app.security import hash_password, keyed_hash, new_token, tokens_match, work_session_token
 
 EXPIRED = "This code has expired or was already used. Please ask for a new code."
 
@@ -158,6 +158,6 @@ def verify(session: Session, email: str, code: str, signup_id: str) -> dict[str,
         session.rollback()
         raise ApiError(409, "conflict", "Please sign in or try again.") from None
     return {
-        "token": create_session_token(user.id),
+        "token": work_session_token(user),
         "user": {"id": user.id, "name": user.name, "email": user.email, "role": user.role},
     }
