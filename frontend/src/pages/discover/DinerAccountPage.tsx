@@ -30,7 +30,10 @@ export default function DinerAccountPage() {
   return (
     <PageShell title={signedIn ? "My account" : "Log in"} restaurantBrand>
       <div className={`acc-page${signedIn ? " acc-wide" : ""}`}>
-        <Link to="/">Back to restaurants</Link>
+        <p className="acc-links">
+          <Link to="/">Back to restaurants</Link>
+          <Link to="/account">Your whole account: bookings and staff</Link>
+        </p>
         <h1 className="acc-title">{signedIn ? "My account" : "Log in to SeatPlan"}</h1>
         {signedIn ? (
           <>

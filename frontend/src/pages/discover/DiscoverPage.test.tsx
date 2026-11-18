@@ -95,11 +95,11 @@ describe("DiscoverPage: the command bar", () => {
     expect(photo?.getAttribute("alt")).toBe("The room of Casa 1");
     expect(screen.getByText("2 restaurants")).toBeTruthy();
   });
-  it("links the header to the owners page and to the demo", async () => {
+  it("links the header to the owners page and to Event booking", async () => {
     server(() => ({ items: [], total: 0 }));
     renderPage();
     expect(screen.getByRole("link", { name: "For restaurant owners" }).getAttribute("href")).toBe("/owner/sign-in");
-    expect(screen.getByRole("link", { name: "Plan an event" }).getAttribute("href")).toBe("/demo");
+    expect(screen.getByRole("link", { name: "Plan an event" }).getAttribute("href")).toBe("/events");
     await screen.findByText("No restaurants match");
   });
   it("moves the only card and pin highlight to the hovered result without restoring a prior selection", async () => {

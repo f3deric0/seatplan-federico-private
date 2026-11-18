@@ -59,3 +59,9 @@
 .ep-staff-section { margin-top: var(--space-6); }
 .ep-staff-section > h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.75rem; margin: 0 0 var(--space-3); }
 .ep-signin { max-width: 28rem; }
+.ep-staff-row .ep-type { color: var(--c-primary); margin-bottom: var(--space-1); }
+.ep-signin { display: flex; flex-direction: column; gap: var(--space-3); }
+.ep-signin-title { margin: 0; font-size: var(--fs-xl); }
+.ep-signin .ep-muted { margin: 0; }
+.ep-staff-account { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); margin: 0 0 var(--space-4); }
+.ep-staff-account a { display: inline-flex; align-items: center; min-height: var(--touch-target); }

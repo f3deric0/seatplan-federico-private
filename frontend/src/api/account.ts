@@ -145,3 +145,22 @@ export function addMember(venueId: string, email: string): Promise<VenueMember> 
 export function removeMember(venueId: string, memberId: number): Promise<{ removed: true }> {
   return api.delete(`${membersPath(venueId)}/${memberId}`);
 }
+
+// ---------- GET /events: the events this work account can run ----------
+
+/** One row of GET /events: the account's own events first, then those at venues where it is a member. */
+export interface RunnableEvent {
+  public_id: string;
+  name: string;
+  starts_at: string;
+  ends_at: string;
+  event_type: string | null;
+  event_type_label: string | null;
+  listed: boolean;
+  venue_name: string | null;
+  role: "organiser" | "staff";
+}
+
+export function listRunnableEvents(): Promise<RunnableEvent[]> {
+  return api.get<RunnableEvent[]>("/events");
+}

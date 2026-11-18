@@ -1,5 +1,5 @@
-// The diner account stays visible in the public header. On phones the owner and
-// event links sit behind Menu.
+// The account link stays visible in the public header and opens /account. On phones the
+// owner and event links sit behind Menu.
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { getGuestToken, getSessionToken } from "../../api/client";
@@ -28,12 +28,13 @@ export function PublicHeaderActions() {
         <Link to={owners} className="btn btn-ghost" onClick={close}>
           For restaurant owners
         </Link>
-        <Link to="/demo" className="btn btn-ghost" onClick={close}>
+        <Link to="/events" className="btn btn-ghost" onClick={close}>
           Plan an event
         </Link>
       </div>
-      <Link to="/restaurants/account" className="btn btn-primary site-nav-login" onClick={() => setOpen(false)}>
-        {getGuestToken() ? "My account" : "Log in"}
+      {/* One account for bookings and work (plan 2026-11-18): either session means signed in. */}
+      <Link to="/account" className="btn btn-primary site-nav-login" onClick={() => setOpen(false)}>
+        {getGuestToken() || getSessionToken() ? "My account" : "Log in"}
       </Link>
     </nav>
   );

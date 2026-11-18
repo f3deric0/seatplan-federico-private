@@ -26,6 +26,11 @@ export interface EventSummary {
   deadline_passed: boolean;
   /** The scope for useLive, for example "event-abc123". */
   live_scope: string;
+  /** Organiser answers only (docs/api.md, "Events"): the kind of event and where it is. */
+  event_type?: string | null;
+  event_type_label?: string | null;
+  listed?: boolean;
+  venue_name?: string | null;
 }
 
 /** One number per term of the optimiser objective (ScoreBreakdown in events_model.py). */
