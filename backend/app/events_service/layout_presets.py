@@ -197,13 +197,12 @@ def _rounds(
 ) -> list[PresetTable]:
     """Round tables on a grid. Step-free places at the back row's two end tables."""
     half_w, above, below = ext
-    cells = list(_grid(area, half_w, (above, below), pitch))
-    back = [cell for cell in cells if cell[4]]
+    # Cut at MAX_SEATS first, so the step-free places go on the back row kept.
+    cells = list(_grid(area, half_w, (above, below), pitch))[: MAX_SEATS // len(angles)]
+    back = [cell for cell in cells if cell[0] == cells[-1][0]] if cells else []
     ends = {(back[0][0], back[0][1]), (back[-1][0], back[-1][1])} if back else set()
     tables: list[PresetTable] = []
     for row, column, cx, cy, _last in cells:
-        if (len(tables) + 1) * len(angles) > MAX_SEATS:
-            break
         steps = accessible if (row, column) in ends else set()
         seats = _round_seats(cx, cy, seat_r, angles, steps)
         box = (cx - table_r, cy - table_r, 2 * table_r, 2 * table_r)
@@ -284,15 +283,22 @@ def _lines(
         yield row, lefts, per, area.top + above + row * pitch
 
 
+def _kept(
+    lines: list[tuple[int, list[float], int, float]],
+) -> list[tuple[int, list[float], int, float]]:
+    """The rows that stay within MAX_SEATS (every row has the same seats)."""
+    if not lines:
+        return lines
+    _row, lefts, per, _y = lines[0]
+    return lines[: MAX_SEATS // (per * len(lefts))]
+
+
 def _theatre(width: float, height: float) -> tuple[list[PresetZone], list[PresetTable]]:
     """Rows of chairs (one "row" table per section), a centre aisle between sections."""
     area = _area(width, height, True, SIDE_AISLE)
-    lines = list(_lines(area, 50, 12, 120, (42, 42), 95))
+    lines = _kept(list(_lines(area, 50, 12, 120, (42, 42), 95)))
     tables: list[PresetTable] = []
-    seats_so_far = 0
     for row, lefts, per, line in lines:
-        if seats_so_far + per * len(lefts) > MAX_SEATS:
-            break
         name = _row_name(row)
         back = row == len(lines) - 1
         for index, (left, section) in enumerate(
@@ -309,19 +315,15 @@ def _theatre(width: float, height: float) -> tuple[list[PresetZone], list[Preset
             ]
             label = f"{name} {section}".strip()
             tables.append(_table(label, "row", (left, line - 20, per * 50, 40), 0, seats))
-        seats_so_far += per * len(lefts)
     return [_front("Stage", "stage", width)], tables
 
 
 def _classroom(width: float, height: float) -> tuple[list[PresetZone], list[PresetTable]]:
     """Long tables, chairs behind them facing the front, an aisle between sections."""
     area = _area(width, height, True, SIDE_AISLE)
-    lines = list(_lines(area, 60, 8, 100, (22, 95), 140))
+    lines = _kept(list(_lines(area, 60, 8, 100, (22, 95), 140)))
     tables: list[PresetTable] = []
-    seats_so_far = 0
     for row, lefts, per, top in lines:
-        if seats_so_far + per * len(lefts) > MAX_SEATS:
-            break
         back = row == len(lines) - 1
         for index, (left, section) in enumerate(
             zip(lefts, _section_names(len(lefts)), strict=True)
@@ -333,7 +335,6 @@ def _classroom(width: float, height: float) -> tuple[list[PresetZone], list[Pres
                 seats.append(_seat(label, left + 30 + n * 60, top + 45 + 28, back and outer))
             name = f"Row {row + 1} {section.lower()}".strip()
             tables.append(_table(name, "rect", (left, top, per * 60, 45), 0, seats))
-        seats_so_far += per * len(lefts)
     return [_front("Stage", "stage", width)], tables
 
 

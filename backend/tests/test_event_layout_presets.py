@@ -200,9 +200,11 @@ def test_a_tiny_room_gives_no_seats_and_a_huge_one_stays_within_the_limits() -> 
     for key in PRESET_KEYS:
         tiny = build(key, 100, 100)
         assert tiny.capacity == 0 and tiny.tables == ()
-        huge = build(key, 10000, 10000)
-        assert 0 < huge.capacity <= MAX_SEATS, key
-        assert len(huge.tables) <= 1000
+        for side in (3000, 10000):  # rooms where MAX_SEATS cuts the rows
+            huge = build(key, side, side)
+            assert 0 < huge.capacity <= MAX_SEATS, key
+            assert len(huge.tables) <= 1000
+            assert any(seat.accessible for t in huge.tables for seat in t.seats), (key, side)
 
 
 def test_the_same_room_always_gives_the_same_setup() -> None:
