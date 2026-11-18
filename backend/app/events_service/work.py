@@ -12,8 +12,8 @@ One list per kind, each row with the person's role there:
 
 from typing import Any
 
-from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy import func, or_, select
+from sqlalchemy.orm import Session, aliased
 
 from app.core import members
 from app.events_service.event_types import event_type_label
@@ -42,7 +42,9 @@ def _venue_roles(session: Session, user: Organiser) -> list[tuple[Venue, str]]:
     if user.role == "staff":
         conditions.append((Venue.kind == "restaurant") & Venue.is_demo.is_(True))
     found = []
-    for venue in session.scalars(select(Venue).where(or_(*conditions)).order_by(Venue.id)):
+    # An event's setup copy (core/parent_venue.py) is part of its event, not a venue.
+    query = select(Venue).where(or_(*conditions), Venue.parent_venue_id.is_(None))
+    for venue in session.scalars(query.order_by(Venue.id)):
         found.append((venue, "owner" if venue.organiser_id == user.id else "staff"))
     found.sort(key=lambda item: (item[1] != "owner", item[0].id))
     return found
@@ -68,12 +70,17 @@ def runnable_events(session: Session, user: Organiser) -> list[tuple[Event, Venu
     if user.role != "organiser":
         return []
     member_ids = members.member_venue_ids(session, user.email)
+    # An event on its own setup copy sits at the copy's parent: that venue's
+    # team runs it, and that venue is the one named.
+    room = aliased(Venue)
+    hall_id = func.coalesce(room.parent_venue_id, room.id)
     condition = Event.organiser_id == user.id
     if member_ids:
-        condition = condition | Event.venue_id.in_(member_ids)
+        condition = condition | hall_id.in_(member_ids)
     rows = session.execute(
         select(Event, Venue)
-        .join(Venue, Venue.id == Event.venue_id)
+        .join(room, room.id == Event.venue_id)
+        .join(Venue, Venue.id == hall_id)
         .where(condition)
         .order_by(Event.starts_at, Event.id)
     ).all()

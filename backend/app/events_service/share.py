@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.core import audit
 from app.core.errors import ApiError
+from app.core.parent_venue import shown_venue
 from app.core.privacy import display_name
 from app.events_service.access import (
     MAX_TOKEN_LENGTH,
@@ -225,9 +226,10 @@ def visitor_map(session: Session, event: Event, venue: Venue) -> dict[str, Any]:
 
 def visitor_view(session: Session, event: Event) -> dict[str, Any]:
     venue = load_venue(session, event)
+    shown = shown_venue(session, venue) or venue
     return {
         "event": event_summary(event),
-        "venue": {"name": venue.name},
+        "venue": {"name": shown.name},
         "map": visitor_map(session, event, venue),
         "join": join_state(session, event),
     }

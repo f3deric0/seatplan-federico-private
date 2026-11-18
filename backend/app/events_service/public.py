@@ -14,7 +14,7 @@ flow: an account is needed to hold a seat) and its places left.
 from typing import Any
 
 from sqlalchemy import Select, func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.core.errors import ApiError
 from app.events_service import share
@@ -33,9 +33,12 @@ def public_rows(
     session: Session, event_type: str | None = None, venue_id: int | None = None
 ) -> list[tuple[Event, Venue]]:
     """Every public event (see the module docstring), soonest first."""
+    # An event on its own setup copy (core/parent_venue.py) shows its parent.
+    room = aliased(Venue)
     query = (
         select(Event, Venue)
-        .join(Venue, Venue.id == Event.venue_id)
+        .join(room, room.id == Event.venue_id)
+        .join(Venue, Venue.id == func.coalesce(room.parent_venue_id, room.id))
         .where(
             Event.listed.is_(True),
             Event.share_enabled.is_(True),

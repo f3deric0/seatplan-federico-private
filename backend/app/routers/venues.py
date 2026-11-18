@@ -10,11 +10,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app import db
-from app.core import audit, members
+from app.core import audit, live, members
 from app.core.errors import ApiError
 from app.core.layout import LayoutItem, save_layout
 from app.core.text import PlainText
-from app.models import Organiser, Seat, Venue, VenueTable, Zone
+from app.models import Event, Organiser, Seat, Venue, VenueTable, Zone
 from app.security import CurrentOrganiser, CurrentUser
 
 router = APIRouter(prefix="/venues", tags=["venues"])
@@ -132,14 +132,38 @@ def _venue_detail(session: Session, venue: Venue) -> dict[str, Any]:
     return detail
 
 
+def may_run_setup(session: Session, venue: Venue, user: Organiser) -> bool:
+    """Who may open and fine-tune an event's setup copy: the venue's owner, a
+    member of the parent venue's team, or the organiser of the event on it.
+
+    The demo staff account is not one of them: setups belong to events, and
+    only organiser accounts run events.
+    """
+    if user.role == "staff":
+        return False
+    if venue.organiser_id == user.id or members.is_member(session, venue.id, user.email):
+        return True
+    found = session.scalar(
+        select(Event.id).where(Event.venue_id == venue.id, Event.organiser_id == user.id)
+    )
+    return found is not None
+
+
 def load_venue(
     session: Session, public_id: str, user: Organiser, *, owner_only: bool = False
 ) -> Venue:
     """The venue if this user may see it. Staff may see every venue; an
     organiser their own, and a member (core/members.py) the venues whose owner
     added their address, unless `owner_only` (the floor plan editor).
+    An event's own setup copy (venues.parent_venue_id) follows may_run_setup
+    instead, for reading and for the editor alike.
     Missing and forbidden look the same (404)."""
     venue = session.scalars(select(Venue).where(Venue.public_id == public_id)).first()
+    if venue is not None and venue.parent_venue_id is not None:
+        # An event's own setup copy: the people who run that event fine-tune it.
+        if not may_run_setup(session, venue, user):
+            raise ApiError(404, "not_found", "Venue not found.")
+        return venue
     if venue is not None and not owner_only and members.is_member(session, venue.id, user.email):
         return venue
     if (
@@ -153,7 +177,8 @@ def load_venue(
 
 @router.get("")
 def list_venues(user: CurrentUser, session: db.SessionDep) -> list[dict[str, Any]]:
-    query = select(Venue).order_by(Venue.id)
+    # An event's setup copy is reached through its event, never listed.
+    query = select(Venue).where(Venue.parent_venue_id.is_(None)).order_by(Venue.id)
     if user.role != "staff":
         query = query.where(Venue.organiser_id == user.id)
     else:
@@ -222,6 +247,12 @@ def put_layout(
             entity_id=venue.public_id,
             detail=counts,
         )
+        if venue.parent_venue_id is not None:
+            # The event's map changed under its organiser and guests.
+            for public_id in session.scalars(
+                select(Event.public_id).where(Event.venue_id == venue.id)
+            ):
+                live.bump(session, f"event-{public_id}")
         session.commit()
     except IntegrityError:
         # A deleted seat or table is still used by an assignment or booking.

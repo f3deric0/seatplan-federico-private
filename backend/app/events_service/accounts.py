@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.core import audit, members
 from app.core.errors import ApiError
+from app.core.parent_venue import shown_venue_of
 from app.core.privacy import mask_email
 from app.events_service import share
 from app.events_service.access import deadline_passed
@@ -627,7 +628,7 @@ def my_events(session: Session, account: GuestAccount) -> list[dict[str, Any]]:
     found = []
     for guest in rows:
         event = session.get(Event, guest.event_id)
-        venue = session.get(Venue, event.venue_id) if event else None
+        venue = shown_venue_of(session, event.venue_id) if event else None
         if event is None or venue is None:
             continue
         found.append(

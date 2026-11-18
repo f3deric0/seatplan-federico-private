@@ -120,6 +120,10 @@ class Venue(Base):
     published_at: Mapped[datetime | None] = mapped_column(UtcDateTime)
     # Event venues only: "hall" or "quinta" (events_service/event_types.py).
     venue_type: Mapped[str | None] = mapped_column(String(20))
+    # Set only on an event's own copy of a hall or quinta (its "setup",
+    # events_service/layouts.py): the venue it copies. That copy is private
+    # (draft, no slug); public pages, names and the venue team are the parent's.
+    parent_venue_id: Mapped[int | None] = mapped_column(ForeignKey("venues.id"))
 
 
 class VenueMember(Base):

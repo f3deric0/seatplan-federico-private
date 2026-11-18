@@ -14,6 +14,7 @@ from app import db
 from app.core import audit, live
 from app.core.errors import ApiError
 from app.core.holds import commit_or_seat_taken
+from app.core.parent_venue import shown_venue, shown_venue_of
 from app.events_service import chart, csv_io, exact_check, guests, optimise, plans, share, work
 from app.events_service.access import (
     attendee_link,
@@ -52,7 +53,7 @@ router = APIRouter(tags=["events"])
 
 
 def event_dict(session: Session, event: Event) -> dict[str, Any]:
-    venue = session.get(Venue, event.venue_id)
+    venue = shown_venue_of(session, event.venue_id)  # the hall, not the event's setup copy
     return {
         "public_id": event.public_id,
         "name": event.name,
@@ -67,6 +68,11 @@ def event_dict(session: Session, event: Event) -> dict[str, Any]:
         "listed": event.listed,
         "venue_name": venue.name if venue is not None else None,
     }
+
+
+def _shown_name(session: Session, venue: Venue) -> str:
+    shown = shown_venue(session, venue)
+    return shown.name if shown is not None else venue.name
 
 
 def _changed(
@@ -99,7 +105,12 @@ def _changed(
 @router.post("/events", status_code=201)
 def create_event(body: EventIn, user: CurrentOrganiser, session: db.SessionDep) -> dict[str, Any]:
     venue = session.scalars(select(Venue).where(Venue.public_id == body.venue_id)).first()
-    if venue is None or venue.organiser_id != user.id or venue.kind != "event":
+    if (
+        venue is None
+        or venue.organiser_id != user.id
+        or venue.kind != "event"
+        or venue.parent_venue_id is not None  # another event's setup copy
+    ):
         raise ApiError(404, "not_found", "Event venue not found.")
     if body.ends_at <= body.starts_at:
         raise ApiError(422, "validation", "The event must end after it starts.")
@@ -134,7 +145,9 @@ def get_event(eid: str, user: CurrentOrganiser, session: db.SessionDep) -> dict[
     ]
     return {
         "event": event_dict(session, event),
-        "venue": {"public_id": venue.public_id, "name": venue.name},
+        # public_id: the venue holding this event's map (its setup copy once a
+        # preset is applied: the one to open in the editor); name: the hall's.
+        "venue": {"public_id": venue.public_id, "name": _shown_name(session, venue)},
         "map": organiser_map(session, event, venue),
         "not_chosen": not_chosen,
         "counts": {

@@ -30,9 +30,13 @@ def normalise(email: str) -> str:
 
 
 def is_member(session: Session, venue_id: int, email: str) -> bool:
+    """True when the address is on the venue's team. An event's own setup copy
+    (core/parent_venue.py) has no team of its own: its parent's team counts."""
+    parent = select(Venue.parent_venue_id).where(Venue.id == venue_id).scalar_subquery()
     found = session.scalar(
         select(VenueMember.id).where(
-            VenueMember.venue_id == venue_id, VenueMember.email == normalise(email)
+            VenueMember.venue_id == func.coalesce(parent, venue_id),
+            VenueMember.email == normalise(email),
         )
     )
     return found is not None
@@ -60,7 +64,12 @@ def is_member_anywhere(session: Session, email: str) -> bool:
 def load_owned_venue(session: Session, public_id: str, owner: Organiser) -> Venue:
     """The owner's restaurant or event venue, else 404 (missing and forbidden look alike)."""
     venue = session.scalars(
-        select(Venue).where(Venue.public_id == public_id, Venue.organiser_id == owner.id)
+        select(Venue).where(
+            Venue.public_id == public_id,
+            Venue.organiser_id == owner.id,
+            # An event's setup copy has no team of its own (the parent's counts).
+            Venue.parent_venue_id.is_(None),
+        )
     ).first()
     if venue is None or venue.kind not in ("restaurant", "event"):
         raise ApiError(404, "not_found", "Venue not found.")
