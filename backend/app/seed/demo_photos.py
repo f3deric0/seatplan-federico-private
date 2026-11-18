@@ -1,6 +1,6 @@
-"""Invented pictures for the demo restaurants, drawn here from plain shapes.
+"""Invented pictures for the demo restaurants and event venues, drawn here from plain shapes.
 
-SOURCE OF EVERY DEMO PHOTO IN THE DEFAULT RESTAURANT SEED: this file.
+SOURCE OF EVERY DEMO PHOTO IN THE DEFAULT RESTAURANT AND EVENT VENUE SEED: this file.
 Each picture is made by the code below
 (rectangles, circles and colour bands written out as an indexed PNG by
 app/mail/png.py). No photograph, stock image or other third-party material is
@@ -169,12 +169,114 @@ def _linen_bistro(p: Painter) -> None:
         p.disc(x + 30, 130, 8, TERRACOTTA)
 
 
+# ---------------------------------------------------------------- event venues
+# Drawn the same way, for seed/demo_event_venues.py: halls and quintas.
+
+
+def _auditorium(p: Painter) -> None:
+    p.rect(0, 0, WIDTH, HEIGHT, DUSK)
+    p.rect(110, 20, 180, 70, LINEN)  # the screen
+    p.rect(120, 30, 160, 50, DAY)
+    p.rect(60, 90, 280, 14, DARK_WOOD)  # the stage
+    for x in (80, 320):  # spotlights
+        p.disc(x, 12, 6, LIGHT)
+    for row in range(5):  # rows of seats, wider towards the back
+        y = 115 + row * 22
+        margin = 70 - row * 14
+        for x in range(margin, WIDTH - margin, 18):
+            p.rect(x, y, 14, 12, TERRACOTTA)
+            p.rect(x, y + 12, 14, 3, SHADOW)
+
+
+def _ballroom(p: Painter) -> None:
+    p.rect(0, 0, WIDTH, HEIGHT, WARM)
+    p.rect(0, 0, WIDTH, 70, PALE)
+    for x in range(20, WIDTH, 80):  # tall windows
+        p.rect(x, 10, 36, 90, DAY)
+        p.rect(x + 17, 10, 2, 90, WHITE)
+    for cx in (110, 290):  # chandeliers
+        p.rect(cx - 1, 0, 2, 22, SHADOW)
+        p.disc(cx, 30, 14, LIGHT)
+    p.rect(0, 150, WIDTH, 75, DARK_WOOD)
+    for cx, cy in ((70, 160), (200, 168), (330, 160), (135, 205), (265, 205)):  # round tables
+        p.disc(cx, cy, 26, LINEN)
+        p.disc(cx, cy - 6, 5, TERRACOTTA)
+
+
+def _loft_workshop(p: Painter) -> None:
+    p.rect(0, 0, WIDTH, HEIGHT, STONE)
+    for x in range(0, WIDTH, 40):  # exposed brick
+        for y in range(0, 110, 16):
+            p.rect(x + (y // 16 % 2) * 20, y, 36, 12, TERRACOTTA)
+    p.rect(150, 20, 100, 60, WHITE)  # a whiteboard
+    p.rect(0, 110, WIDTH, 6, SHADOW)
+    p.rect(0, 116, WIDTH, 109, WOOD)
+    for row in range(3):  # classroom tables facing the board
+        y = 130 + row * 30
+        for x in (40, 230):
+            p.rect(x, y, 130, 10, LINEN)
+            for seat in range(4):
+                p.disc(x + 16 + seat * 33, y + 18, 5, DARK_WOOD)
+
+
+def _garden_quinta(p: Painter) -> None:
+    p.rect(0, 0, WIDTH, HEIGHT, DAY)
+    p.disc(330, 40, 20, LIGHT)
+    p.rect(0, 95, WIDTH, 130, LEAVES)
+    for cx, cy in ((40, 90), (370, 85), (300, 100)):  # trees on the hill
+        p.disc(cx, cy, 30, DARK_WOOD if cx == 300 else LEAVES)
+    p.rect(80, 60, 200, 40, WHITE)  # the white house of the quinta
+    p.rect(80, 52, 200, 8, TERRACOTTA)
+    for x in (110, 160, 210, 250):
+        p.rect(x, 72, 14, 20, DAY)
+    for x in range(10, WIDTH, 26):  # string lights
+        p.disc(x, 120 + int(6 * math.sin(x / 20)), 3, LIGHT)
+    for cx, cy in ((70, 175), (180, 185), (290, 175), (125, 212), (240, 212)):
+        p.disc(cx, cy, 22, LINEN)
+
+
+def _cork_oaks(p: Painter) -> None:
+    p.bands(0, 110, (PALE, WARM, SUNSET))
+    p.disc(80, 95, 24, LIGHT)
+    p.rect(0, 110, WIDTH, 115, FRUIT)  # the dry summer plain
+    p.rect(0, 110, WIDTH, 8, WOOD)
+    for cx in (60, 190, 330):  # cork oaks
+        p.rect(cx - 5, 95, 10, 40, DARK_WOOD)
+        p.disc(cx, 85, 34, LEAVES)
+    p.rect(150, 150, 120, 50, WHITE)  # a low white house with a blue stripe
+    p.rect(150, 192, 120, 8, RIVER)
+    p.rect(195, 165, 20, 35, DARK_WOOD)
+    for x in (30, 300):
+        p.rect(x, 190, 70, 6, LINEN)
+        p.rect(x + 30, 196, 6, 22, DARK_WOOD)
+
+
+def _vineyard_terraces(p: Painter) -> None:
+    p.bands(0, 80, (DAY, PALE))
+    for step in range(6):  # terraces down to the river
+        y = 60 + step * 22
+        p.rect(0, y, WIDTH, 22, LEAVES if step % 2 == 0 else DARK_WOOD)
+        for x in range(step * 6, WIDTH, 22):
+            p.rect(x, y + 4, 10, 6, TERRACOTTA if step % 2 == 0 else LEAVES)
+    p.rect(0, 192, WIDTH, 33, RIVER)
+    for x in range(30, WIDTH, 70):
+        p.rect(x, 205, 30, 3, RIVER_LIGHT)
+    p.rect(250, 30, 90, 34, WHITE)  # the house at the top
+    p.rect(250, 24, 90, 6, TERRACOTTA)
+
+
 SCENES = {
     "river_terrace": _river_terrace,
     "orange_patio": _orange_patio,
     "viewpoint": _viewpoint,
     "tasca": _tasca,
     "linen_bistro": _linen_bistro,
+    "auditorium": _auditorium,
+    "ballroom": _ballroom,
+    "loft_workshop": _loft_workshop,
+    "garden_quinta": _garden_quinta,
+    "cork_oaks": _cork_oaks,
+    "vineyard_terraces": _vineyard_terraces,
 }
 
 
