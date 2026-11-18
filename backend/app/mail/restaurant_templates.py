@@ -57,6 +57,9 @@ class RestaurantBooking:
     cover_alt: str = ""
     picture_width: int | None = None  # None: there is no mini-map
     picture_alt: str = ""
+    # "€20, taken off your bill. Free cancellation until Fri 20 Nov, 19:30." Only on
+    # bookings that needed a deposit; every other email is exactly as before.
+    payment_line: str | None = None
 
 
 def seat_line(facts: RestaurantBooking) -> str:
@@ -106,6 +109,7 @@ def _details(facts: RestaurantBooking) -> list[tuple[str, str]]:
         ("Time", facts.time_text),
         ("People", _party(facts.party_size)),
         ("Your table", seat_line(facts)),
+        *([("Deposit", facts.payment_line)] if facts.payment_line else []),
     ]
 
 

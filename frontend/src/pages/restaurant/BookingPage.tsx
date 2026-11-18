@@ -4,10 +4,10 @@
 // 5 confirmation. This file only draws: the answers so far live in
 // useBookingFlow.ts, and each step lives in its own file.
 import { useEffect, useRef } from "react";
-import { Navigate, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ApiError } from "../../api/client";
 import { getRestaurant } from "../../api/restaurant";
-import type { RestaurantInfo } from "../../api/restaurant";
+import type { BookingConfirmation, RestaurantInfo } from "../../api/restaurant";
 import { EmptyState, ErrorState, PageShell, Skeleton, Stepper } from "../../design/components";
 import { ChooseSeat } from "./ChooseSeat";
 import { Confirmation } from "./Confirmation";
@@ -16,6 +16,7 @@ import { StepDetails } from "./StepDetails";
 import { StepParty } from "./StepParty";
 import { StepTable } from "./StepTable";
 import { StepTime } from "./StepTime";
+import { rememberPendingBooking } from "../pay/pendingBooking";
 import { STEP, useBookingFlow } from "./useBookingFlow";
 import { linkedTime, useLinkedTime } from "./useLinkedTime";
 import { useLoad } from "./useLoad";
@@ -133,6 +134,7 @@ function BookingFlow({ venueId, info }: { venueId: string; info: RestaurantInfo 
         <StepDetails
           venueId={venueId}
           needs={needs}
+          time={time}
           hold={hold}
           seatId={flow.seatId}
           secondsLeft={flow.secondsLeft ?? 0}
@@ -144,9 +146,28 @@ function BookingFlow({ venueId, info }: { venueId: string; info: RestaurantInfo 
           onBack={() => flow.go(STEP.table)}
         />
       )}
-      {step === STEP.done && flow.confirmation && <Confirmation confirmation={flow.confirmation} />}
+      {step === STEP.done && flow.confirmation && (flow.confirmation.payment ? <GoToPayment confirmation={flow.confirmation} /> : <Confirmation confirmation={flow.confirmation} />)}
     </>
   );
+}
+
+/**
+ * The booking is saved but waiting for its deposit: take the diner to the payment page. The manage
+ * link stays in this tab meanwhile, because the payment page must never see it (see pendingBooking.ts).
+ */
+function GoToPayment({ confirmation }: { confirmation: BookingConfirmation }) {
+  const navigate = useNavigate();
+  const payment = confirmation.payment;
+  const manageUrl = confirmation.manage_url;
+  const email = confirmation.email;
+  useEffect(() => {
+    if (!payment) return;
+    rememberPendingBooking(payment.payment_id, { manageUrl, email });
+    // A path is our own demo page; anything else is the payment provider's page.
+    if (payment.next_url.startsWith("/")) navigate(payment.next_url, { replace: true });
+    else window.location.assign(payment.next_url);
+  }, [payment, manageUrl, email, navigate]);
+  return <Skeleton lines={3} label="Taking you to the payment page" />;
 }
 
 /** The restaurant and the day above the stages, the three stages on wide screens, "2 of 3 · Table" on a phone. */

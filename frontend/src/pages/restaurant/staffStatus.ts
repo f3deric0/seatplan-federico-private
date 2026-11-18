@@ -64,6 +64,7 @@ export function upcomingArrivals(bookings: StaffBooking[]): StaffBooking[] {
 }
 
 export const BOOKING_LOOK: Record<BookingStatus, { label: string; tone: "neutral" | "warning" | "success" }> = {
+  pending: { label: "Waiting for deposit", tone: "warning" },
   confirmed: { label: "Expected", tone: "warning" },
   seated: { label: "Seated", tone: "success" },
   finishing: { label: "Finishing", tone: "success" },

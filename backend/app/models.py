@@ -651,3 +651,79 @@ class VenuePhoto(Base):
     position: Mapped[int] = mapped_column(Integer, default=0)
     is_cover: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utc_now)
+
+
+# ------------------------------------------------------------------ deposits
+
+
+class BookingPolicy(Base):
+    """What a restaurant asks up front, per service name ("Dinner").
+
+    service_name "" is the default for every service without a row of its own.
+    The name, not the ServicePeriod id, is the key because the schedule editor
+    deletes and re-inserts the periods on every save, so their ids are not stable.
+    """
+
+    __tablename__ = "booking_policies"
+    __table_args__ = (UniqueConstraint("venue_id", "service_name", name="uq_booking_policy"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    venue_id: Mapped[int] = mapped_column(ForeignKey("venues.id"), index=True)
+    service_name: Mapped[str] = mapped_column(String(40), default="")
+    mode: Mapped[str] = mapped_column(String(10), default="deposit")
+    per_person_cents: Mapped[int] = mapped_column(Integer)
+    cancel_hours: Mapped[int] = mapped_column(Integer, default=24)
+    min_party: Mapped[int] = mapped_column(Integer, default=1)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utc_now)
+
+
+class BookingPayment(Base):
+    """The deposit of one booking, with a snapshot of the terms the diner accepted.
+
+    Later edits to the restaurant's policy never change a booking that already
+    exists, because everything needed is copied here at booking time.
+    """
+
+    __tablename__ = "booking_payments"
+    __table_args__ = (Index("ix_booking_payments_status_expires", "status", "expires_at"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    public_id: Mapped[str] = mapped_column(
+        String(32), default=new_public_id, unique=True, index=True
+    )
+    booking_id: Mapped[int] = mapped_column(ForeignKey("bookings.id"), unique=True)
+    venue_id: Mapped[int] = mapped_column(ForeignKey("venues.id"), index=True)
+    provider: Mapped[str] = mapped_column(String(10))
+    kind: Mapped[str] = mapped_column(String(10), default="deposit")
+    # pending -> paid | expired; paid -> refunded | kept; refund_due while a refund is retried.
+    status: Mapped[str] = mapped_column(String(12), default="pending")
+    per_person_cents: Mapped[int] = mapped_column(Integer)
+    party_at_booking: Mapped[int] = mapped_column(Integer)
+    amount_cents: Mapped[int] = mapped_column(Integer)
+    cancel_hours: Mapped[int] = mapped_column(Integer)
+    policy_text: Mapped[str] = mapped_column(String(400))
+    accepted_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utc_now)
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime)
+    checkout_id: Mapped[str | None] = mapped_column(String(255))
+    # Stripe's payment_intent id: the only thing needed to refund. Never a card detail.
+    payment_ref: Mapped[str | None] = mapped_column(String(80))
+    refunded_cents: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utc_now)
+
+
+class PaymentEvent(Base):
+    """A webhook we already handled. The unique key makes a repeat do nothing.
+
+    No body is stored: only which event, so nothing personal or financial
+    lingers here.
+    """
+
+    __tablename__ = "payment_events"
+    __table_args__ = (UniqueConstraint("provider", "event_id", name="uq_payment_event"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    provider: Mapped[str] = mapped_column(String(10))
+    event_id: Mapped[str] = mapped_column(String(255))
+    type: Mapped[str] = mapped_column(String(60))
+    received_at: Mapped[datetime] = mapped_column(UtcDateTime, default=utc_now)

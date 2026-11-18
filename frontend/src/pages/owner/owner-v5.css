@@ -323,3 +323,18 @@
 }
 
 .ow-left { display: grid; gap: var(--space-3); min-width: 0; }
+
+/* The deposit rules form: one bordered group per rule. */
+.ow-rule {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--c-border);
+}
+
+.ow-rule legend {
+  padding: 0 var(--space-2);
+  font-weight: var(--fw-bold);
+}

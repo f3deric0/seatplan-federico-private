@@ -16,6 +16,17 @@ Security. "Not released" means it has not been deployed anywhere.
 Things planned but not done yet: the first Vercel deployment, real email
 through Resend, usability sessions with real users.
 
+### Added (2026-11-18)
+
+- Deposits for restaurant bookings. The owner sets, per service, a deposit per person and a free-cancellation
+  window; a diner accepts the terms, the booking waits as `pending` (it keeps its table) until the deposit is
+  paid, and is then confirmed. Cancelling in time refunds it; after the deadline the restaurant keeps it; the
+  restaurant cancelling always refunds. The default provider is a demo one (a clearly labelled pretend payment
+  page, no money moves); Stripe is wired in behind `PAYMENT_PROVIDER=stripe` and only needs its keys
+  (`backend/app/payments/READ_ME_FIRST.md`). Hosted Checkout only, so no card data reaches SeatPlan and the
+  Content-Security-Policy is unchanged; webhooks are signature-checked, deduplicated and re-read from Stripe.
+- Staff see each booking's deposit on the floor. New owner page "Deposits".
+
 ### Added (2026-11-10 to 11)
 
 - Shared event link: one link per event (`/j/<token>`), switched on and off,

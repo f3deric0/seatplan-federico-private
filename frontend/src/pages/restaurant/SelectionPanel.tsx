@@ -4,6 +4,7 @@ import type { StaffBooking, StaffFloor, StaffTable } from "../../api/restaurant"
 import { Badge, Button } from "../../design/components";
 import { BookingActions } from "./BookingActions";
 import { people, tablesText } from "./format";
+import { depositStatus } from "./money";
 import { BOOKING_LOOK, FLOOR_LOOK } from "./staffStatus";
 import { prefWords } from "./prefs";
 import { CustomerHistory } from "./CustomerHistory";
@@ -75,6 +76,13 @@ function BookingDetails({ booking }: { booking: StaffBooking }) {
         {booking.needs_accessible && <Badge tone="info">Accessible table</Badge>}
         {booking.high_chairs > 0 && <Badge>High chairs: {booking.high_chairs}</Badge>}
       </div>
+      {booking.payment && (
+        <p className="st-note" data-testid="staff-deposit">
+          <strong>{depositStatus(booking.payment)}</strong>
+          {booking.payment.status === "pending" && ". The table is held until it is paid."}
+          {booking.payment.status === "paid" && ", taken off the bill."}
+        </p>
+      )}
       {booking.seat && <p className="st-note">Chair requested: {booking.seat.label}</p>}
       {prefWords(booking.prefs) && <p className="st-note">Guest wished for: {prefWords(booking.prefs)}</p>}
       {booking.notes && <p className="st-note">Note: {booking.notes}</p>}

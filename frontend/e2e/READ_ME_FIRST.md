@@ -34,6 +34,7 @@ Use distinct E2E_API_PORT/E2E_WEB_PORT when running alongside another worktree.
 | `room-editor.spec.ts` | Full 10 x 7 m room workflow with touch enabled, save/reload, two-tab stale-layout recovery and saved daylight/night preview |
 | `owner.spec.ts` | Owner publishes/unpublishes at 1440/390, drafts reject diner access, existing booked chair/manage link survives, axe on review/draft/manage; discovery itself awaits tasks 25/26/29 |
 | `accessibility.spec.ts` | axe-core scan (WCAG 2.1 A and AA) of nine pages, including the visitor page, the create-account form and the guest sign-in page |
+| `restaurant-deposit.spec.ts` | Deposits with the demo provider: terms must be accepted, the booking is pending until paid on the demo page, staff see the deposit, cancelling in time refunds it, giving up frees the table, the owner sets the rules |
 | `fixtures.ts` | Demo links, sign-in, and the rule that fails a test on a page error or a CSP violation |
 | `attendee-steps.ts` | Attendee steps shared by the desktop and phone tests |
 

@@ -17,8 +17,8 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from app import db
 from app.core.errors import ApiError, SeatTaken
 from app.core.text import PlainText
-from app.models import Venue, utc_now
-from app.restaurant_service import booking_rows, manage_flow, waitlist
+from app.models import Booking, Venue, utc_now
+from app.restaurant_service import booking_payments, booking_rows, manage_flow, waitlist
 from app.restaurant_service.alternatives import conflict_response
 from app.restaurant_service.availability import MAX_ONLINE_PARTY, check_party_size, max_party
 from app.restaurant_service.changes import record_change
@@ -68,6 +68,13 @@ def _venue_of(session: db.SessionDep, venue_id: int) -> Venue:
     return venue
 
 
+def _add_payment(session: db.SessionDep, booking: Booking, detail: dict[str, Any]) -> None:
+    """The deposit, when this booking has one: what was paid and what cancelling would do."""
+    payment = booking_payments.payment_of(session, booking.id)
+    if payment is not None:
+        detail["payment"] = booking_payments.summary(payment, booking)
+
+
 @router.get("/b/{manage_token}")
 def view_booking(manage_token: str, request: Request, session: db.SessionDep) -> dict[str, Any]:
     _limit(session, request, "manage", MANAGE_LIMIT)
@@ -78,6 +85,7 @@ def view_booking(manage_token: str, request: Request, session: db.SessionDep) ->
     detail["can_change"] = booking.status == "confirmed" and not is_past(
         venue, booking.date, local_start
     )
+    _add_payment(session, booking, detail)
     # The change form offers party sizes up to this, so every choice can fit.
     detail["max_party"] = max_party(session, venue)
     return detail
@@ -121,7 +129,9 @@ def cancel_booking(manage_token: str, request: Request, session: db.SessionDep) 
         raise ApiError(409, "conflict", "This booking can no longer be cancelled.")
     manage_flow.cancel_booking(session, venue, booking, actor="diner", token=manage_token)
     session.commit()
-    return booking_rows.describe(session, venue, booking)
+    detail = booking_rows.describe(session, venue, booking)
+    _add_payment(session, booking, detail)
+    return detail
 
 
 @router.post("/r/{venue_public_id}/waitlist", status_code=201)

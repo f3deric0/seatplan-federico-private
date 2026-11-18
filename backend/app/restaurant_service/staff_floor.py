@@ -16,14 +16,26 @@ from app.core.errors import ApiError, SeatTaken
 from app.core.holds import commit_or_seat_taken
 from app.models import Booking, Organiser, TableSlot, Venue, VenueTable
 from app.optimiser.restaurant_assign import recommend_table
-from app.restaurant_service import booking_rows, chosen_seat, map_view, occupancy, schedule
+from app.restaurant_service import (
+    booking_payments,
+    booking_rows,
+    chosen_seat,
+    map_view,
+    occupancy,
+    schedule,
+)
 from app.restaurant_service.availability import PartyNeeds, table_specs_for
 from app.restaurant_service.changes import record_change
 from app.restaurant_service.clock import booking_window, hhmm, slot_of
 from app.restaurant_service.manage_flow import cancel_booking, needs_of
 from app.security import hash_token, new_token
 
-FLOOR_STATUS = {"confirmed": "reserved", "seated": "seated", "finishing": "finishing"}
+FLOOR_STATUS = {
+    "pending": "reserved",
+    "confirmed": "reserved",
+    "seated": "seated",
+    "finishing": "finishing",
+}
 # Statuses that hand the table back. Once there, a booking cannot be reopened,
 # because its slots may already belong to someone else.
 CLOSING_STATUSES = ("completed", "no_show", "cancelled")
@@ -98,10 +110,15 @@ def floor(session: Session, venue: Venue, day: date, at: time) -> dict[str, Any]
     asked_chairs = frozenset(
         b.chosen_seat_id for b in owners.values() if b.chosen_seat_id is not None
     )
-    bookings = [
-        booking_rows.describe(session, venue, booking)
-        for booking in occupancy.active_bookings(session, venue, day)
-    ]
+    active = occupancy.active_bookings(session, venue, day)
+    payments = booking_payments.payments_for(session, [booking.id for booking in active])
+    bookings = []
+    for booking in active:
+        row = booking_rows.describe(session, venue, booking)
+        if booking.id in payments:
+            # Deposit state for the staff card: "Deposit paid", "Waiting for deposit".
+            row["payment"] = booking_payments.summary(payments[booking.id], booking)
+        bookings.append(row)
     return {
         "date": day.isoformat(),
         "time": hhmm(at),
@@ -193,6 +210,9 @@ def set_status(
     """Change a booking's status. Closing statuses give the tables back. Commits."""
     if booking.status in CLOSING_STATUSES:
         raise ApiError(409, "conflict", "This booking is already closed.")
+    if booking.status == "pending" and status != "cancelled":
+        # The guest has not paid yet; staff can only release the table.
+        raise ApiError(409, "conflict", "This booking is waiting for its deposit.")
     if status == "cancelled":
         cancel_booking(session, venue, booking, actor=user.email)
     else:

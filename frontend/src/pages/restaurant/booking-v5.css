@@ -972,3 +972,45 @@
     background: transparent;
   }
 }
+
+/* ---------- Deposits: the terms before booking, and the payment page ---------- */
+
+.rb-deposit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-primary-soft);
+}
+
+.rb-deposit p {
+  margin: 0;
+}
+
+.rb-deposit-title {
+  margin: 0;
+  font-size: var(--fs-lg);
+  color: var(--c-primary);
+}
+
+.rb-deposit-amount {
+  font-size: var(--fs-lg);
+}
+
+.rb-deposit-demo {
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.rb-pay-card {
+  max-width: 34rem;
+}
+
+.rb-pay-card .rb-big-number {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--c-primary);
+}

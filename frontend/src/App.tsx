@@ -31,6 +31,9 @@ import StaffPage from "./pages/restaurant/StaffPage";
 import HoursPage from "./pages/owner/HoursPage";
 import MenuPage from "./pages/owner/MenuPage";
 import PublishReview from "./pages/owner/PublishReview";
+import PaymentsPage from "./pages/owner/PaymentsPage";
+import DemoCheckoutPage from "./pages/pay/DemoCheckoutPage";
+import PaymentReturnPage from "./pages/pay/PaymentReturnPage";
 const RoomEditorPage = lazy(() => import("./pages/room-editor/RoomEditorPage"));
 
 export default function App() {
@@ -48,6 +51,7 @@ export default function App() {
       <Route path="/owner/:venueId/photos" element={<PhotoEditorPage />} />
       <Route path="/owner/:venueId/hours" element={<HoursPage />} />
       <Route path="/owner/:venueId/menu" element={<MenuPage />} />
+      <Route path="/owner/:venueId/payments" element={<PaymentsPage />} />
       <Route path="/owner/:venueId/review" element={<PublishReview />} />
       <Route path="/owner/sign-in" element={<Login defaultNext="/owner" />} />
       <Route path="/owner/:venueId/dashboard" element={<StaffPage />} />
@@ -71,6 +75,9 @@ export default function App() {
       <Route path="/restaurants/:slug" element={<RestaurantPage />} />
       <Route path="/r/:venueId" element={<BookingPage />} />
       <Route path="/b/:token" element={<ManageBookingPage />} />
+      {/* Deposits: the pretend payment page (demo only) and where every payment page sends the diner back. */}
+      <Route path="/pay/demo/:paymentId" element={<DemoCheckoutPage />} />
+      <Route path="/pay/return/:paymentId" element={<PaymentReturnPage />} />
       <Route path="/staff/:venueId" element={<StaffPage />} />
       {/* Shared: floor-plan editor for both kinds of venue */}
       <Route path="/editor/:venueId" element={<EditorPage />} />

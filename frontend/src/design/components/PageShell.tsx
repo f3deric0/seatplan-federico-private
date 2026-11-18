@@ -5,7 +5,8 @@ import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import seatPlanLogo from "../seatplan-logo.png";
 
-const RESTAURANT_ROOTS = ["/restaurants", "/r", "/b", "/owner", "/staff"];
+// /pay is where a diner pays a restaurant deposit and returns from the payment page.
+const RESTAURANT_ROOTS = ["/restaurants", "/r", "/b", "/owner", "/staff", "/pay"];
 
 /** The routes of the Restaurants product (diner, owner, staff). Events and their sign-ins are not in it. */
 export function isRestaurantRoute(pathname: string, search = ""): boolean {

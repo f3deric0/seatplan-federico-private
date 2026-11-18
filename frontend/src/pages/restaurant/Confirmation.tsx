@@ -4,6 +4,7 @@
 import type { BookingConfirmation } from "../../api/restaurant";
 import { BookingRows } from "./BookingSummary";
 import { CopyLink, absoluteUrl } from "./CopyLink";
+import { cancelNote, depositStatus } from "./money";
 import { StepHeading } from "./StepHeading";
 import { DirectionsLink, VenueCard, usePublicVenue } from "./VenueCard";
 
@@ -22,6 +23,11 @@ export function Confirmation({ confirmation }: { confirmation: BookingConfirmati
         <StepHeading>Booking confirmed.</StepHeading>
         <p className="rb-muted rb5-lede">Your table at {booking.venue_name} is reserved.</p>
         <BookingRows booking={booking} />
+        {booking.payment && booking.payment.status === "paid" && (
+          <p className="rb-muted" role="note">
+            {depositStatus(booking.payment)}, taken off your bill. {cancelNote(booking.payment)}
+          </p>
+        )}
         <div className="rb5-actions">
           <a className="btn btn-primary" href={absoluteUrl(manageUrl)}>
             Manage booking <span aria-hidden="true">{"\u2192"}</span>

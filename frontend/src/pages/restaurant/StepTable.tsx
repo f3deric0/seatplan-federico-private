@@ -347,6 +347,7 @@ function TableStepBody({ venueId, map: loaded, hold, secondsLeft, submitting, ph
             variant="panel"
             venueId={venueId}
             needs={needs}
+            time={time}
             hold={hold}
             seatId={details.seatId}
             seatLabel={details.seatLabel}

@@ -8,7 +8,7 @@ confirm: read the hold -> check it still fits -> consume the hold -> insert
 """
 
 from dataclasses import dataclass
-from datetime import date, time
+from datetime import date, time, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -16,7 +16,14 @@ from app.core.errors import ApiError, SeatTaken
 from app.core.holds import commit_or_seat_taken
 from app.models import Booking, Venue
 from app.optimiser.restaurant_assign import recommend_table
-from app.restaurant_service import booking_rows, chosen_seat, emails, occupancy, schedule
+from app.restaurant_service import (
+    booking_payments,
+    booking_rows,
+    chosen_seat,
+    emails,
+    occupancy,
+    schedule,
+)
 from app.restaurant_service.availability import (
     PREF_KEYS,
     PartyNeeds,
@@ -143,11 +150,14 @@ def confirm_booking(
     needs: PartyNeeds,
     contact: Contact,
     seat_id: int | None = None,
+    deposit: booking_payments.Deposit | None = None,
 ) -> tuple[Booking, str]:
     """Turn a hold (see holding.read_hold) into a booking.
 
     Returns (booking, manage token). Raises SeatTaken if the database refuses
-    the table_slots rows, HoldExpired if the hold ran out.
+    the table_slots rows, HoldExpired if the hold ran out. With a `deposit` the
+    booking is saved as "pending", keeps its table, and is confirmed only once
+    the deposit is paid (booking_payments.py); its confirmation email waits too.
     """
     _check_hold_fits(session, venue, held, needs)
     # Checked before the hold is used up, so a bad chair keeps the diner's table.
@@ -168,7 +178,7 @@ def confirm_booking(
         allergies=contact.allergies,
         needs_accessible=needs.needs_accessible,
         high_chairs=needs.high_chairs,
-        status="confirmed",
+        status="pending" if deposit else "confirmed",
         source="diner",
         table_choice=held.table_choice,
         manage_token_hash=hash_token(token),
@@ -179,7 +189,14 @@ def confirm_booking(
     session.add(booking)
     session.flush()  # gives the booking its id for the table_slots rows
     booking_rows.write_slots(session, booking, held.table_ids, held.window)
-    emails.queue_confirmation(session, venue, booking, token)
+    if deposit:
+        payment = booking_payments.create_pending(session, venue, booking, deposit)
+        # Parked three days ahead as a safety net: it is released the moment the
+        # deposit is paid, and dropped when the wait ends without one.
+        parked = payment.expires_at + timedelta(days=3)
+        emails.queue_confirmation(session, venue, booking, token, hold_until=parked)
+    else:
+        emails.queue_confirmation(session, venue, booking, token)
     record_change(
         session,
         venue,

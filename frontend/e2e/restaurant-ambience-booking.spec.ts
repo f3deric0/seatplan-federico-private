@@ -56,7 +56,8 @@ test("a diner confirms from the form beside the plan, without leaving the map", 
   await page.getByRole("button", { name: /^Hold .* & continue/ }).first().click();
   const panel = page.getByRole("form", { name: "Your details" });
   await expect(panel).toBeVisible();
-  await expect(page.getByRole("option").first()).toBeVisible(); // the plan is still there
+  // The plan is still there. Scoped to the plan's listbox: the form's own "Occasion" menu also has <option>s.
+  await expect(page.getByRole("listbox").getByRole("option").first()).toBeVisible();
   await panel.getByLabel("Name for the booking").fill("Panel Diner");
   await panel.getByLabel("Email", { exact: true }).fill("panel.diner@example.com");
   await panel.getByRole("button", { name: "Confirm booking" }).click();

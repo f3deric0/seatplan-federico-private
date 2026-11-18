@@ -14,8 +14,10 @@ from app.optimiser.restaurant_model import TableSpec
 from app.restaurant_service.clock import booking_window
 
 # Bookings in these states own their table_slots rows. Every other state
-# (completed, cancelled, no_show) has already handed its table back.
-ACTIVE_STATUSES = ("confirmed", "seated", "finishing")
+# (completed, cancelled, no_show) has already handed its table back. "pending" is
+# a booking waiting for its deposit: it keeps the table for a short time (see
+# booking_payments.PENDING_MINUTES) so nobody else can take it meanwhile.
+ACTIVE_STATUSES = ("pending", "confirmed", "seated", "finishing")
 
 Busy = dict[int, set[int]]
 

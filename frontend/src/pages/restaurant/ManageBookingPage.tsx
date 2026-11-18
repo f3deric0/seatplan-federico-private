@@ -14,6 +14,7 @@ import { errorMessage, formatDate, people } from "./format";
 import { DirectionsLink, VenueCard, usePublicVenue } from "./VenueCard";
 import { useLoad } from "./useLoad";
 import { ArrivalNotice } from "./ArrivalNotice";
+import { cancelNote, depositStatus } from "./money";
 import "./restaurant.css";
 
 export default function ManageBookingPage() {
@@ -65,7 +66,7 @@ function ManageBooking({ token, booking, onUpdate }: { token: string; booking: B
   const toggle = (which: "time" | "chair"): void => setPanel(panel === which ? null : which);
   const hasChairs = (booking.table_ids ?? []).length > 0;
   const venue = usePublicVenue(booking.venue_public_id);
-  const statusBadge = booking.status === "confirmed" ? <Badge tone="success">Confirmed</Badge> : booking.status === "cancelled" ? <Badge tone="danger">Cancelled</Badge> : null;
+  const statusBadge = booking.status === "confirmed" ? <Badge tone="success">Confirmed</Badge> : booking.status === "cancelled" ? <Badge tone="danger">Cancelled</Badge> : booking.status === "pending" ? <Badge tone="warning">Waiting for deposit</Badge> : null;
   return (
     <>
       <p className="rb5-manage-sub">
@@ -76,10 +77,21 @@ function ManageBooking({ token, booking, onUpdate }: { token: string; booking: B
           This booking is cancelled. The table is free for someone else.
         </p>
       )}
+      {booking.status === "pending" && booking.payment && (
+        <p className="rb-notice rb-notice-warning" role="status">
+          <strong>This booking is waiting for its deposit.</strong>{" "}
+          {booking.payment.payment_id ? <a href={`/pay/return/${encodeURIComponent(booking.payment.payment_id)}`}>Check or finish the payment</a> : "Please finish the payment."}
+        </p>
+      )}
       <div className="rb5-two rb5-manage">
         <section className="rb-card rb5-details-card" aria-label="Reservation details">
           <h2 className="rb5-card-title">Reservation details</h2>
           <BookingRows booking={booking} />
+          {booking.payment && booking.status !== "pending" && booking.payment.status !== "expired" && (
+            <p className="rb-muted" data-testid="deposit-line">
+              {depositStatus(booking.payment)}. {booking.payment.policy_text}
+            </p>
+          )}
           <div className="rb5-reference">
             <span className="rb-muted">Reference {booking.public_id.slice(0, 8).toUpperCase()}</span>
             <DirectionsLink venue={venue} />
@@ -179,6 +191,7 @@ function CancelDialog({ token, booking, open, onClose, onCancelled }: { token: s
         {formatDate(booking.date)}, {booking.time} to {booking.end_time} · {people(booking.party_size)}
       </p>
       <p>The table is released straight away and cannot be taken back. You would need to book again.</p>
+      {cancelNote(booking.payment) && <p className="rb-notice" role="note">{cancelNote(booking.payment)}</p>}
       {problem && (
         <p className="rb-notice rb-notice-error" role="alert">
           {problem}

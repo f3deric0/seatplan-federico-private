@@ -17,10 +17,11 @@ from app.config import get_settings
 from app.mail.png import png_width
 from app.mail.restaurant_picture import render_restaurant_picture
 from app.mail.restaurant_templates import RestaurantBooking, picture_alt
-from app.models import Booking, Seat, Venue, VenuePhoto
+from app.models import Booking, BookingPayment, Seat, Venue, VenuePhoto
+from app.payments import money
 from app.restaurant_service import ambience_view, chosen_seat, occupancy
 from app.restaurant_service.booking_rows import table_labels
-from app.restaurant_service.clock import venue_zone
+from app.restaurant_service.clock import venue_zone, when_text
 from app.restaurant_service.discovery import maps_url
 
 MAX_PHRASES = 4
@@ -99,6 +100,18 @@ def _picture(
     return None
 
 
+def _payment_line(session: Session, venue: Venue, booking: Booking) -> str | None:
+    """One sentence about the deposit, or None for bookings that never had one."""
+    payment = session.scalar(select(BookingPayment).where(BookingPayment.booking_id == booking.id))
+    if payment is None:
+        return None
+    deadline = money.cancel_deadline(booking.start_at, payment.cancel_hours)
+    return (
+        f"{money.format_eur(payment.amount_cents)}, taken off your bill. "
+        f"Free cancellation until {when_text(venue, deadline)}."
+    )
+
+
 def booking_email_data(
     session: Session, venue: Venue, booking: Booking, link: str
 ) -> BookingEmailData:
@@ -130,6 +143,7 @@ def booking_email_data(
         cover_alt=cover.alt_text if cover else "",
         picture_width=png_width(png) if png else None,
         picture_alt=picture_alt(venue.name, table_text, seat["label"] if seat else None),
+        payment_line=_payment_line(session, venue, booking),
     )
     encoded = base64.b64encode(png).decode("ascii") if png else None
     return BookingEmailData(facts, encoded)

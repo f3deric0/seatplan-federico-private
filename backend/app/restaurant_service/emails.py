@@ -157,13 +157,71 @@ def drop_reminder(session: Session, booking: Booking) -> None:
 # ---------------------------------------------------------------- booking emails
 
 
-def queue_confirmation(session: Session, venue: Venue, booking: Booking, token: str) -> None:
+def _confirmation_key(booking: Booking) -> str:
+    return f"booking-confirmed-{booking.public_id}"
+
+
+def queue_confirmation(
+    session: Session,
+    venue: Venue,
+    booking: Booking,
+    token: str,
+    hold_until: datetime | None = None,
+) -> None:
+    """Queue the confirmation. With `hold_until` (a booking waiting for its deposit) it
+    is parked far ahead and released by release_confirmation once the deposit is paid,
+    or dropped by drop_unsent_booking_emails if it never is."""
     data = booking_email_data(session, venue, booking, manage_link(token))
     parts = restaurant_templates.booking_email("confirmed", data.facts)
-    key = f"booking-confirmed-{booking.public_id}"
     ics = _invite(venue, booking)
-    _queue(session, key, booking.email, "booking_confirmed", parts, ics, None, data.picture)
+    _queue(
+        session,
+        _confirmation_key(booking),
+        booking.email,
+        "booking_confirmed",
+        parts,
+        ics,
+        hold_until,
+        data.picture,
+    )
     queue_reminder(session, venue, booking, token)
+
+
+def release_confirmation(session: Session, booking: Booking) -> None:
+    """The deposit is paid: let the parked confirmation go out at the next send."""
+    session.execute(
+        update(EmailOutbox)
+        .where(
+            (EmailOutbox.idempotency_key == _confirmation_key(booking))
+            & (EmailOutbox.status == "queued")
+        )
+        .values(next_attempt_at=utc_now())
+    )
+
+
+def drop_unsent_booking_emails(session: Session, booking: Booking) -> None:
+    """The booking never got its deposit: its confirmation and reminders must never go out.
+
+    Marked skipped instead of deleted so the email log still shows them, and the
+    words and invite are blanked because they hold the raw manage link.
+    """
+    session.execute(
+        update(EmailOutbox)
+        .where(
+            (
+                (EmailOutbox.idempotency_key == _confirmation_key(booking))
+                | EmailOutbox.idempotency_key.startswith(_reminder_prefix(booking), autoescape=True)
+            )
+            & (EmailOutbox.status == "queued")
+        )
+        .values(
+            status="skipped",
+            last_error="Deposit not paid",
+            body_text="",
+            body_html="",
+            ics=None,
+        )
+    )
 
 
 def queue_change(session: Session, venue: Venue, booking: Booking, token: str = "") -> None:

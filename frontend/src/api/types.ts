@@ -23,6 +23,9 @@ export type ErrorCode =
   | "stale_layout" // HTTP 409: the room layout was saved elsewhere since it was opened
   | "event_full" // HTTP 409: no place left for one more guest (docs/guest-accounts.md)
   | "link_closed" // HTTP 403: the shared link is valid but switched off
+  | "policy_not_accepted" // HTTP 422: a deposit applies and its terms were not accepted
+  | "payment_unavailable" // HTTP 502: the payment provider could not be reached
+  | "payments_not_ready" // HTTP 422: deposits need online payments connected first
   | "method_not_allowed" // HTTP 405
   | "internal" // HTTP 500, or a status the API never plans to send
   | "network" // client only: the request never reached the server

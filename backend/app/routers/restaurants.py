@@ -17,13 +17,16 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from app import db
 from app.core.errors import ApiError, SeatTaken
 from app.core.text import PlainText
+from app.models import Venue
 from app.restaurant_service import (
     ambience_view,
+    booking_payments,
     chosen_seat,
     diner_flow,
     holding,
     map_view,
     occupancy,
+    policies,
     schedule,
 )
 from app.restaurant_service.alternatives import conflict_response
@@ -38,7 +41,7 @@ from app.restaurant_service.availability import (
 from app.restaurant_service.booking_caps import check_booking_caps
 from app.restaurant_service.booking_rows import describe
 from app.restaurant_service.changes import record_change
-from app.restaurant_service.clock import time_of_slot
+from app.restaurant_service.clock import slot_moment, time_of_slot
 from app.restaurant_service.emails import manage_link
 from app.restaurant_service.schedule_edit import read_schedule
 from app.restaurant_service.venue_access import load_published
@@ -99,6 +102,8 @@ class BookingIn(Strict):
     prefs: list[str] = Field(default_factory=list, max_length=10)  # kept for the staff
     # The chair the diner would like (spec 9.4): indicative, the whole table is booked.
     seat_id: int | None = Field(default=None, ge=1)
+    # True when the diner ticked the deposit terms. Required only when a deposit applies.
+    accept_policy: bool = False
 
 
 def _limit(session: db.SessionDep, request: Request, name: str, limit: int) -> None:
@@ -273,6 +278,7 @@ def book(
     _limit(session, request, "book", BOOK_LIMIT)
     venue = load_published(session, venue_public_id)
     held = holding.read_hold(session, venue, body.hold_id)
+    deposit = _deposit_terms(session, venue, held, body)
     # After read_hold, so a dead or made-up hold_id never counts against the
     # daily cap; before confirm_booking, because the cap commits its count.
     check_booking_caps(session, venue, str(body.email), client_ip(request))
@@ -290,14 +296,63 @@ def book(
     )
     try:
         booking, token = diner_flow.confirm_booking(
-            session, venue, held, needs, contact, seat_id=body.seat_id
+            session, venue, held, needs, contact, seat_id=body.seat_id, deposit=deposit
         )
     except SeatTaken as taken:
         at = time_of_slot(held.window[0])
         return conflict_response(session, venue, held.day, at, needs, taken.message)
-    return {
+    answer: dict[str, Any] = {
         "booking": describe(session, venue, booking, with_phrase=True),
         "manage_token": token,
         "manage_path": f"/b/{token}",
         "manage_link": manage_link(token),
     }
+    if deposit:
+        payment = booking_payments.payment_of(session, booking.id)
+        assert payment is not None  # confirm_booking just created it
+        # The booking is saved; now open the payment page. If that fails the
+        # booking is undone and the diner is told, so no table stays blocked.
+        next_url = booking_payments.begin_checkout(session, venue, booking, payment)
+        answer["booking"]["status"] = booking.status
+        answer["payment"] = {
+            "required": True,
+            "payment_id": payment.public_id,
+            "next_url": next_url,
+            "amount_cents": payment.amount_cents,
+            "expires_at": payment.expires_at.isoformat(),
+        }
+    return answer
+
+
+def _deposit_terms(
+    session: db.SessionDep, venue: Venue, held: holding.HeldTables, body: BookingIn
+) -> booking_payments.Deposit | None:
+    """The deposit this booking owes, or None. 422 when it applies but was not accepted."""
+    start = slot_moment(venue, held.day, held.window[0])
+    period = schedule.check_bookable(session, venue, held.day, time_of_slot(held.window[0]))
+    policy = policies.policy_for(session, venue, period.name, body.party)
+    if policy is None:
+        return None
+    if not body.accept_policy:
+        raise ApiError(
+            422, "policy_not_accepted", "Please accept the deposit terms to book this table."
+        )
+    terms = policies.describe_terms(venue, policy, start, body.party)
+    return booking_payments.Deposit(policy.per_person_cents, policy.cancel_hours, terms["text"])
+
+
+@router.get("/r/{venue_public_id}/policy")
+def deposit_policy(
+    venue_public_id: str,
+    request: Request,
+    session: db.SessionDep,
+    date: dt.date,
+    time: dt.time,
+    party: Party,
+) -> dict[str, Any]:
+    """What the diner must accept before booking this time, if anything."""
+    _limit(session, request, "read", READ_LIMIT)
+    venue = load_published(session, venue_public_id)
+    check_party_size(session, venue, party)
+    terms = policies.terms_for(session, venue, date, time, party)
+    return terms if terms is not None else {"mode": "none"}

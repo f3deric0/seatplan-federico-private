@@ -9,10 +9,10 @@ afterEach(() => {
 });
 
 describe("isRestaurantRoute", () => {
-  it.each(["/", "/restaurants/tagus-terrace", "/r/abc", "/b/token", "/owner", "/owner/sign-in", "/owner/abc/rooms", "/staff/abc"])("%s is a Restaurants route", (path) => {
+  it.each(["/", "/restaurants/tagus-terrace", "/r/abc", "/b/token", "/owner", "/owner/sign-in", "/owner/abc/rooms", "/staff/abc", "/pay/demo/abc", "/pay/return/abc", "/owner/abc/payments"])("%s is a Restaurants route", (path) => {
     expect(isRestaurantRoute(path)).toBe(true);
   });
-  it.each(["/demo", "/login", "/e/token", "/j/token", "/j/token/register", "/my", "/my/account", "/organiser/abc", "/editor/abc", "/restaurantsx", "/ownership"])("%s is not", (path) => {
+  it.each(["/demo", "/login", "/e/token", "/j/token", "/j/token/register", "/my", "/my/account", "/organiser/abc", "/editor/abc", "/restaurantsx", "/ownership", "/payroll"])("%s is not", (path) => {
     expect(isRestaurantRoute(path)).toBe(false);
   });
 });

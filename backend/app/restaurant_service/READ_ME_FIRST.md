@@ -92,6 +92,8 @@ never touches the database; this package turns rows into its dataclasses.
 | `dashboard.py` | Covers, utilisation, no-show rate, overbooking suggestion |
 | `schedule_edit.py` | Read and replace the schedule |
 | `venue_access.py` | Find the restaurant in the URL (diner and staff rules) |
+| `policies.py` | The restaurant's deposit rules per service, and what a diner is told before confirming. Deposits are only on where no real money can move by mistake (demo provider: demo restaurants only) |
+| `booking_payments.py` | A deposit's life: a booking waits as `pending` (it keeps its table), is confirmed when paid, expires after 30 minutes or when abandoned, and is refunded or kept on cancellation. Every state change is a conditional UPDATE, so nothing happens twice. See `payments/READ_ME_FIRST.md` |
 
 ## Data flow of one booking
 
@@ -101,6 +103,8 @@ POST /r/{vid}/hold      check_bookable -> check_covers_cap -> recommend_table
 DELETE /r/{vid}/hold/{hold_id}  delete the hold rows -> bump + audit
 POST /r/{vid}/bookings  read_hold -> check_booking_caps -> lock the service row -> fit and covers cap checked again -> consume holds
                         -> Booking + ALL table_slots rows -> emails -> one commit
+                        (a deposit applies: Booking is "pending", its confirmation email is parked, then
+                         booking_payments.begin_checkout opens the payment page; paying makes it "confirmed")
 PATCH /b/{token}        release old slots -> write new slots -> one commit
 DELETE /b/{token}       release slots -> cancellation email -> waitlist offer
 ```

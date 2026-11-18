@@ -2,15 +2,17 @@
 // and the submit button checks everything and moves focus to the first field that needs attention.
 // It is a step of its own (after the optional chair), and also the form in the side panel next to
 // the map once a table is held (variant "panel"), so a diner can confirm without leaving the plan.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { FormEvent } from "react";
 import { ApiError } from "../../api/client";
-import { createBooking } from "../../api/restaurant";
-import type { BookingConfirmation, ContactDetails, PartyNeeds } from "../../api/restaurant";
+import { createBooking, getDepositTerms } from "../../api/restaurant";
+import type { BookingConfirmation, ContactDetails, DepositTerms, PartyNeeds } from "../../api/restaurant";
 import { Button, Field, Select } from "../../design/components";
+import { DepositNotice } from "./DepositNotice";
 import { errorMessage } from "./format";
 import { HoldCountdown } from "./HoldCountdown";
+import { formatEuros } from "./money";
 import type { Hold } from "./StepTable";
 import { StepHeading } from "./StepHeading";
 import { validateContact } from "./validation";
@@ -19,6 +21,8 @@ import type { ContactErrors } from "./validation";
 interface StepDetailsProps {
   venueId: string;
   needs: PartyNeeds;
+  /** The time of the booking ("19:00"), to ask whether a deposit applies to it. */
+  time?: string | null;
   hold: Hold;
   /** The chair the diner would like, if they chose one. */
   seatId: number | null;
@@ -45,12 +49,35 @@ interface StepDetailsProps {
 const FIELD_ORDER: (keyof ContactDetails)[] = ["name", "email", "phone", "notes"];
 
 export function StepDetails(props: StepDetailsProps) {
-  const { venueId, needs, hold, seatId, seatLabel, summary, secondsLeft, contact, onContactChange, onBooked, onHoldLost, onSubmittingChange, onBack, onChooseSeat, onClearSeat, variant = "step" } = props;
+  const { venueId, needs, time = null, hold, seatId, seatLabel, summary, secondsLeft, contact, onContactChange, onBooked, onHoldLost, onSubmittingChange, onBack, onChooseSeat, onClearSeat, variant = "step" } = props;
   const panel = variant === "panel";
   const [touched, setTouched] = useState<Partial<Record<keyof ContactDetails, boolean>>>({});
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
+  // The restaurant's deposit rule for this time and party, if it has one. The diner must accept it.
+  const [terms, setTerms] = useState<DepositTerms | null>(null);
+  const [accepted, setAccepted] = useState(false);
+  const [termsError, setTermsError] = useState<string | null>(null);
+  const [termsRound, setTermsRound] = useState(0);
+  useEffect(() => {
+    let current = true;
+    setTerms(null);
+    setAccepted(false);
+    if (!time) return undefined;
+    getDepositTerms(venueId, needs.date, time, needs.party).then(
+      (found) => {
+        if (current) setTerms(found);
+      },
+      () => {
+        // Without the terms on screen the server still refuses a booking that needs a deposit
+        // (policy_not_accepted), and that answer brings them back here, so nothing is lost.
+      },
+    );
+    return () => {
+      current = false;
+    };
+  }, [venueId, needs.date, needs.party, time, termsRound]);
   const errors = validateContact(contact);
   const shown = (field: keyof ContactDetails): string | null => (touched[field] ? (errors[field] ?? null) : null);
 
@@ -60,12 +87,24 @@ export function StepDetails(props: StepDetailsProps) {
     setTouched({ name: true, email: true, phone: true, notes: true });
     if (errors.phone || errors.notes) setMoreOpen(true);
     if (focusFirstError(errors)) return;
+    if (terms && !accepted) {
+      setTermsError("Please accept the deposit terms to book this table.");
+      document.getElementById("rb-accept-deposit")?.focus();
+      return;
+    }
     setBusy(true);
     onSubmittingChange?.(true);
     setProblem(null);
     try {
-      onBooked(await createBooking(venueId, hold.holdId, trimmed(contact), needs, seatId));
+      // The acceptance is only sent when a deposit applies, so a booking without one is exactly as before.
+      onBooked(terms ? await createBooking(venueId, hold.holdId, trimmed(contact), needs, seatId, true) : await createBooking(venueId, hold.holdId, trimmed(contact), needs, seatId));
     } catch (error) {
+      if (error instanceof ApiError && error.code === "policy_not_accepted") {
+        // The terms did not load or changed: show them again, and keep the hold.
+        setTermsRound((round) => round + 1);
+        setProblem(error.message);
+        return;
+      }
       if (error instanceof ApiError && (error.code === "hold_expired" || error.code === "seat_taken")) {
         onHoldLost(`Your hold on table ${hold.tableLabel} ended before we could book it. Your details are not lost: pick a table again.`);
         return;
@@ -116,6 +155,7 @@ export function StepDetails(props: StepDetailsProps) {
       <Field label="Dietary preferences (optional)" maxLength={500} placeholder="Vegetarian, vegan…" value={contact.dietary_requirements ?? ""} onChange={event => onContactChange({ ...contact, dietary_requirements: event.target.value })} />
       <Field label="Food allergies (optional)" maxLength={500} hint="The staff will see this. Please confirm safe preparation directly with the restaurant." placeholder="Tell us about any food allergies" value={contact.allergies ?? ""} onChange={event => onContactChange({ ...contact, allergies: event.target.value })} />
       {panel && onChooseSeat && <ChairRequest seatId={seatId} seatLabel={seatLabel ?? null} onChoose={onChooseSeat} onClear={onClearSeat} disabled={busy} />}
+      {terms && <DepositNotice terms={terms} accepted={accepted} disabled={busy} error={termsError} onChange={(value) => { setAccepted(value); if (value) setTermsError(null); }} />}
       {problem && (
         <p className="rb-notice rb-notice-error" role="alert">
           {problem}
@@ -128,7 +168,7 @@ export function StepDetails(props: StepDetailsProps) {
           </Button>
         )}
         <Button type="submit" busy={busy} disabled={secondsLeft === 0 && !busy}>
-          Confirm booking {panel && <span aria-hidden="true">→</span>}
+          {terms ? `Pay ${formatEuros(terms.total_cents)} deposit` : "Confirm booking"} {panel && <span aria-hidden="true">→</span>}
         </Button>
       </div>
     </form>

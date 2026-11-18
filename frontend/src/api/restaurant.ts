@@ -146,7 +146,51 @@ export interface BookingSeat {
 
 // ---------- Bookings ----------
 
-export type BookingStatus = "confirmed" | "seated" | "finishing" | "completed" | "cancelled" | "no_show";
+export type BookingStatus = "pending" | "confirmed" | "seated" | "finishing" | "completed" | "cancelled" | "no_show";
+
+/** What a deposit's payment is doing. `refund_due` is a refund the server is still retrying. */
+export type PaymentStatus = "pending" | "paid" | "expired" | "refunded" | "kept" | "refund_due";
+
+/** The deposit rule shown before booking (GET /r/{vid}/policy), in words and in cents. */
+export interface DepositTerms {
+  mode: "deposit";
+  per_person_cents: number;
+  total_cents: number;
+  cancel_hours: number;
+  cancel_deadline: string;
+  text: string;
+  accept_text: string;
+  /** "demo": no money moves. "test"/"live": Stripe. */
+  payments_mode: "demo" | "test" | "live";
+}
+
+/** The deposit of one booking, as the diner and the staff see it. No provider ids. */
+export interface PaymentSummary {
+  kind: string;
+  status: PaymentStatus;
+  amount_cents: number;
+  per_person_cents: number;
+  party: number;
+  refunded_cents: number;
+  cancel_hours: number;
+  cancel_deadline: string;
+  /** What cancelling now would do: give it back, keep it, or nothing (not paid). */
+  cancel_outcome: "none" | "refund" | "keep";
+  expires_at: string;
+  policy_text: string;
+  mode: string;
+  /** Only on the diner's manage page. */
+  payment_id?: string;
+}
+
+/** A booking that must be paid for: where to send the diner next. */
+export interface PaymentRequired {
+  payment_id: string;
+  /** A path on this site (demo payment page) or the full address of Stripe's page. */
+  next_url: string;
+  amount_cents: number;
+  expires_at: string;
+}
 
 /** One booking as the diner sees it (confirmation page and manage page). */
 export interface BookingPreferences {
@@ -177,6 +221,8 @@ export interface BookingView extends BookingPreferences {
   seat?: BookingSeat | null;
   /** The biggest party this restaurant can seat. Only GET /b/{token} sends it, so it can be null. */
   max_party: number | null;
+  /** The deposit, when the booking has one. */
+  payment?: PaymentSummary | null;
 }
 
 export interface ContactDetails {
@@ -194,6 +240,8 @@ export interface BookingConfirmation {
   booking: BookingView;
   manage_url: string;
   email: string;
+  /** Present when a deposit is due: the booking is "pending" until it is paid. */
+  payment?: PaymentRequired | null;
 }
 
 /** Body of POST /r/{vid}/waitlist, exactly as the backend reads it. */
@@ -252,6 +300,8 @@ export interface StaffBooking extends BookingPreferences {
   notes: string;
   prefs?: string[];
   seat?: BookingSeat | null;
+  /** The deposit state, when the booking has one. */
+  payment?: PaymentSummary | null;
 }
 
 /** The staff floor. `services` lets the time scrubber know where a service starts and ends. */
@@ -477,6 +527,8 @@ export interface ServerBooking extends BookingPreferences {
   can_change?: boolean;
   /** Only on GET /b/{token}: the biggest party the restaurant can seat. */
   max_party?: number;
+  /** Only when the booking has a deposit. */
+  payment?: PaymentSummary;
 }
 
 /** POST /r/{vid}/bookings. The token appears only in this one answer. */
@@ -485,6 +537,8 @@ export interface ServerConfirmation {
   manage_token: string;
   manage_path: string;
   manage_link: string;
+  /** Only when a deposit is due. */
+  payment?: PaymentRequired & { required: true };
 }
 
 /** GET /staff/{vid}/floor. */
@@ -579,6 +633,7 @@ export function toBookingView(server: ServerBooking): BookingView {
     prefs: server.prefs ?? [],
     seat: server.seat ?? null,
     max_party: server.max_party ?? null,
+    payment: server.payment ?? null,
   };
 }
 
@@ -599,6 +654,7 @@ export function toStaffBooking(server: ServerBooking): StaffBooking {
     notes: server.notes,
     prefs: server.prefs ?? [],
     seat: server.seat ?? null,
+    payment: server.payment ?? null,
   };
 }
 
@@ -707,12 +763,19 @@ export async function createBooking(
   contact: ContactDetails,
   needs: PartyNeeds,
   seatId: number | null = null,
+  acceptPolicy = false,
 ): Promise<BookingConfirmation> {
   // The backend checks the party size against the hold, so it is sent again here.
   const wishes = needs.prefs?.length ? { prefs: needs.prefs } : {};
-  const body = { hold_id: holdId, ...contact, party: needs.party, needs_accessible: needs.needs_accessible, high_chairs: needs.high_chairs, ...wishes, ...(seatId === null ? {} : { seat_id: seatId }) };
+  const body = { hold_id: holdId, ...contact, party: needs.party, needs_accessible: needs.needs_accessible, high_chairs: needs.high_chairs, ...wishes, ...(seatId === null ? {} : { seat_id: seatId }), ...(acceptPolicy ? { accept_policy: true } : {}) };
   const server = await api.post<ServerConfirmation>(`${diner(vid)}/bookings`, body);
-  return { booking: toBookingView(server.booking), manage_url: server.manage_path, email: contact.email };
+  return { booking: toBookingView(server.booking), manage_url: server.manage_path, email: contact.email, payment: server.payment ?? null };
+}
+
+/** The deposit this date, time and party would owe, or null when the restaurant asks for none. */
+export async function getDepositTerms(vid: string, date: IsoDate, time: ClockTime, party: number): Promise<DepositTerms | null> {
+  const answer = await api.get<DepositTerms | { mode: "none" }>(`${diner(vid)}/policy?${query({ date, time, party })}`);
+  return answer.mode === "deposit" ? answer : null;
 }
 
 export function joinWaitlist(vid: string, entry: WaitlistRequest): Promise<WaitlistAnswer> {

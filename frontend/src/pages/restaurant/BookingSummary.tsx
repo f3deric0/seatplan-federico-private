@@ -7,6 +7,7 @@ import { formatDate, guests, people, tablesText } from "./format";
 import { prefWords } from "./prefs";
 
 const STATUS_TEXT: Record<BookingStatus, { label: string; tone: BadgeTone }> = {
+  pending: { label: "Waiting for deposit", tone: "warning" },
   confirmed: { label: "Confirmed", tone: "success" },
   seated: { label: "Seated", tone: "info" },
   finishing: { label: "Finishing", tone: "info" },

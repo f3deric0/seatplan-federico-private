@@ -13,10 +13,11 @@ from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError, SeatTaken
 from app.core.holds import commit_or_seat_taken
-from app.models import Booking, Venue, WaitlistEntry
+from app.models import Booking, Venue, WaitlistEntry, utc_now
 from app.optimiser.restaurant_assign import recommend_table
 from app.optimiser.restaurant_model import choice_problem
 from app.restaurant_service import (
+    booking_payments,
     booking_rows,
     chosen_seat,
     emails,
@@ -145,6 +146,9 @@ def cancel_booking(
     freed = booking_rows.release_slots(session, booking)
     booking.status = "cancelled"
     session.flush()  # the freed slots must be gone before we look for free tables
+    # A paid deposit is refunded or kept, per the terms the diner accepted. Only the
+    # diner's own cancellation can lose it: the restaurant cancelling refunds in full.
+    booking_payments.on_cancel(session, venue, booking, actor == "diner", utc_now())
     emails.queue_cancellation(session, venue, booking, token)
     offered = waitlist.offer_freed_tables(session, venue, booking, freed)
     record_change(

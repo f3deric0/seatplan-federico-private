@@ -24,8 +24,10 @@ who is calling and what they sent, calls a helper (in `events_service/`,
 | `visitor.py` | `GET /j/{token}`, `POST /j/{token}/register`, `POST /j/{token}/join` | Anyone with an event's shared link (read only); joining needs a guest account. No hold or confirm route exists here. Register checks the link before counting any limit, and never refuses a full event (the join step decides) |
 | `guest_accounts.py` | `/guest/verify` (needs the `signup_id`), `/guest/login`, `/guest/logout`, `/guest/password/...` (never shows the code), `/guest/me`, `/guest/me/delete` (a wrong password is 422) | Anyone (code, login and reset are rate limited) / a signed-in guest account (`CurrentGuestAccount`) |
 | `guest_events.py` | `/guest/events/{eid}/...` | A guest account with a guest row on that event; mirrors `attendee.py` exactly |
-| `restaurants.py` | `/r/{vid}/...` (slots, map, hold, book) | Anyone; rate limited per address. Booking also has daily caps per mailbox and per address (`restaurant_service/booking_caps.py`, S8) |
+| `restaurants.py` | `/r/{vid}/...` (slots, map, policy, hold, book) | Anyone; rate limited per address. Booking also has daily caps per mailbox and per address (`restaurant_service/booking_caps.py`, S8) |
 | `bookings.py` | `/b/{manage_token}`, waitlist | Whoever holds the manage link; rate limited |
+| `payments.py` | `/payments/{id}` (status), `/payments/demo/{id}` (pretend payment, demo provider only), `/payments/{id}/retry`, `/abandon`, `POST /payments/webhooks/stripe` | Whoever holds the random payment id, rate limited. The webhook proves itself with Stripe's signature and is closed (404) unless `PAYMENT_PROVIDER=stripe` |
+| `owner_payments.py` | `/owner/restaurants/{vid}/payments` (read and replace the deposit rules) | The restaurant's owner (`CurrentOrganiser`); another owner gets 404 |
 | `staff.py` | `/staff/{vid}/...` (floor, walk-ins, dashboard, schedule) | A logged-in user |
 | `emails.py` | `POST /internal/email/process`, `GET /emails/log` | The cron (`X-Cron-Secret`) / organisers |
 

@@ -9,6 +9,7 @@ import { Badge } from "../../design/components";
 import { SEAT_RADIUS } from "../../seatmap/geometry";
 import { PatternDefs, SeatGlyph, safeId } from "../../seatmap/glyphs";
 import { people, tablesText } from "./format";
+import { staffDepositLabel } from "./money";
 import { BOOKING_LOOK, FLOOR_LOOK, bookingOnTable } from "./staffStatus";
 
 /** The drag payload type. A custom type, so dropping random text does nothing. */
@@ -97,6 +98,7 @@ export function ArrivalsList({ arrivals, selectedId, onSelect, services = [], la
             {booking.needs_accessible && <Badge tone="info">Accessible</Badge>}
             {booking.high_chairs > 0 && <Badge>High chair x{booking.high_chairs}</Badge>}
             {booking.notes && <Badge tone="warning">Note</Badge>}
+            {staffDepositLabel(booking.payment) && <Badge tone="success">{staffDepositLabel(booking.payment)}</Badge>}
           </span>
         </li>
       ))}
