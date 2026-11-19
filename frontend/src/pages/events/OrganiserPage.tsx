@@ -8,6 +8,7 @@ import type { OrganiserEvent } from "../../api/events";
 import { ErrorState, PageShell, Skeleton } from "../../design/components";
 import { formatDateTime } from "./format";
 import { GuestsTab } from "./GuestsTab";
+import { LayoutTab } from "./LayoutTab";
 import { OptimiseTab } from "./OptimiseTab";
 import { OrganiserMap } from "./OrganiserMap";
 import { PrintTab } from "./PrintTab";
@@ -80,15 +81,20 @@ function SidePanel({ org, data }: { org: OrganiserState; data: OrganiserEvent })
   const [tab, setTab] = useState("guests");
   const items = [
     { id: "guests", label: "Guests", content: <GuestsTab org={org} data={data} /> },
+    // One-click room setups (plan 2026-11-18, "Later decisions"); the setup it previews is drawn on the map.
+    { id: "layout", label: "Layout", content: <LayoutTab org={org} data={data} /> },
     { id: "optimise", label: "Optimise", content: <OptimiseTab org={org} data={data} /> },
     { id: "settings", label: "Settings", content: <SettingsTab org={org} data={data} /> },
     { id: "print", label: "Print", content: <PrintTab eventId={org.eventId} eventName={data.event.name} /> },
-    // LAYOUT TAB GOES HERE (plan 2026-11-18, "Later decisions": one-click room setups for event staff).
-    // Built by the event room layouts step, not here.
   ];
+  // A setup preview belongs to the Layout tab: leaving the tab puts the real plan back on the map.
+  const changeTab = (id: string): void => {
+    if (id !== "layout") org.setLayoutPreview(null);
+    setTab(id);
+  };
   return (
     <aside className="ev-side" aria-label="Plan tools">
-      <Tabs label="Plan tools" items={items} current={tab} onChange={setTab} />
+      <Tabs label="Plan tools" items={items} current={tab} onChange={changeTab} />
     </aside>
   );
 }
