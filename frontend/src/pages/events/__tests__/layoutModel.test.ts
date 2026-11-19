@@ -114,6 +114,42 @@ describe("confirmLines", () => {
       "Anyone whose seat changes gets the usual seat-change email.",
     ]);
   });
+
+  it("names seated guests who need a step-free seat the setup does not have", () => {
+    const facts = { seated: 7, capacity: 30, guests: 7, accessible_needed: 6, accessible_seats: 4, holding: 0 };
+    expect(confirmLines("Banquet", facts)).toEqual([
+      "7 guests already have a seat. They will be re-seated automatically on the Banquet setup, keeping groups and friends together.",
+      "Only 4 seats in the Banquet setup are step-free, so at least 2 guests who need one will lose their seat and be told by email.",
+      "Anyone whose seat changes gets the usual seat-change email.",
+    ]);
+    expect(confirmLines("Classroom", { ...facts, accessible_needed: 1, accessible_seats: 0 })[1]).toBe(
+      "No seat in the Classroom setup is step-free, so at least 1 guest who needs one will lose their seat and be told by email.",
+    );
+    expect(confirmLines("Banquet", { ...facts, accessible_needed: 4 })).toHaveLength(2);
+  });
+
+  it("says that people choosing a seat right now will choose again", () => {
+    const lines = confirmLines("Theatre", { seated: 2, capacity: 28, guests: 4, holding: 1 });
+    expect(lines).toContain("1 person choosing a seat right now will need to choose again on the new layout.");
+    expect(confirmLines("Theatre", { seated: 2, capacity: 28, guests: 4, holding: 3 })).toContain(
+      "3 people choosing a seat right now will need to choose again on the new layout.",
+    );
+  });
+});
+
+describe("confirmFacts with the step-free and hold counts", () => {
+  it("keeps them when the server sends them", () => {
+    const details = { seated: 7, capacity: 30, guests: 7, accessible_needed: 6, accessible_seats: 4, holding: 1 };
+    const body = { code: "guests_seated", message: "x", details };
+    expect(confirmFacts(new ApiError(409, "guests_seated", "x", body))).toEqual(details);
+  });
+});
+
+describe("previewToMap step-free seats", () => {
+  it("marks the seats the preview marks", () => {
+    const marked: LayoutPreview = { ...PREVIEW, tables: [{ ...PREVIEW.tables[0], seats: [{ x: 1, y: 2, accessible: true }, { x: 3, y: 4 }] }] };
+    expect(previewToMap(marked).seats.map((s) => s.accessible)).toEqual([true, false]);
+  });
 });
 
 describe("appliedMessage", () => {

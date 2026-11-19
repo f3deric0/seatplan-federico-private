@@ -41,6 +41,7 @@ from app.events_service.layout_presets import (
     PRESET_KEYS,
     PRESETS,
     PresetLayout,
+    PresetSeat,
     build,
     matches,
 )
@@ -64,6 +65,7 @@ from app.models import (
     Venue,
     VenueTable,
     Zone,
+    utc_now,
 )
 from app.optimiser.events_anneal import solve
 
@@ -107,6 +109,18 @@ def current_preset(session: Session, room: Venue) -> str:
     return "custom"
 
 
+def _preview_seat(seat: PresetSeat) -> dict[str, Any]:
+    """Only a step-free seat carries `accessible` (true), to keep previews small."""
+    found: dict[str, Any] = {"x": round(seat.x), "y": round(seat.y)}
+    if seat.accessible:
+        found["accessible"] = True
+    return found
+
+
+def _step_free(layout: PresetLayout) -> int:
+    return sum(seat.accessible for table in layout.tables for seat in table.seats)
+
+
 def preview(layout: PresetLayout) -> dict[str, Any]:
     """A thumbnail's worth: whole centimetres, no labels, no ids."""
     return {
@@ -124,7 +138,7 @@ def preview(layout: PresetLayout) -> dict[str, Any]:
                 "w": round(t.w),
                 "h": round(t.h),
                 "rotation": round(t.rotation),
-                "seats": [{"x": round(s.x), "y": round(s.y)} for s in t.seats],
+                "seats": [_preview_seat(s) for s in t.seats],
             }
             for t in layout.tables
         ],
@@ -243,11 +257,37 @@ def _plural(count: int, word: str) -> str:
     return f"{count} {word}" if count == 1 else f"{count} {word}s"
 
 
-def _check(
-    key: str, layout: PresetLayout, seated: int, coming: int, confirm: bool
-) -> dict[str, int]:
+def _step_free_loss(label: str, details: dict[str, int]) -> str:
+    """The sentence for seated guests who need a step-free seat the setup lacks, or ""."""
+    short = details["accessible_needed"] - details["accessible_seats"]
+    if short <= 0:
+        return ""
+    have = details["accessible_seats"]
+    seats = "Only 1 seat" if have == 1 else ("No seat" if have == 0 else f"Only {have} seats")
+    verb = "is" if have == 1 else "are"
+    return (
+        f" {seats} in the {label} setup {verb} step-free, so at least "
+        f"{_plural(short, 'guest')} who need one will lose their seat."
+    )
+
+
+def _check(key: str, layout: PresetLayout, facts: dict[str, int], confirm: bool) -> dict[str, int]:
+    """Refuse before any write, with the counts the confirm step shows (`details`).
+
+    `facts`: seated, guests (coming), accessible_needed (seated guests who need
+    a step-free seat: a hard rule for the re-seat), holding (seats someone is
+    choosing right now; those holds are dropped).
+    """
     label = PRESETS[key].label
-    details = {"seated": seated, "capacity": layout.capacity, "guests": coming}
+    seated, coming = facts["seated"], facts["guests"]
+    details = {
+        "seated": seated,
+        "capacity": layout.capacity,
+        "guests": coming,
+        "accessible_needed": facts["accessible_needed"],
+        "accessible_seats": _step_free(layout),
+        "holding": facts["holding"],
+    }
     if layout.capacity == 0:
         raise ApiError(
             422,
@@ -260,7 +300,8 @@ def _check(
             409,
             "guests_seated",
             f"{_plural(seated, 'guest')} already {verb} a seat. Applying the {label} setup "
-            "will re-seat them on the new layout and email anyone whose seat changes.",
+            "will re-seat them on the new layout and email anyone whose seat changes."
+            + _step_free_loss(label, details),
             details,
         )
     if layout.capacity < coming and not confirm:
@@ -275,6 +316,22 @@ def _check(
     return details
 
 
+def _facts(
+    session: Session, event: Event, rows: dict[int, SeatAssignment], coming: list[Guest]
+) -> dict[str, int]:
+    holding = session.scalar(
+        select(func.count())
+        .select_from(Hold)
+        .where(Hold.scope == event_scope(event), Hold.expires_at > utc_now())
+    )
+    return {
+        "seated": len(rows),
+        "guests": len(coming),
+        "accessible_needed": sum(g.needs_accessible for g in coming if g.id in rows),
+        "holding": int(holding or 0),
+    }
+
+
 def _retire_plans(session: Session, event: Event) -> None:
     """Old scenarios and undo steps name seats of the old room: keep them, unused."""
     for snapshot in session.scalars(select(PlanSnapshot).where(PlanSnapshot.event_id == event.id)):
@@ -285,6 +342,14 @@ def _retire_plans(session: Session, event: Event) -> None:
     session.flush()
 
 
+def _place(session: Session, seat: Seat | None) -> tuple[Any, ...] | None:
+    """What a guest reads and sees of a seat: table label, seat label, position."""
+    if seat is None:
+        return None
+    table = session.get(VenueTable, seat.table_id) if seat.table_id else None
+    return (table.label if table else None, seat.label, round(seat.x), round(seat.y))
+
+
 def _tell(
     session: Session,
     event: Event,
@@ -293,7 +358,12 @@ def _tell(
     new_seat_id: int | None,
     actor: str,
 ) -> None:
-    """One audit row and the guest's seat email for this re-seat. No commit."""
+    """One audit row and the guest's seat email for this re-seat. No commit.
+
+    No email when the new seat has the old one's table, number and place (the
+    same setup rebuilt after a tweak elsewhere): nothing changed for the guest.
+    Their reminder still moves to the new seat row.
+    """
     entry = audit.record(
         session,
         actor=actor,
@@ -305,6 +375,9 @@ def _tell(
     if new_seat_id is not None:
         seat = session.get(Seat, new_seat_id)
         assert seat is not None
+        if _place(session, seat) == _place(session, session.get(Seat, old_seat_id)):
+            sync_reminder(session, event, guest, seat)
+            return
         queue_change_email(session, event, guest, seat, old_seat_id, entry, moved_by_organiser=True)
         return
     session.flush()  # gives the audit row its id, used in the email key below
@@ -322,17 +395,23 @@ def apply_preset(
 ) -> dict[str, Any]:
     """Put the event on a fresh copy of its hall laid out as `key`. No commit.
 
-    Raises 422 too_small, 409 guests_seated or 422 not_enough_seats (see the
-    module docstring) before writing anything.
+    Raises 409 conflict (this setup is already in use), 422 too_small, 409
+    guests_seated or 422 not_enough_seats (see the module docstring) before
+    writing anything.
     """
     # lock_event reads the event's room again: a second apply that waited at
     # the lock must see the copy the first one made, not the one it removed.
     lock_event(session, event)
     room, hall = _rooms(session, event)
+    if current_preset(session, room) == key:
+        # Re-applying would only move everyone to identical seats and email them.
+        raise ApiError(
+            409, "conflict", f"The {PRESETS[key].label} setup is already in use. Nothing changed."
+        )
     layout = build(key, hall.width, hall.height)
     rows = current_rows(session, event)
     coming = active_guests(session, event)
-    _check(key, layout, len(rows), len(coming), confirm)
+    _check(key, layout, _facts(session, event, rows, coming), confirm)
 
     copy = new_setup(session, event, hall, layout)
     old_seats = {guest_id: row.seat_id for guest_id, row in rows.items()}

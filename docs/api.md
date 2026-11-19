@@ -80,19 +80,26 @@ another at the same hall. Names, public pages, photos, emails and the venue team
   Banquet, `cabaret` Cabaret, `theatre` Theatre, `classroom` Classroom, `u_shape` U-shape, `boardroom`
   Boardroom, `cocktail` Cocktail, each fitted to the hall's width and height (cm, front at the top).
   `preview = {width, height, zones: [{kind, x, y, w, h}], tables: [{shape, x, y, w, h, rotation,
-  seats: [{x, y}]}]}`, whole centimetres, enough for an SVG thumbnail (`x, y` the top-left of the
+  seats: [{x, y, accessible?: true}]}]}` (only a step-free seat carries `accessible`), whole centimetres, enough for an SVG thumbnail (`x, y` the top-left of the
   unrotated box, `rotation` in degrees around its centre, as in the editor).
-- `POST /events/{eid}/layout` `{preset, confirm?: false}` (unknown preset or field 422). Checks, in
-  this order, before writing anything:
+- `POST /events/{eid}/layout` `{preset, confirm?: false}` (unknown preset or field 422; **429**
+  `rate_limited` past 20 a minute per person, each one can re-seat and email everyone). Checks, in this
+  order, after taking the event lock and before writing anything:
+  - **409** `conflict` "The Banquet setup is already in use. Nothing changed." when the event's room
+    still is that setup (`current`): re-applying would only move everyone to identical seats;
   - **422** `too_small` when the room fits none of that setup;
   - **409** `guests_seated` when anyone has a seat and `confirm` is not true, with
-    `error.details = {seated, capacity, guests}` (the new setup's capacity);
+    `error.details = {seated, capacity, guests, accessible_needed, accessible_seats, holding}` (the new
+    setup's capacity; seated guests who need a step-free seat and the setup's step-free seats, a hard
+    rule for the re-seat, so when the first is larger at least the difference lose their seat and the
+    message says so; people holding a seat right now, whose holds are dropped);
   - **422** `not_enough_seats` when the setup has fewer seats than guests coming and `confirm` is not
     true, with the same `details`.
   Then, under the event lock: a new copy of the hall with the preset; every seated guest is re-seated
   on it by the optimiser (auto-fill's search: groups and acquaintances kept), anyone who cannot fit
   loses their seat; holds on the old seats are dropped; each guest whose seat changed gets the usual
-  "seat changed" email (and its reminder moves), those who lost their seat the "seat cancelled" one;
+  "seat changed" email (and its reminder moves; no email when the new seat has the old one's table,
+  number and place), those who lost their seat the "seat cancelled" one;
   old scenarios and undo steps are retired (they name seats that no longer exist) and history starts
   again ("Room set up as Banquet"); the live scope is bumped and `event.layout` audited. A previous
   copy is removed and the new one takes over its public id, so the editor link stays. Re-seated
@@ -307,7 +314,7 @@ room setup errors above); without them the key is absent.
 | `hold_expired` | 409 | The 5-minute hold ran out before confirming |
 | `deadline_passed` | 409 | The event's change deadline has passed (also: joining with the shared link after it) |
 | `conflict` | 409 | Any other clash, including "please try again" after a Postgres deadlock |
-| `guests_seated` | 409 | Applying a room setup would re-seat guests: send `confirm: true` (`details: {seated, capacity, guests}`) |
+| `guests_seated` | 409 | Applying a room setup would re-seat guests: send `confirm: true` (`details: {seated, capacity, guests, accessible_needed, accessible_seats, holding}`) |
 | `not_enough_seats` | 422 | The room setup has fewer seats than guests coming: send `confirm: true` to seat as many as fit (`details` as above) |
 | `too_small` | 422 | The room fits none of that setup |
 | `rate_limited` | 429 | Too many calls in this minute, too many live streams, too many held tables, or a booking cap (4 upcoming bookings per mailbox, 10 booking attempts per address and day at one restaurant) |

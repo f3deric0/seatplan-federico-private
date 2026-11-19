@@ -58,9 +58,13 @@ from app.events_service.seating import (
 )
 from app.events_service.seatmap import organiser_map
 from app.models import AuditLog, Event, Guest, Organiser, Seat, SeatAssignment, Venue
-from app.security import CurrentOrganiser
+from app.security import CurrentOrganiser, rate_limit
 
 router = APIRouter(tags=["events"])
+
+# Each apply runs the re-seat (up to about 15 s under the event lock) and can
+# email every seated guest; a person switching setups by hand needs far fewer.
+LAYOUT_APPLIES_PER_MINUTE = 20
 
 
 def event_dict(session: Session, event: Event) -> dict[str, Any]:
@@ -300,6 +304,8 @@ def apply_layout(
     With guests seated it needs confirm=true (else 409 guests_seated); then
     everyone is re-seated and told. See events_service/layouts.py.
     """
+    # First: rate_limit commits its count.
+    rate_limit(session, f"event-layout:{user.id}", LAYOUT_APPLIES_PER_MINUTE, 60)
     event = load_event(session, eid, user)
     result = layouts.apply_preset(session, event, body.preset, body.confirm, user.email)
     detail = {

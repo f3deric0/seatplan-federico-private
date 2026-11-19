@@ -22,7 +22,8 @@ function zoneName(kind: string, presetKey?: string): string {
 
 /**
  * The preview as a seat map. It has no ids or labels, so tables and seats are
- * numbered in order; every seat is free, because nobody sits there yet.
+ * numbered in order; every seat is free, because nobody sits there yet. Step-free
+ * seats keep their mark, so staff see how few a setup has.
  */
 export function previewToMap(preview: LayoutPreview, presetKey?: string): { zones: MapZone[]; tables: MapTable[]; seats: MapSeat[] } {
   const zones = preview.zones.map((zone, index) => ({
@@ -40,7 +41,7 @@ export function previewToMap(preview: LayoutPreview, presetKey?: string): { zone
     const id = index + 1;
     tables.push({ id, label: String(id), shape: table.shape, x: table.x, y: table.y, w: table.w, h: table.h, rotation: table.rotation });
     table.seats.forEach((seat, n) => {
-      seats.push({ id: seats.length + 1, table_id: id, label: String(n + 1), x: seat.x, y: seat.y, state: "free", accessible: false, occupant: null });
+      seats.push({ id: seats.length + 1, table_id: id, label: String(n + 1), x: seat.x, y: seat.y, state: "free", accessible: seat.accessible === true, occupant: null });
     });
   });
   return { zones, tables, seats };
@@ -71,7 +72,12 @@ export function confirmFacts(error: unknown): LayoutConfirmFacts | null {
   if (error.code !== "guests_seated" && error.code !== "not_enough_seats") return null;
   const facts = error.details?.details as Partial<LayoutConfirmFacts> | undefined;
   if (!facts || typeof facts.seated !== "number" || typeof facts.capacity !== "number" || typeof facts.guests !== "number") return null;
-  return { seated: facts.seated, capacity: facts.capacity, guests: facts.guests };
+  const found: LayoutConfirmFacts = { seated: facts.seated, capacity: facts.capacity, guests: facts.guests };
+  // Newer counts: kept only when the server sends them.
+  for (const key of ["accessible_needed", "accessible_seats", "holding"] as const) {
+    if (typeof facts[key] === "number") found[key] = facts[key];
+  }
+  return found;
 }
 
 /** What applying will do, one sentence per line, for the confirm dialog. */
@@ -88,6 +94,18 @@ export function confirmLines(label: string, facts: LayoutConfirmFacts): string[]
     lines.push(`The ${label} setup has only ${plural(capacity, "seat")}, so ${plural(lost, "guest")} will lose their seat and be told by email.`);
   } else if (capacity < guests) {
     lines.push(`The ${label} setup has ${plural(capacity, "seat")} for ${guests} guests coming, so ${guests - capacity} will not get a seat.`);
+  }
+  // Needing a step-free seat is a hard rule for the re-seat: the setup's step-free seats are all such guests can get.
+  const stepFree = facts.accessible_seats ?? 0;
+  const short = (facts.accessible_needed ?? 0) - stepFree;
+  if (seated > 0 && facts.accessible_seats !== undefined && short > 0) {
+    const have = stepFree === 0 ? "No seat" : stepFree === 1 ? "Only 1 seat" : `Only ${stepFree} seats`;
+    const who = short === 1 ? "1 guest who needs one" : `${short} guests who need one`;
+    lines.push(`${have} in the ${label} setup ${stepFree === 1 || stepFree === 0 ? "is" : "are"} step-free, so at least ${who} will lose their seat and be told by email.`);
+  }
+  const holding = facts.holding ?? 0;
+  if (holding > 0) {
+    lines.push(`${holding === 1 ? "1 person" : `${holding} people`} choosing a seat right now will need to choose again on the new layout.`);
   }
   if (seated > 0) lines.push("Anyone whose seat changes gets the usual seat-change email.");
   return lines;

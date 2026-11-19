@@ -83,9 +83,15 @@ def test_the_layout_tab_lists_seven_setups_fitted_to_the_hall(
         preview = preset["preview"]
         assert (preview["width"], preview["height"]) == (1000, 500)
         assert sum(len(t["seats"]) for t in preview["tables"]) == preset["capacity"]
+        step_free = sum(s.accessible for t in expected.tables for s in t.seats)
+        marked = sum(1 for t in preview["tables"] for s in t["seats"] if "accessible" in s)
+        assert marked == step_free
         for table in preview["tables"]:
             assert set(table) == {"shape", "x", "y", "w", "h", "rotation", "seats"}
-            assert all(set(seat) == {"x", "y"} for seat in table["seats"])
+            # Only a step-free seat says so, to keep the thumbnail small.
+            for seat in table["seats"]:
+                assert set(seat) in ({"x", "y"}, {"x", "y", "accessible"})
+                assert seat.get("accessible", True) is True
             assert all(isinstance(v, int) for v in (table["x"], table["y"], table["w"]))
     # Small enough for a thumbnail: whole numbers, no labels, no ids.
     assert len(str(data["presets"])) < 40_000
@@ -165,7 +171,14 @@ def test_seated_guests_are_never_moved_without_confirm(
                     "2 guests already have a seat. Applying the Theatre setup will re-seat "
                     "them on the new layout and email anyone whose seat changes."
                 ),
-                "details": {"seated": 2, "capacity": 28, "guests": 4},
+                "details": {
+                    "seated": 2,
+                    "capacity": 28,
+                    "guests": 4,
+                    "accessible_needed": 0,
+                    "accessible_seats": 4,
+                    "holding": 0,
+                },
             }
         }
     after = _event(session, setup)
@@ -299,7 +312,14 @@ def test_a_setup_smaller_than_the_guest_list_needs_confirm(
             "The Boardroom setup has 8 seats but 10 guests are coming. "
             "Choose a larger setup, or confirm to seat as many as fit."
         ),
-        "details": {"seated": 0, "capacity": 8, "guests": 10},
+        "details": {
+            "seated": 0,
+            "capacity": 8,
+            "guests": 10,
+            "accessible_needed": 0,
+            "accessible_seats": 2,
+            "holding": 0,
+        },
     }
     accepted = _apply(client, setup, "boardroom", confirm=True)
     assert accepted.status_code == 200, accepted.text
@@ -320,7 +340,14 @@ def test_who_cannot_fit_stays_unseated_is_counted_and_told(
         assert placed.status_code == 200, placed.text
     refused = _apply(client, setup, "boardroom")
     assert refused.status_code == 409
-    assert refused.json()["error"]["details"] == {"seated": 10, "capacity": 8, "guests": 10}
+    assert refused.json()["error"]["details"] == {
+        "seated": 10,
+        "capacity": 8,
+        "guests": 10,
+        "accessible_needed": 0,
+        "accessible_seats": 2,
+        "holding": 0,
+    }
 
     applied = _apply(client, setup, "boardroom", confirm=True)
     assert applied.status_code == 200, applied.text
@@ -683,6 +710,155 @@ def test_the_usual_event_flows_work_on_a_setup_copy(
     assert {t["label"] for t in chart.json()["tables"]} >= {"T1"}
     exported = client.get(f"/api/events/{setup.eid}/export.csv", headers=setup.headers)
     assert exported.status_code == 200 and "Guest 1" in exported.text
+
+
+def test_the_confirm_step_names_guests_who_would_lose_a_step_free_seat(
+    client: TestClient, session: Session, organiser: Organiser
+) -> None:
+    """Needing a step-free seat is a hard rule for the re-seat. A setup with
+    fewer step-free seats than the seated guests who need one cannot keep
+    them all: the 409 says so before anything changes, with the counts."""
+    people = [
+        {"name": f"W{n}", "email": f"w{n}@example.com", "needs_accessible": n < 6} for n in range(7)
+    ]
+    setup = make_event(client, organiser, people, tables=2, per_table=4)
+    event = _event(session, setup)
+    for seat in session.scalars(select(Seat).where(Seat.venue_id == event.venue_id)):
+        seat.is_accessible = True
+    session.commit()
+    for n in range(7):
+        choose(client, setup, f"W{n}", setup.seats[n // 4][n % 4])
+    banquet = layout_presets.build("banquet", 1000, 500)
+    step_free = sum(seat.accessible for table in banquet.tables for seat in table.seats)
+    assert step_free == 4
+
+    refused = _apply(client, setup, "banquet")
+    assert refused.status_code == 409
+    error = refused.json()["error"]
+    assert error["details"] == {
+        "seated": 7,
+        "capacity": 30,
+        "guests": 7,
+        "accessible_needed": 6,
+        "accessible_seats": 4,
+        "holding": 0,
+    }
+    assert "Only 4 seats in the Banquet setup are step-free" in error["message"]
+    assert "at least 2 guests who need one will lose their seat" in error["message"]
+
+    applied = _apply(client, setup, "banquet", confirm=True).json()
+    assert (applied["reseated"], applied["unseated"]) == (5, 2)
+
+    # The previews show where the step-free seats are.
+    preview = next(p for p in _layouts(client, setup)["presets"] if p["key"] == "banquet")
+    marked = [s for t in preview["preview"]["tables"] for s in t["seats"] if s.get("accessible")]
+    assert len(marked) == 4
+
+
+def test_the_confirm_step_counts_people_choosing_a_seat_right_now(
+    client: TestClient, session: Session, organiser: Organiser
+) -> None:
+    setup = make_event(client, organiser, PEOPLE)
+    choose(client, setup, "Guest 1", setup.seats[0][0])
+    held = client.post(
+        f"/api/a/{setup.tokens['Guest 2']}/hold", json={"seat_id": setup.seats[1][0]}
+    )
+    assert held.status_code == 200, held.text
+    refused = _apply(client, setup, "banquet")
+    assert refused.status_code == 409
+    assert refused.json()["error"]["details"]["holding"] == 1
+
+
+def test_the_setup_in_use_again_changes_nothing_and_emails_nobody(
+    client: TestClient, session: Session, organiser: Organiser
+) -> None:
+    """From a stale tab or the API: the room already is that setup, so a second
+    apply would only move everyone to identical seats and email them all."""
+    setup = make_event(client, organiser, PEOPLE)
+    for n, seat in ((1, setup.seats[0][0]), (2, setup.seats[0][1])):
+        choose(client, setup, f"Guest {n}", seat)
+    assert _apply(client, setup, "banquet", confirm=True).status_code == 200
+    event = _event(session, setup)
+    room, seats = event.venue_id, {g: r.seat_id for g, r in _rows(session, event).items()}
+    mails = len(outbox(session, "seat_changed"))
+
+    again = _apply(client, setup, "banquet", confirm=True)
+    assert again.status_code == 409
+    assert again.json()["error"]["code"] == "conflict"
+    assert again.json()["error"]["message"] == (
+        "The Banquet setup is already in use. Nothing changed."
+    )
+    event = _event(session, setup)
+    assert event.venue_id == room
+    assert {g: r.seat_id for g, r in _rows(session, event).items()} == seats
+    assert len(outbox(session, "seat_changed")) == mails
+
+
+def test_nobody_is_emailed_when_their_seat_keeps_its_place_and_name(
+    client: TestClient, session: Session, organiser: Organiser
+) -> None:
+    """After a tweak in the editor, the same setup again rebuilds the room: a
+    guest who gets the seat with the same table, number and place has nothing
+    new to read. The audit row is still written for everyone re-seated."""
+    from app.models import AuditLog
+
+    setup = make_event(client, organiser, PEOPLE)
+    for n, seat in ((1, setup.seats[0][0]), (2, setup.seats[0][1]), (3, setup.seats[1][0])):
+        choose(client, setup, f"Guest {n}", seat)
+    assert _apply(client, setup, "banquet", confirm=True).status_code == 200
+    event = _event(session, setup)
+    taken = {r.seat_id for r in _rows(session, event).values()}
+    spare = session.scalars(
+        select(Seat).where(Seat.venue_id == event.venue_id, Seat.id.not_in(taken))
+    ).first()
+    spare.x += 1  # a tweak in the editor, on a seat nobody has
+    session.commit()
+    assert _layouts(client, setup)["current"] == "custom"
+    before = {g: _place(session, r.seat_id) for g, r in _rows(session, event).items()}
+    mails = {m.id for m in outbox(session, "seat_changed")}
+    moves = session.scalar(
+        select(func.count()).select_from(AuditLog).where(AuditLog.action == "seat.layout_move")
+    )
+
+    applied = _apply(client, setup, "banquet", confirm=True)
+    assert applied.status_code == 200, applied.text
+    assert applied.json()["reseated"] == 3
+    event = _event(session, setup)
+    after = {g: _place(session, r.seat_id) for g, r in _rows(session, event).items()}
+    new = [m for m in outbox(session, "seat_changed") if m.id not in mails]
+    moved = {g for g in after if after[g] != before[g]}
+    assert sorted(m.to_email for m in new) == sorted(
+        f"guest{g_n}@example.com"
+        for g_n in [n for n in (1, 2, 3) if setup.guests[f"Guest {n}"] in moved]
+    )
+    assert moved != set(after), "the solver gave everyone a new place: the test proves nothing"
+    assert (
+        session.scalar(
+            select(func.count()).select_from(AuditLog).where(AuditLog.action == "seat.layout_move")
+        )
+        == moves + 3
+    )
+
+
+def _place(session: Session, seat_id: int) -> tuple[Any, ...]:
+    seat = session.get(Seat, seat_id)
+    table = session.get(VenueTable, seat.table_id)
+    return (table.label, seat.label, seat.x, seat.y)
+
+
+def test_room_setups_are_rate_limited_per_person(
+    client: TestClient, session: Session, organiser: Organiser, monkeypatch: Any
+) -> None:
+    from app.routers import events as events_router
+
+    monkeypatch.setattr(events_router, "LAYOUT_APPLIES_PER_MINUTE", 2)
+    setup = make_event(client, organiser, PEOPLE)
+    assert _apply(client, setup, "banquet").status_code == 200
+    assert _apply(client, setup, "cabaret").status_code == 200
+    third = _apply(client, setup, "theatre")
+    assert third.status_code == 429
+    assert third.json()["error"]["code"] == "rate_limited"
+    assert _layouts(client, setup)["current"] == "cabaret"
 
 
 def test_a_write_that_loaded_the_event_before_a_setup_change_uses_the_new_room(

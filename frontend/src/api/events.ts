@@ -328,7 +328,7 @@ export interface LayoutPreview {
   height: number;
   zones: { kind: string; x: number; y: number; w: number; h: number }[];
   /** (x, y) is the top-left of the unrotated box; rotation turns it around its centre. Seat x, y are seat centres in the room. */
-  tables: { shape: "round" | "rect" | "row"; x: number; y: number; w: number; h: number; rotation: number; seats: { x: number; y: number }[] }[];
+  tables: { shape: "round" | "rect" | "row"; x: number; y: number; w: number; h: number; rotation: number; seats: { x: number; y: number; accessible?: true }[] }[];
 }
 
 export interface LayoutPreset {
@@ -365,6 +365,11 @@ export interface LayoutConfirmFacts {
   seated: number;
   capacity: number;
   guests: number;
+  /** Seated guests who need a step-free seat, and the step-free seats of the setup (a hard rule for the re-seat). */
+  accessible_needed?: number;
+  accessible_seats?: number;
+  /** People holding a seat right now: their holds are dropped. */
+  holding?: number;
 }
 
 function eventPath(eventId: string, rest = ""): string {

@@ -16,7 +16,7 @@ The routers check the request and call one function from here.
 | `access.py` | Find the event (its organiser, or a member of its venue: `core/members.py`) or the guest (token hash); deadline rule |
 | `problem.py` | Database rows to optimiser dataclasses (`EventProblem`); the current plan |
 | `seatmap.py` | The map payload: attendee view (privacy-filtered) and organiser view |
-| `seating.py` | Attendee hold, confirm, change and release; the shared seat rules; `lock_event` (one lock order); `drop_assignment(notify=False)` frees a seat without an email |
+| `seating.py` | Attendee hold, confirm, change and release; the shared seat rules; `lock_event` (one lock order; it reloads `event.venue_id`, so read seats after it: a room setup moves the event); `drop_assignment(notify=False)` frees a seat without an email |
 | `attendee_view.py` | The attendee page, people list, own details, RSVP, "I know them" and privacy: one copy used by the personal link and by guest accounts |
 | `mailer.py` | Queue confirmation, change and cancellation emails (outbox). Account holders get the email with the seat picture (`picture_room`, `account_link`) |
 | `guests.py` | Organiser guest list: add, change, GDPR erase (`actor` is the organiser's email or `account:<id>`; an erased row keeps its `account_id` so that account cannot rejoin), new link. `guest_dict` adds `source` and `has_account` |
@@ -38,7 +38,7 @@ The routers check the request and call one function from here.
 
 ```
 GET  /a/{token}           rate_limit -> load_guest (hash) -> attendee_map (privacy)
-POST /a/{token}/hold      seat rules -> lock_event -> take_hold (UNIQUE on holds) -> 409 seat_taken
+POST /a/{token}/hold      lock_event -> seat rules -> take_hold (UNIQUE on holds) -> 409 seat_taken
 POST /a/{token}/confirm   lock_event -> confirm_hold -> insert or update seat_assignments
                           -> flush (UNIQUE) -> 409 ; audit + outbox email -> one commit
 ```
@@ -79,10 +79,12 @@ POST /events/{eid}/undo | /redo        move along the history snapshots, never t
 
 ```
 GET  /events/{eid}/layouts   load_event -> 7 x layout_presets.build(hall size) -> previews + current
-POST /events/{eid}/layout    load_event -> build -> lock_event -> checks (too_small, guests_seated
-                             without confirm, not_enough_seats without confirm) -> new setup copy
+POST /events/{eid}/layout    rate_limit -> load_event -> lock_event -> 409 if already that setup
+                             -> build -> checks (too_small, guests_seated without confirm,
+                             not_enough_seats without confirm) -> new setup copy
                              -> drop holds and old assignments -> event.venue_id = copy -> solve()
-                             -> new assignments -> seat emails -> retire old plans, new history
+                             -> new assignments -> seat emails (none for the same table, number
+                             and place) -> retire old plans, new history
                              -> remove the previous copy (the new one keeps its public id) -> one commit
 ```
 
