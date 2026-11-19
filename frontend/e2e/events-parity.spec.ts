@@ -23,14 +23,20 @@ async function demoCode(page: Page): Promise<string> {
   return ((await badge.innerText()).match(/\d{6}/) ?? [""])[0];
 }
 
-/** Makes an account through the API (register, then verify with the demo code), as the page would. */
-async function accountByApi(request: APIRequestContext, person: { name: string; email: string; password: string }): Promise<void> {
+/**
+ * Makes an account through the API (register, then verify with the demo code), as the page would.
+ * Returns the two sessions verify hands back, so a test need not spend one of the 10 sign-ins a minute.
+ */
+async function accountByApi(request: APIRequestContext, person: { name: string; email: string; password: string }): Promise<{ guest: string; work: string }> {
   const sent = await request.post("/api/account/register", { data: { name: person.name, email: person.email, password: person.password, consent: true } });
   expect(sent.status()).toBe(202);
   const { signup_id: signupId, demo_code: code } = (await sent.json()) as { signup_id: string; demo_code: string };
   expect(code).toMatch(/^\d{6}$/);
   const verified = await request.post("/api/guest/verify", { data: { email: person.email, code, signup_id: signupId } });
   expect(verified.status()).toBe(201);
+  const body = (await verified.json()) as { token: string; work?: { token: string } };
+  expect(body.work?.token, "a new address gets its work session from verify").toBeTruthy();
+  return { guest: body.token, work: body.work?.token ?? "" };
 }
 
 /** Signs in on /account (one form for both halves of the account). */
@@ -98,7 +104,7 @@ test("an owner adds a member by email; the member sees the restaurant under Staf
   const links = await demoLinks(request);
   const venueId = lastPart(links.restaurant_staff);
   const member = newPerson("team");
-  await accountByApi(request, member);
+  const memberSessions = await accountByApi(request, member);
 
   await signIn(page, ORGANISER, `/owner/${venueId}/team`);
   await expect(page.getByRole("heading", { level: 1, name: "Team" })).toBeVisible();
@@ -107,10 +113,15 @@ test("an owner adds a member by email; the member sees the restaurant under Staf
   await page.getByRole("button", { name: "Add to team" }).click();
   await expect(page.locator(".ow-team-list strong", { hasText: member.email })).toBeVisible();
 
-  // The member, in the same tab after the owner has gone.
-  await page.evaluate(() => sessionStorage.clear());
+  // The member, in the same tab after the owner has gone, with the sessions their sign-up gave them
+  // (the sign-in form itself is covered by the account test above).
+  await page.evaluate((s) => {
+    sessionStorage.clear();
+    sessionStorage.setItem("seatplan.guest-session", s.guest);
+    sessionStorage.setItem("seatplan.session", s.work);
+  }, memberSessions);
   await page.goto("/account?tab=staff");
-  await accountSignIn(page, member);
+  await expect(page.getByRole("heading", { level: 1, name: member.name })).toBeVisible();
   const floor = page.locator(`a[href="/staff/${venueId}"]`);
   await expect(floor).toBeVisible();
   await expect(page.locator(".ep-staff-row", { has: floor }).getByText("Staff", { exact: true })).toBeVisible();
@@ -180,7 +191,7 @@ test("Event staff: sign in, pick a type, open the organiser workspace", async ({
   await page.goto("/account");
   await expect(page.getByRole("heading", { level: 1, name: "Rita Rossi" })).toBeVisible();
   await expect(page.locator(".diner-booking-list").first().getByRole("listitem")).not.toHaveCount(0);
-  await expect(page.getByRole("list", { name: "Your events" }).getByText("Lisbon Product Conference")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Your events" }).getByRole("heading", { name: "Lisbon Product Conference" })).toBeVisible();
   await page.getByRole("button", { name: "Staff" }).click();
   await expect(page.locator(".ep-staff-row", { hasText: "Casa Lumen" })).toBeVisible();
   await expect(page.locator(".ep-staff-row", { hasText: "Quinta da Serra Azul" }).first()).toBeVisible();
