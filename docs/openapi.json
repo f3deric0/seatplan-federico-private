@@ -5991,7 +5991,7 @@
           "restaurants"
         ],
         "summary": "Book",
-        "description": "Turn a hold into a confirmed booking and queue the confirmation email.\n\n429 `rate_limited` when the booking caps say no: 4 upcoming bookings per\nmailbox, 10 attempts per client address per UTC day (booking_caps.py).",
+        "description": "Turn a hold into a confirmed booking and queue the confirmation email.\n\n429 `rate_limited` when the booking caps say no: 4 upcoming bookings per\nmailbox, 10 attempts per client address per UTC day (booking_caps.py).\nA diner signed in with a guest session who books under their own address\nowns the booking at once (it shows under Booking on /account): the session\nproves who booked, so no emailed proof is needed. Any other token, or none,\nbooks anonymously as before.",
         "operationId": "book_api_r__venue_public_id__bookings_post",
         "parameters": [
           {
@@ -6001,6 +6001,22 @@
             "schema": {
               "type": "string",
               "title": "Venue Public Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
             }
           }
         ],
