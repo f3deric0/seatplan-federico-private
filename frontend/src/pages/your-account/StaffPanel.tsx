@@ -1,5 +1,6 @@
 // The Staff side of /account (GET /account/work): the restaurants, event venues and events
-// this account can run, each with its role. Owners also get the owner pages, Team included.
+// this account can run, each with its role. Owners also get the owner pages, Team included
+// (an event venue's owner gets Team only: its room and events are run from the event pages).
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getAccountWork } from "../../api/account";
@@ -48,7 +49,8 @@ export function StaffPanel({ onSessionGone, shownEmail = null }: { onSessionGone
           </ul>
         )}
         <p className="ya-more">
-          <Link to="/owner">Restaurant owner area</Link>
+          {/* /owner lists the restaurants this person owns: for staff only, it is where they start their own. */}
+          <Link to="/owner">{restaurants.some((r) => r.role === "owner") ? "Restaurant owner area" : "Open your own restaurant"}</Link>
         </p>
       </section>
       <section aria-labelledby="ya-venues-title" className="ya-section">
@@ -120,6 +122,11 @@ function VenueRow({ venue: v }: { venue: WorkEventVenue }) {
           {v.name} <RoleBadge role={v.role} />
         </h3>
         <p>{kind}</p>
+        {v.role === "owner" && (
+          <nav className="ya-owner-links" aria-label={`Manage ${v.name}`}>
+            <Link to={`/owner/${encodeURIComponent(v.public_id)}/team`}>Team</Link>
+          </nav>
+        )}
       </div>
       {v.slug && v.status === "published" && (
         <Link className="btn btn-secondary" to={`/venues/${encodeURIComponent(v.slug)}`}>

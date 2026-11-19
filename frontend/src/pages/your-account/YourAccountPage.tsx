@@ -117,7 +117,7 @@ export default function YourAccountPage() {
                 ) : (
                   <MissingSide
                     title="Sign in again to open your staff tools"
-                    text="Your staff tools need the work side of your account, which this sign-in did not open (or it has ended). Sign in again with your password. If no restaurant or venue has added your email to its team yet, there is nothing to run here."
+                    text="Your staff tools need the work side of your account, which this sign-in did not open (or it has ended). Sign in again with your password. If no restaurant or venue has added your email to its team yet, there is nothing to run here. A team opens staff tools only for an account made on this page, or one whose email an emailed code confirmed: a code shown on screen in the demo confirms nothing."
                     onSignedIn={signedIn}
                   />
                 ))}

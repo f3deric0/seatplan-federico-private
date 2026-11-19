@@ -122,6 +122,39 @@ describe("/account signed in", () => {
     expect(screen.queryByText(/not as rita@example.com/)).toBeNull();
   });
 
+  it("gives an event venue's owner its Team page, and staff no owner links", async () => {
+    setGuestToken("g.1.0.9.sig");
+    setSessionToken("3.9.sig");
+    const server = startFakeServer();
+    bookingRoutes(server);
+    const hall = { public_id: "h1", name: "Tagus Hall", slug: null, status: "draft", role: "owner", venue_type: "hall" };
+    server.routes.set("GET /account/work", () => ({ body: { ...WORK, event_venues: [...WORK.event_venues, hall] } }));
+    renderAt("/account?tab=staff");
+    const teams = (await screen.findAllByRole("link", { name: "Team" })).map((link) => link.getAttribute("href"));
+    expect(teams).toEqual(["/owner/mine/team", "/owner/h1/team"]);
+  });
+
+  it("offers a staff-only person their own restaurant, not an owner area", async () => {
+    setGuestToken("g.1.0.9.sig");
+    setSessionToken("3.9.sig");
+    const server = startFakeServer();
+    bookingRoutes(server);
+    server.routes.set("GET /account/work", () => ({ body: { ...WORK, restaurants: [WORK.restaurants[0]] } }));
+    renderAt("/account?tab=staff");
+    expect((await screen.findByRole("link", { name: "Open your own restaurant" })).getAttribute("href")).toBe("/owner");
+    expect(screen.queryByRole("link", { name: "Restaurant owner area" })).toBeNull();
+  });
+
+  it("keeps the owner area link for an owner", async () => {
+    setGuestToken("g.1.0.9.sig");
+    setSessionToken("3.9.sig");
+    const server = startFakeServer();
+    bookingRoutes(server);
+    server.routes.set("GET /account/work", () => ({ body: WORK }));
+    renderAt("/account?tab=staff");
+    expect(await screen.findByRole("link", { name: "Restaurant owner area" })).toBeTruthy();
+  });
+
   it("explains a missing work side instead of sending the person away", async () => {
     setGuestToken("g.1.0.9.sig");
     const server = startFakeServer();
@@ -129,6 +162,8 @@ describe("/account signed in", () => {
     renderAt("/account?tab=staff");
     expect(await screen.findByRole("heading", { name: "Sign in again to open your staff tools" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Sign in again" })).toBeTruthy();
+    // Signing in again cannot help an account whose code was shown on screen: say so, no endless loop.
+    expect(screen.getByText(/a code shown on screen in the demo confirms nothing/)).toBeTruthy();
     expect(callsTo(server, "GET", "/account/work")).toEqual([]);
   });
 
@@ -191,6 +226,21 @@ describe("/owner/:venueId/team", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Remove member" }));
     await waitFor(() => expect(screen.queryByText("rita@example.com", { selector: "strong" })).toBeNull());
     expect(callsTo(server, "DELETE", "/owner/venues/casa/members/1")).toHaveLength(1);
+  });
+
+  it("runs the team of an event venue in words for a venue, without the restaurant steps", async () => {
+    setSessionToken("1.9.sig");
+    const server = startFakeServer();
+    server.routes.set("GET /owner/venues/q1/members", () => ({ body: { items: [] } }));
+    server.routes.set("GET /owner/restaurants/q1", () => errorReply(404, "not_found", "Restaurant not found."));
+    server.routes.set("GET /account/work", () => ({ body: { ...WORK, event_venues: [{ ...WORK.event_venues[0], role: "owner" }] } }));
+    renderAt("/owner/q1/team");
+    expect(await screen.findByText("Quinta da Serra Azul")).toBeTruthy();
+    expect(await screen.findByText(/the venue then appears under Staff/)).toBeTruthy();
+    expect(screen.getByText(/run the events held here with you/)).toBeTruthy();
+    expect(screen.queryByText(/restaurant/i)).toBeNull();
+    expect(screen.queryByRole("link", { name: "Floor plan" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Back to your account" }).getAttribute("href")).toBe("/account?tab=staff");
   });
 
   it("refuses a malformed email before calling the server", async () => {
