@@ -33,12 +33,17 @@
   top: var(--space-3);
 }
 
+/* Frosted, but nearly opaque: photos and the map scroll under it and the
+   header text must stay readable over the darkest of them. */
 .shell-header {
   position: sticky;
   top: 0;
   z-index: var(--z-header);
-  background: var(--c-bg);
-  border-bottom: var(--border-width) solid var(--c-border);
+  background: var(--glass-fill-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  backdrop-filter: var(--glass-blur-strong);
+  border-bottom: var(--border-width) solid var(--glass-edge);
+  box-shadow: 0 1px 0 var(--c-border);
 }
 
 .shell-header .shell-inner {
@@ -65,7 +70,8 @@
 }
 
 .shell-footer {
-  border-top: var(--border-width) solid var(--c-border);
+  border-top: var(--border-width) solid var(--glass-edge);
+  background: var(--glass-fill-soft);
   color: var(--c-text-muted);
   font-size: var(--fs-sm);
   padding-block: var(--space-3);
@@ -142,11 +148,13 @@
   transition:
     background-color var(--dur-fast) var(--ease-out),
     border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
     transform var(--dur-instant) var(--ease-out);
 }
 
 .btn:active:not(:disabled) {
   transform: translateY(1px);
+  box-shadow: none;
 }
 
 .btn:disabled {
@@ -163,20 +171,25 @@
 .btn-primary {
   background: var(--c-primary);
   color: var(--c-on-primary);
+  box-shadow: var(--btn-sheen);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--c-primary-hover);
+  box-shadow: var(--btn-sheen), var(--shadow-press);
 }
 
+/* A pane of glass with a lit edge, not an outlined box. */
 .btn-secondary {
-  background: var(--c-surface);
+  background: var(--glass-fill-soft);
   color: var(--c-text);
-  border-color: var(--c-border-strong);
+  border-color: var(--glass-edge);
+  box-shadow: var(--glass-highlight), var(--shadow-sm);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--c-primary-soft);
+  background: var(--glass-fill-hover);
+  box-shadow: var(--glass-highlight), var(--shadow-md);
 }
 
 .btn-ghost {
@@ -185,7 +198,8 @@
 }
 
 .btn-ghost:hover:not(:disabled) {
-  background: var(--c-primary-soft);
+  background: var(--glass-fill-soft);
+  box-shadow: var(--glass-highlight);
 }
 
 .btn-danger {
@@ -235,10 +249,17 @@
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
   border: var(--border-width) solid var(--c-border-strong);
-  background: var(--c-surface);
+  background: var(--glass-fill-soft);
+  box-shadow: var(--glass-highlight);
   color: var(--c-text);
   font: inherit;
-  transition: border-color var(--dur-fast) var(--ease-out);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.field-input:focus {
+  background: var(--glass-fill-hover);
 }
 
 .field-input:hover {

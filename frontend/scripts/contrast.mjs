@@ -65,6 +65,36 @@ const PAIRS = [
   ["seat-accessible-mark", "seat-accessible", NON_TEXT],
   ["seat-held", "seat-held-soft", NON_TEXT],
   ["seat-friend", "seat-friend-soft", NON_TEXT],
+  // Glass: text that sits straight on the page meets the lamp pools of the
+  // background at their strongest, and text on a frosted panel meets the panel
+  // composited over the worst pool (--c-glass-floor).
+  ...["c-lamp-warm", "c-lamp-cool", "c-bg-deep"].flatMap((bg) => [
+    ["c-text", bg, TEXT],
+    ["c-heading", bg, TEXT],
+    ["c-text-muted", bg, TEXT],
+    ["c-primary", bg, TEXT],
+    ["c-accent", bg, TEXT],
+    ["c-focus", bg, NON_TEXT],
+  ]),
+  ["c-text", "c-glass-floor", TEXT],
+  ["c-heading", "c-glass-floor", TEXT],
+  ["c-text-muted", "c-glass-floor", TEXT],
+  ["c-primary", "c-glass-floor", TEXT],
+  ["c-accent", "c-glass-floor", TEXT],
+  ["c-danger", "c-glass-floor", TEXT],
+  ["c-border-strong", "c-glass-floor", NON_TEXT],
+  ["c-focus", "c-glass-floor", NON_TEXT],
+  // Clearer glass (inputs, chips, rows: --glass-fill-soft) over the darkest pool.
+  // Placeholders use --c-text-muted (base.css), so its pairs here and on
+  // --c-glass-floor and --c-surface are the placeholder checks too.
+  ["c-text", "c-glass-soft-floor", TEXT],
+  ["c-heading", "c-glass-soft-floor", TEXT],
+  ["c-text-muted", "c-glass-soft-floor", TEXT],
+  ["c-primary", "c-glass-soft-floor", TEXT],
+  ["c-accent", "c-glass-soft-floor", TEXT],
+  ["c-danger", "c-glass-soft-floor", TEXT],
+  ["c-border-strong", "c-glass-soft-floor", NON_TEXT],
+  ["c-focus", "c-glass-soft-floor", NON_TEXT],
 ];
 
 /** Reads every "--name: #hex;" inside one CSS block of text. */
