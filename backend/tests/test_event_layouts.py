@@ -683,3 +683,70 @@ def test_the_usual_event_flows_work_on_a_setup_copy(
     assert {t["label"] for t in chart.json()["tables"]} >= {"T1"}
     exported = client.get(f"/api/events/{setup.eid}/export.csv", headers=setup.headers)
     assert exported.status_code == 200 and "Guest 1" in exported.text
+
+
+def test_a_write_that_loaded_the_event_before_a_setup_change_uses_the_new_room(
+    client: TestClient, session: Session, organiser: Organiser
+) -> None:
+    """Staff B's request loads the event, organiser A changes the setup and
+    commits, then B's write takes the lock: it must see the new room and never
+    put a guest on a seat of the old one (the hall's, or a removed copy's)."""
+    from app.core.errors import ApiError
+    from app.events_service.schemas import SeatChoice
+    from app.events_service.seating import confirm_seat, hold_seat
+    from app.routers import events as events_router
+
+    people = [{"name": f"G{n}", "email": f"g{n}@example.com"} for n in range(3)]
+    setup = make_event(client, organiser, people, tables=2, per_table=4)
+    choose(client, setup, "G0", setup.seats[0][0])
+    user = session.merge(organiser)
+    g1, g2 = setup.guests["G1"], setup.guests["G2"]
+    hall_seat = setup.seats[1][1]
+
+    def loaded_now() -> Event:
+        # What a request holds after load_event, before it takes the lock.
+        session.expire_all()
+        return session.scalars(select(Event).where(Event.public_id == setup.eid)).one()
+
+    def status_of(call: Any) -> int:
+        try:
+            call()
+        except ApiError as error:
+            session.rollback()
+            return error.status
+        raise AssertionError("the write went through on the old room")
+
+    # 1. The hall's own plan, then a setup copy.
+    stale = loaded_now()
+    hall_id = stale.venue_id
+    assert _apply(client, setup, "banquet", confirm=True).status_code == 200
+    choice = SeatChoice(seat_id=hall_seat)
+    assert status_of(lambda: events_router.assign_seat(setup.eid, g1, choice, user, session)) == 404
+    stale = loaded_now()
+    assert _apply(client, setup, "cabaret", confirm=True).status_code == 200
+    guest = session.get(Guest, g2)
+    assert status_of(lambda: hold_seat(session, stale, guest, hall_seat)) == 404
+    assert status_of(lambda: confirm_seat(session, stale, guest, hall_seat)) == 404
+
+    # 2. One copy, then the next: the first copy and its seats are gone.
+    stale = loaded_now()
+    copy_seat = session.scalars(
+        select(Seat.id).where(Seat.venue_id == stale.venue_id).order_by(Seat.id)
+    ).first()
+    assert _apply(client, setup, "theatre", confirm=True).status_code == 200
+    gone = SeatChoice(seat_id=copy_seat)
+    assert status_of(lambda: events_router.assign_seat(setup.eid, g1, gone, user, session)) == 404
+
+    # A seat of the room in use still works, and lands in that room.
+    event = _event(session, setup)
+    taken = {row.seat_id for row in _rows(session, event).values()}
+    free = next(
+        seat_id
+        for seat_id in session.scalars(select(Seat.id).where(Seat.venue_id == event.venue_id))
+        if seat_id not in taken
+    )
+    loaded_now()
+    events_router.assign_seat(setup.eid, g1, SeatChoice(seat_id=free), user, session)
+    event = _event(session, setup)
+    assert event.venue_id != hall_id
+    assert session.get(Seat, _rows(session, event)[g1].seat_id).venue_id == event.venue_id

@@ -378,8 +378,8 @@ def assign_seat(
     guest = load_event_guest(session, event, gid)
     if guest.rsvp == "no":
         raise ApiError(409, "conflict", "This guest said they are not coming.")
-    seat = seat_for_guest(session, event, guest, body.seat_id)
     lock_event(session, event)
+    seat = seat_for_guest(session, event, guest, body.seat_id)  # after the lock: the room in use
     plans.ensure_baseline(session, event)
     old_seat_id = _place(session, event, guest, seat)
     detail = {"seat_id": seat.id, "old_seat_id": old_seat_id}

@@ -34,8 +34,15 @@ def lock_event(session: Session, event: Event) -> None:
     one open transaction update a row. Doing it first gives every transaction
     on the event the same lock order. It also tells listeners about the change
     when we commit, so later bumps in the same transaction are not needed.
+
+    The event's room is read again once the lock is held: a room setup
+    (layouts.py) moves the event to another venue, and a request that loaded
+    the event before that commit would otherwise check seats against the old
+    room. Only `venue_id` is reloaded, so field changes the caller made before
+    the lock are kept. Read seats and other room data after this call.
     """
     live.bump(session, event_scope(event))
+    session.refresh(event, ["venue_id"])
 
 
 def taken_message(seat: Seat) -> str:
@@ -70,8 +77,8 @@ def hold_seat(session: Session, event: Event, guest: Guest, seat_id: int) -> Hol
     """Hold one seat for five minutes. Taking a new hold drops this guest's other holds."""
     require_before_deadline(event)
     require_coming(guest)
-    seat = seat_for_guest(session, event, guest, seat_id)
     lock_event(session, event)
+    seat = seat_for_guest(session, event, guest, seat_id)  # after the lock: the room in use
     # Checked after the lock, so a confirm that just committed is already visible.
     if _owned_by_other(session, event, guest, seat):
         raise SeatTaken(taken_message(seat))
@@ -107,8 +114,8 @@ def confirm_seat(
     """
     require_before_deadline(event)
     require_coming(guest)
-    seat = seat_for_guest(session, event, guest, seat_id)
     lock_event(session, event)
+    seat = seat_for_guest(session, event, guest, seat_id)  # after the lock: the room in use
     confirm_hold(
         session,
         scope=event_scope(event),
