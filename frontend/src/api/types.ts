@@ -26,6 +26,9 @@ export type ErrorCode =
   | "policy_not_accepted" // HTTP 422: a deposit applies and its terms were not accepted
   | "payment_unavailable" // HTTP 502: the payment provider could not be reached
   | "payments_not_ready" // HTTP 422: deposits need online payments connected first
+  | "guests_seated" // HTTP 409: an event room setup would move seated guests; send confirm to go ahead
+  | "not_enough_seats" // HTTP 422: an event room setup has fewer seats than guests coming; confirm to go ahead
+  | "too_small" // HTTP 422: the hall fits none of that event room setup
   | "method_not_allowed" // HTTP 405
   | "internal" // HTTP 500, or a status the API never plans to send
   | "network" // client only: the request never reached the server
