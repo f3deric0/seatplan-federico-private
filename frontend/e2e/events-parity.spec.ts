@@ -42,7 +42,7 @@ async function accountByApi(request: APIRequestContext, person: { name: string; 
 /**
  * The server allows 10 sign-ins a minute from one address, counted per calendar minute
  * (backend/app/security.py, rate_limit), and every test file shares that address. This file
- * needs three, so it starts on a fresh minute and leaves the next file a fresh one too;
+ * needs four, so it starts on a fresh minute and leaves the next file a fresh one too;
  * otherwise a busy minute makes later files fail with 429 one after another.
  */
 async function waitForNextMinute(): Promise<void> {
@@ -149,6 +149,36 @@ test("an owner adds a member by email; the member sees the restaurant under Staf
   await floor.click();
   await page.waitForURL((url) => url.pathname === `/staff/${venueId}`);
   await expect(page.getByRole("heading", { name: "Service floor" })).toBeVisible();
+});
+
+test("a quinta's owner adds a member from Staff; the member sees the quinta and its events", async ({ page, request }) => {
+  const member = newPerson("venue");
+  const memberSessions = await accountByApi(request, member);
+
+  await signIn(page, ORGANISER, "/account");
+  await page.getByRole("button", { name: "Staff" }).click();
+  const quinta = page.locator(".ep-staff-row", { has: page.getByRole("heading", { name: /Quinta da Serra Azul/ }) });
+  await quinta.getByRole("link", { name: "Team" }).click();
+  await page.waitForURL((url) => /^\/owner\/[^/]+\/team$/.test(url.pathname));
+  await expect(page.getByRole("heading", { level: 1, name: "Team" })).toBeVisible();
+  await expect(page.getByText("Quinta da Serra Azul", { exact: true })).toBeVisible();
+  await expect(page.getByText(/the venue then appears under Staff/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Floor plan" })).toHaveCount(0);
+  await page.getByRole("textbox", { name: /^Email/ }).fill(member.email);
+  await page.getByRole("button", { name: "Add to team" }).click();
+  await expect(page.locator(".ow-team-list strong", { hasText: member.email })).toBeVisible();
+
+  await page.evaluate((s) => {
+    sessionStorage.clear();
+    sessionStorage.setItem("seatplan.guest-session", s.guest);
+    sessionStorage.setItem("seatplan.session", s.work);
+  }, memberSessions);
+  await page.goto("/account?tab=staff");
+  await expect(page.getByRole("heading", { level: 1, name: member.name })).toBeVisible();
+  const row = page.locator(".ep-staff-row", { has: page.getByRole("heading", { name: /Quinta da Serra Azul/ }) });
+  await expect(row.getByText("Staff", { exact: true })).toBeVisible();
+  await expect(row.getByRole("link", { name: "Team" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Open organiser workspace for Sofia and Tiago's wedding/ })).toBeVisible();
 });
 
 test("Event booking: filter by type, open an event, and the shared link reaches the seat choice", async ({ page }) => {

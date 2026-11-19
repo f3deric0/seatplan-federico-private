@@ -11,8 +11,9 @@ carries and forgets any other left in the tab.
 | `AccountSignIn.tsx` | `POST /account/login`; also used by `/events/staff` |
 | `AccountRegister.tsx` | `POST /account/register` (four fields only), then the code step (`POST /guest/verify`); the demo code is shown when the server sends it |
 | `BookingPanel.tsx` | `DinerDashboard` (bookings, saved restaurants) and My events (`GET /guest/me`) |
-| `StaffPanel.tsx` | `GET /account/work`: restaurants, event venues, events, with role badges; owners get Profile, Floor plan, Team, Publishing |
+| `StaffPanel.tsx` | `GET /account/work`: restaurants, event venues, events, with role badges; restaurant owners get Profile, Floor plan, Team, Publishing; event venue owners get Team. "Restaurant owner area" only for someone who owns a restaurant, else "Open your own restaurant" |
 
 A 401 on a guest call is forgotten by `client.ts`; a 401 on `/account/work` is forgotten here
 (`clearSessionToken`), so the page shows "Sign in again" instead of a broken panel. The older pages
-(`/restaurants/account`, `/my`) stay and link here.
+(`/restaurants/account`, `/my`) stay and link here; every Sign out, theirs and the owner menu's, uses
+`accountSignOut` and forgets both sessions.

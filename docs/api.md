@@ -208,7 +208,7 @@ Bearer session and return the same 404 for missing and foreign restaurants.
 | `GET/PUT /staff/{vid}/schedule` | Owner edits opening hours through the existing schedule API; staff limited to demo restaurants |
 | `GET /r/{vid}/map` and `/ambience` | Published restaurants only; additive rooms/light/phrases; map/hold accept optional wishes |
 | `GET /r/{vid}/seats?table_ids=…` | Usable chairs and facing phrases, at most three tables from this venue |
-| `POST /r/{vid}/bookings` | Optional `prefs` and indicative `seat_id`; choice validated before consuming the table hold |
+| `POST /r/{vid}/bookings` | Optional `prefs` and indicative `seat_id`; choice validated before consuming the table hold. With a valid guest session (`Authorization: Bearer` guest token) and the account's own address as `email`, the booking belongs to that account at once (`account_id`, listed by `GET /diner/bookings`); any other token or none books anonymously, never 401 |
 
 Room writes reject malformed clocks, unknown sides, opening overlap/out-of-wall
 spans, partial glass walls and unknown/duplicate view tags with 422. Foreign

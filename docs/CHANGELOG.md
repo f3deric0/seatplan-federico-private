@@ -16,6 +16,29 @@ Security. "Not released" means it has not been deployed anywhere.
 Things planned but not done yet: the first Vercel deployment, real email
 through Resend, usability sessions with real users.
 
+### Fixed (2026-11-19, review of events parity and the Layout tab)
+
+- Every event write reads the event's room again once it holds the event lock (`lock_event` reloads
+  `venue_id`); assigning, holding and confirming look the seat up after the lock. A request that had
+  loaded the event before a room setup committed could put a guest on a seat of the old room.
+- Room setups: the confirm step (409 `guests_seated`) adds `accessible_needed`, `accessible_seats` and
+  `holding` to `details`; the message and the dialog say how many guests who need a step-free seat at
+  least will lose theirs, and that people choosing a seat right now will choose again. Previews mark
+  step-free seats. Applying the setup already in use is a 409 `conflict` (nothing moves, nobody is
+  emailed); a re-seat emails nobody whose table, number and place stay the same.
+- Every Sign out (the `/my` bar, `/restaurants/account`, the owner menu) forgets both sessions of the
+  tab, as `/account` does.
+- A table booked while signed in, under the account's own address, shows under Booking at once
+  (`POST /api/r/{vid}/bookings` reads the guest session; otherwise it books anonymously as before).
+- An event venue's owner has a Team link under Staff; `/owner/:id/team` names the venue and drops the
+  restaurant steps and words there. Staff who own no restaurant see "Open your own restaurant".
+  `/demo` has the public header (Log in to `/account`, Plan an event).
+
+### Security (2026-11-19, review of events parity and the Layout tab)
+
+- `POST /api/events/{eid}/layout` is rate limited to 20 a minute per person (each apply can re-seat
+  and email every seated guest).
+
 ### Added (2026-11-18, events parity)
 
 - One account: `POST /api/account/register` signs up without an event; the emailed code then makes the

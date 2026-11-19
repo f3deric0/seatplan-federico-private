@@ -53,4 +53,7 @@ the problems, which the page lists. A published restaurant shows "View public pa
 `TeamPage.tsx` (`/owner/:venueId/team`, "Team" in the shell's lower menu) lists the members, adds one by
 email and removes one after a dialog (`GET|POST|DELETE /owner/venues/{vid}/members`, in `api/account.ts`).
 The server never says whether an email has an account, so the page only explains that the person needs
-one with that address. A 404 means "not your restaurant".
+one with that address. A 404 means "not your restaurant". The same page serves an event venue (hall or
+quinta) its owner reaches from Staff on `/account`: no restaurant profile answers for that id, so the
+page finds the venue in `GET /account/work`, shows its name and venue words, and leaves out the
+restaurant shell and steps (a plain page with "Back to your account").
