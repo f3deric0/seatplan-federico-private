@@ -40,6 +40,15 @@ describe("previewToMap", () => {
   });
 });
 
+describe("previewToMap zone names", () => {
+  it("names the front zone as the setup does: dance floor, screen, bar or stage", () => {
+    expect(previewToMap(PREVIEW, "banquet").zones[0].name).toBe("Dance floor");
+    expect(previewToMap(PREVIEW, "u_shape").zones[0].name).toBe("Screen");
+    expect(previewToMap(PREVIEW, "theatre").zones[0].name).toBe("Stage");
+    expect(previewToMap({ ...PREVIEW, zones: [{ kind: "bar", x: 0, y: 0, w: 9, h: 9 }] }, "cocktail").zones[0].name).toBe("Bar");
+  });
+});
+
 describe("thumbTransform", () => {
   it("is empty without a rotation and turns around the box centre otherwise", () => {
     expect(thumbTransform({ x: 10, y: 20, w: 100, h: 40, rotation: 0 })).toBeUndefined();

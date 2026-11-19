@@ -29,7 +29,7 @@ const NOTHING_SELECTABLE = (): boolean => false;
 
 /** The chosen setup, drawn empty: nobody sits there until it is applied. */
 function LayoutPreviewMap({ org, preset, eventName }: { org: OrganiserState; preset: LayoutPreset; eventName: string }) {
-  const map = useMemo(() => previewToMap(preset.preview), [preset]);
+  const map = useMemo(() => previewToMap(preset.preview, preset.key), [preset]);
   return (
     <div className="ev-org-map" ref={org.mapRef}>
       <p className="ev-preview-banner">

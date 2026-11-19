@@ -12,14 +12,22 @@ function plural(count: number, word: string): string {
   return `${count} ${word}${count === 1 ? "" : "s"}`;
 }
 
+/** The preview carries only a zone's kind; the setup names its front zone (layout_presets.py). */
+const FRONT_NAMES: Record<string, string> = { banquet: "Dance floor", u_shape: "Screen" };
+
+function zoneName(kind: string, presetKey?: string): string {
+  if (presetKey && FRONT_NAMES[presetKey]) return FRONT_NAMES[presetKey];
+  return kind === "bar" ? "Bar" : "Stage";
+}
+
 /**
  * The preview as a seat map. It has no ids or labels, so tables and seats are
  * numbered in order; every seat is free, because nobody sits there yet.
  */
-export function previewToMap(preview: LayoutPreview): { zones: MapZone[]; tables: MapTable[]; seats: MapSeat[] } {
+export function previewToMap(preview: LayoutPreview, presetKey?: string): { zones: MapZone[]; tables: MapTable[]; seats: MapSeat[] } {
   const zones = preview.zones.map((zone, index) => ({
     id: index + 1,
-    name: zone.kind,
+    name: zoneName(zone.kind, presetKey),
     kind: ZONE_KINDS.includes(zone.kind as ZoneKind) ? (zone.kind as ZoneKind) : "general",
     x: zone.x,
     y: zone.y,
