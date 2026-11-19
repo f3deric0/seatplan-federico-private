@@ -590,3 +590,96 @@ def test_unknown_setups_and_strangers_are_refused(
     assert client.get(f"/api/events/{setup.eid}/layouts").status_code == 401
     assert _event(session, setup).venue_id == session.scalar(select(func.min(Venue.id)))
     assert _layouts(client, setup)["own_layout"] is False
+
+
+def test_account_holders_get_their_seat_picture_on_every_setup(
+    client: TestClient, session: Session, organiser: Organiser
+) -> None:
+    """Everyone who joins with the public link has an account: their seat email
+    carries a picture drawn from the event's own copy, on every setup."""
+    people = [{"name": f"Member {n}", "email": f"member{n}@example.com"} for n in range(30)]
+    setup = make_event(client, organiser, people, tables=4, per_table=8)
+    for n in range(30):
+        account = make_account(session, f"member{n}@example.com", f"Member {n}")
+        guest = session.get(Guest, setup.guests[f"Member {n}"])
+        guest.account_id = account.id
+    session.commit()
+    seats = [seat for table in setup.seats for seat in table]
+    for n in range(30):
+        placed = client.put(
+            f"/api/events/{setup.eid}/assignments/{setup.guests[f'Member {n}']}",
+            headers=setup.headers,
+            json={"seat_id": seats[n]},
+        )
+        assert placed.status_code == 200, placed.text
+    for key in layout_presets.PRESET_KEYS:
+        before = {m.id for m in outbox(session, "seat_changed")}
+        applied = _apply(client, setup, key, confirm=True)
+        assert applied.status_code == 200, (key, applied.text)
+        body = applied.json()
+        assert body["reseated"] + body["unseated"] == body["seated"] + body["unseated"]
+        new = [m for m in outbox(session, "seat_changed") if m.id not in before]
+        assert len(new) == body["reseated"] > 0, key
+        assert all(m.image_png for m in new), key
+        assert all("Hall" in m.body_text and "room setup" not in m.body_text for m in new)
+
+
+def test_the_usual_event_flows_work_on_a_setup_copy(
+    client: TestClient, session: Session, organiser: Organiser, monkeypatch: Any
+) -> None:
+    from guest_helpers import open_link, sign_up
+
+    setup = make_event(client, organiser, PEOPLE)
+    old_hall_seat = setup.seats[0][0]
+    choose(client, setup, "Guest 1", old_hall_seat)
+    token_link = open_link(client, setup)
+    assert _apply(client, setup, "banquet", confirm=True).status_code == 200
+    event = _event(session, setup)
+    copy_seats = [
+        s.id for s in session.scalars(select(Seat).where(Seat.venue_id == event.venue_id))
+    ]
+    taken = {r.seat_id for r in _rows(session, event).values()}
+    free = [seat_id for seat_id in copy_seats if seat_id not in taken]
+
+    # The attendee page shows the copy; a seat of the hall is no longer a seat here.
+    page = setup.page(client, "Guest 2")
+    assert page["venue"] == {"name": "Hall"} and len(page["map"]["seats"]) == 30
+    token = setup.tokens["Guest 2"]
+    assert client.post(f"/api/a/{token}/hold", json={"seat_id": old_hall_seat}).status_code == 404
+    choose(client, setup, "Guest 2", free[0])
+
+    # Someone joins with the shared link and picks a seat of the copy.
+    joined = sign_up(client, token_link, "joiner@example.com", "Joiner")
+    headers = {"Authorization": f"Bearer {joined['token']}"}
+    mine = client.get(f"/api/guest/events/{setup.eid}", headers=headers)
+    assert mine.status_code == 200, mine.text
+    assert len(mine.json()["map"]["seats"]) == 30
+    held = client.post(
+        f"/api/guest/events/{setup.eid}/hold", headers=headers, json={"seat_id": free[1]}
+    )
+    assert held.status_code == 200, held.text
+    done = client.post(
+        f"/api/guest/events/{setup.eid}/confirm", headers=headers, json={"seat_id": free[1]}
+    )
+    assert done.status_code == 200, done.text
+
+    # Auto-fill, apply its scenario, undo it.
+    scenario = client.post(
+        f"/api/events/{setup.eid}/optimise/autofill", headers=setup.headers, json={"seed": 1}
+    )
+    assert scenario.status_code == 200, scenario.text
+    sid = scenario.json()["id"]
+    assert set(scenario.json()["assignments"].values()) <= set(copy_seats)
+    applied = client.post(f"/api/events/{setup.eid}/scenarios/{sid}/apply", headers=setup.headers)
+    assert applied.status_code == 200 and applied.json()["conflicts"] == []
+    assert _layouts(client, setup)["seated"] == 5
+    undone = client.post(f"/api/events/{setup.eid}/undo", headers=setup.headers)
+    assert undone.status_code == 200, undone.text
+    assert _layouts(client, setup)["seated"] == 3
+
+    # Print and export read the copy.
+    chart = client.get(f"/api/events/{setup.eid}/chart", headers=setup.headers)
+    assert chart.status_code == 200
+    assert {t["label"] for t in chart.json()["tables"]} >= {"T1"}
+    exported = client.get(f"/api/events/{setup.eid}/export.csv", headers=setup.headers)
+    assert exported.status_code == 200 and "Guest 1" in exported.text
