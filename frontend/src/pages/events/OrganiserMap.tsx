@@ -39,7 +39,6 @@ function LayoutPreviewMap({ org, preset, eventName }: { org: OrganiserState; pre
       <div className="ev-map">
         <SeatMap label={`Preview of the ${preset.label} setup, ${eventName}`} zones={map.zones} tables={map.tables} seats={map.seats} selectable={NOTHING_SELECTABLE} />
       </div>
-      <Legend states={["free"]} showAccessible={false} showRecommended={false} />
     </div>
   );
 }

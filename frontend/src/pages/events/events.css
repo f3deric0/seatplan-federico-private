@@ -456,9 +456,11 @@
   overflow-x: auto;
 }
 
+/* Five tabs fit the side panel on a laptop; on a phone the list scrolls sideways if needed. */
 .ev-tab {
+  flex: 0 0 auto;
   min-height: var(--touch-target);
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
   font: inherit;
   font-weight: var(--fw-medium);
   color: var(--c-text-muted);
@@ -476,6 +478,13 @@
 
 .ev-tabpanel {
   padding-top: var(--space-4);
+}
+
+/* Phone width: tighter tabs, so all five stay in view. */
+@media (max-width: 30rem) {
+  .ev-tab {
+    padding-inline: var(--space-2);
+  }
 }
 
 /* ---------- Organiser: guests ---------- */

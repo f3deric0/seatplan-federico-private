@@ -1,5 +1,5 @@
 // Route /organiser/:eventId: the organiser's workspace. Laptop first:
-// the full map on the left, a side panel with four tabs on the right.
+// the full map on the left, a side panel with five tabs on the right.
 // On narrow screens the panel simply moves under the map.
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";

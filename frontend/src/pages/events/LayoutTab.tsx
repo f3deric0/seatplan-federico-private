@@ -1,6 +1,7 @@
 // Layout tab: one-click room setups for event staff (docs/api.md, "Event room
 // layouts"). Two taps: choose a setup (it shows on the map, nothing changes
-// yet), then "Apply". When guests already have a seat, or the setup has fewer
+// yet), then "Apply"; a third, the confirm, only when guests already have a
+// seat or seats run short. When guests already have a seat, or the setup has fewer
 // seats than guests coming, the server asks first (409 `guests_seated`, 422
 // `not_enough_seats`); a dialog says what will happen and applies on confirm.
 // Each event has its own copy of the hall, so other events there never change.
@@ -31,7 +32,8 @@ export function LayoutTab({ org, data }: { org: OrganiserState; data: OrganiserE
   const venueName = data.event.venue_name ?? data.venue.name;
   // Fetch again when the room or the guest counts change (live updates included).
   const coming = data.guests.filter((g) => g.rsvp !== "no");
-  const countsKey = `${data.venue.public_id}:${coming.length}:${coming.filter((g) => g.seat_id !== null).length}`;
+  // The first seat id changes whenever the room is set up again (every seat is new), even from another session.
+  const countsKey = `${data.venue.public_id}:${data.map.seats[0]?.id ?? 0}:${coming.length}:${coming.filter((g) => g.seat_id !== null).length}`;
 
   const fetchLayouts = useCallback(async (): Promise<void> => {
     try {

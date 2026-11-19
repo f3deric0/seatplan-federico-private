@@ -143,7 +143,8 @@ your restaurants and venues.
 
 ## 11. Room setup (Layout tab)
 
-The **Layout** tab sets the room up for this event in two taps
+The **Layout** tab sets the room up for this event in two taps (three when
+guests already have a seat: the confirm)
 (`GET /api/events/{eid}/layouts`, `POST /api/events/{eid}/layout`). Each card
 shows a setup drawn small (Banquet, Cabaret, Theatre, Classroom, U-shape,
 Boardroom, Cocktail), fitted to the hall or quinta, with its seats against the
