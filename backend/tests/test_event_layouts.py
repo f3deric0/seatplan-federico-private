@@ -755,6 +755,25 @@ def test_the_confirm_step_names_guests_who_would_lose_a_step_free_seat(
     assert len(marked) == 4
 
 
+def test_the_step_free_sentence_reads_right_for_one_and_for_none() -> None:
+    from app.events_service.layouts import _step_free_loss
+
+    def loss(needed: int, seats: int) -> str:
+        return _step_free_loss(
+            "Classroom", {"accessible_needed": needed, "accessible_seats": seats}
+        )
+
+    assert loss(3, 2) == (
+        " Only 2 seats in the Classroom setup are step-free, so at least 1 guest who needs one "
+        "will lose their seat."
+    )
+    assert loss(2, 1).startswith(" Only 1 seat in the Classroom setup is step-free, so at least 1")
+    assert loss(2, 0).startswith(
+        " No seat in the Classroom setup is step-free, so at least 2 guests"
+    )
+    assert loss(2, 2) == loss(0, 4) == ""
+
+
 def test_the_confirm_step_counts_people_choosing_a_seat_right_now(
     client: TestClient, session: Session, organiser: Organiser
 ) -> None:

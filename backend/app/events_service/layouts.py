@@ -264,10 +264,11 @@ def _step_free_loss(label: str, details: dict[str, int]) -> str:
         return ""
     have = details["accessible_seats"]
     seats = "Only 1 seat" if have == 1 else ("No seat" if have == 0 else f"Only {have} seats")
-    verb = "is" if have == 1 else "are"
+    verb = "is" if have <= 1 else "are"
+    need = "needs" if short == 1 else "need"
     return (
         f" {seats} in the {label} setup {verb} step-free, so at least "
-        f"{_plural(short, 'guest')} who need one will lose their seat."
+        f"{_plural(short, 'guest')} who {need} one will lose their seat."
     )
 
 
