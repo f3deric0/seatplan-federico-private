@@ -140,3 +140,19 @@ those at the halls and quintas whose team you are on, each marked
 email and password first. The workspace header shows the kind of event and the
 venue. Your account's **Staff** side (`/account`) shows the same events next to
 your restaurants and venues.
+
+## 11. Room setup (Layout tab)
+
+The **Layout** tab sets the room up for this event in two taps
+(`GET /api/events/{eid}/layouts`, `POST /api/events/{eid}/layout`). Each card
+shows a setup drawn small (Banquet, Cabaret, Theatre, Classroom, U-shape,
+Boardroom, Cocktail), fitted to the hall or quinta, with its seats against the
+guests coming ("140 seats for 40 coming"; "10 short" in red when it is too
+small). Tap a card: the setup appears on the map, empty, and nothing changes
+yet. Tap **Apply**. If guests already have a seat, a dialog says how many will
+be re-seated automatically (groups and friends kept), who would lose a seat,
+and that anyone whose seat changes gets the usual seat-change email; confirm to
+go ahead. The result line says how many were re-seated and how many lost their
+seat. Each event has its own copy of the room, so other events at the same
+venue never change. Once a setup is applied, **Fine-tune in the editor** opens
+this event's copy in the floor-plan editor.

@@ -39,6 +39,10 @@ through Resend, usability sessions with real users.
   that way, re-seating seated guests (with `confirm`) and emailing whoever moved. Fine-tuning that copy
   in `/editor/<id>` is open to the event's organiser and the hall's team. The ten listed demo events
   each run on their own setup. New column `venues.parent_venue_id` (additive).
+- Layout tab in the organiser workspace (`/organiser/:eventId`, second tab): a card per setup with a
+  drawn thumbnail, its seats against the guests coming, preview on the map, Apply, a confirm dialog
+  with the counts when guests are seated or seats run short, the re-seated and unseated counts after,
+  and "Fine-tune in the editor" once the event has its own copy.
 
 ### Changed (2026-11-18, events parity)
 
