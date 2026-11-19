@@ -59,10 +59,11 @@ function OrganiserHeader({ data }: { data: OrganiserEvent }) {
   return (
     <header className="ev-org-header">
       <div>
+        {data.event.event_type_label && <p className="ev-eyebrow">{data.event.event_type_label}</p>}
         <h1 className="ev-title">{data.event.name}</h1>
         <p className="ev-when">
           <time dateTime={data.event.starts_at}>{formatDateTime(data.event.starts_at)}</time>
-          <span> · {data.venue.name}</span>
+          <span> · {data.event.venue_name ?? data.venue.name}</span>
         </p>
       </div>
       <p className="ev-progress">
@@ -82,6 +83,8 @@ function SidePanel({ org, data }: { org: OrganiserState; data: OrganiserEvent })
     { id: "optimise", label: "Optimise", content: <OptimiseTab org={org} data={data} /> },
     { id: "settings", label: "Settings", content: <SettingsTab org={org} data={data} /> },
     { id: "print", label: "Print", content: <PrintTab eventId={org.eventId} eventName={data.event.name} /> },
+    // LAYOUT TAB GOES HERE (plan 2026-11-18, "Later decisions": one-click room setups for event staff).
+    // Built by the event room layouts step, not here.
   ];
   return (
     <aside className="ev-side" aria-label="Plan tools">

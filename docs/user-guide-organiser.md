@@ -130,3 +130,13 @@ event. Open the event, tab **Settings**, card **Shared link**.
 - On a real deployment the codes go out only to addresses allowed by
   `EMAIL_ALLOWLIST` (an open question for the team, `docs/guest-accounts.md`
   section 15).
+
+## 10. Event staff
+
+**Event staff** (`/events/staff`) lists the events you can run: your own, then
+those at the halls and quintas whose team you are on, each marked
+**Organiser** or **Staff**. Pick a kind of event to narrow the list, then
+**Open organiser workspace**. Without a sign-in the page asks for your SeatPlan
+email and password first. The workspace header shows the kind of event and the
+venue. Your account's **Staff** side (`/account`) shows the same events next to
+your restaurants and venues.

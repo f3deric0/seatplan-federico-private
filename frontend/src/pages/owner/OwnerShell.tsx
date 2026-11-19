@@ -7,7 +7,7 @@ import { PageShell } from "../../design/components";
 import "./owner.css";
 import "./owner-v5.css";
 
-export type OwnerSection = "restaurants" | "profile" | "photos" | "hours" | "rooms" | "review" | "menu" | "payments";
+export type OwnerSection = "restaurants" | "profile" | "photos" | "hours" | "rooms" | "review" | "menu" | "payments" | "team";
 
 interface OwnerShellProps {
   /** The browser tab title. */
@@ -22,7 +22,7 @@ interface OwnerShellProps {
   width?: "normal" | "wide";
 }
 
-const STEPS: { key: Exclude<OwnerSection, "restaurants">; label: string; path: string }[] = [
+const STEPS: { key: Exclude<OwnerSection, "restaurants" | "team">; label: string; path: string }[] = [
   { key: "profile", label: "Profile", path: "profile" },
   { key: "photos", label: "Photos", path: "photos" },
   { key: "hours", label: "Opening hours", path: "hours" },
@@ -56,6 +56,8 @@ export function OwnerShell({ title, venueId, venueName, current, publicHref, chi
           </ul>
           <ul className="ow-nav-more">
             {base && <li><Link to={`${base}/dashboard`}>Service floor</Link></li>}
+            {/* Staff access by email (docs/api.md, "Venue team"); not a setup step, so it sits with the floor. */}
+            {base && <li><Link to={`${base}/team`} aria-current={current === "team" ? "page" : undefined}>Team</Link></li>}
             {venueId && (
               <li>
                 <Link to={publicHref ?? `/r/${encodeURIComponent(venueId)}`}>Public restaurant</Link>

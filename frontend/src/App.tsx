@@ -13,6 +13,12 @@ import MySeatPage from "./pages/account/MySeatPage";
 import ResetPage from "./pages/account/ResetPage";
 import DinerAccountPage from "./pages/discover/DinerAccountPage";
 import DiscoverPage from "./pages/discover/DiscoverPage";
+import EventsPage from "./pages/events-public/EventsPage";
+import EventStaffPage from "./pages/events-public/EventStaffPage";
+import YourAccountPage from "./pages/your-account/YourAccountPage";
+import TeamPage from "./pages/owner/TeamPage";
+import VenuePage from "./pages/events-public/VenuePage";
+import VenuesPage from "./pages/events-public/VenuesPage";
 import Home from "./pages/Home";
 import JoinPage from "./pages/join/JoinPage";
 import JoinSignInPage from "./pages/join/JoinSignInPage";
@@ -43,6 +49,8 @@ export default function App() {
       {/* The original SeatPlan home page, with the demo links, moved here (spec 4.1). */}
       <Route path="/demo" element={<Home />} />
       <Route path="/login" element={<Login />} />
+      {/* One account (plan 2026-11-18): sign in or create, then Booking | Staff */}
+      <Route path="/account" element={<YourAccountPage />} />
       <Route path="/owner" element={<OwnerHomePage />} />
       <Route path="/owner/sign-up" element={<OwnerSignUpPage />} />
       <Route path="/owner/new" element={<NewRestaurantWizard />} />
@@ -53,9 +61,15 @@ export default function App() {
       <Route path="/owner/:venueId/menu" element={<MenuPage />} />
       <Route path="/owner/:venueId/payments" element={<PaymentsPage />} />
       <Route path="/owner/:venueId/review" element={<PublishReview />} />
+      <Route path="/owner/:venueId/team" element={<TeamPage />} />
       <Route path="/owner/sign-in" element={<Login defaultNext="/owner" />} />
       <Route path="/owner/:venueId/dashboard" element={<StaffPage />} />
       <Route path="/owner/:venueId/rooms" element={<Suspense fallback={<p role="status">Loading room editor…</p>}><RoomEditorPage /></Suspense>} />
+      {/* Events, public (plan 2026-11-18): Event booking, the halls and quintas, a venue's page */}
+      <Route path="/events" element={<EventsPage />} />
+      <Route path="/events/staff" element={<EventStaffPage />} />
+      <Route path="/venues" element={<VenuesPage />} />
+      <Route path="/venues/:slug" element={<VenuePage />} />
       {/* Events: personal attendee link, organiser workspace */}
       <Route path="/e/:token" element={<AttendeePage />} />
       <Route path="/organiser/:eventId" element={<OrganiserPage />} />

@@ -4,23 +4,24 @@ import { Link } from "react-router-dom";
 import { ApiError, getDemoLinks } from "../api/client";
 import { EmptyState, ErrorState, Legend, PageShell, Skeleton } from "../design/components";
 import { SeatMap } from "../seatmap/SeatMap";
-import { demoEntries } from "./demoLinks";
-import type { DemoEntry, DemoGroup } from "./demoLinks";
+import { demoCards } from "./demoLinks";
+import type { DemoCard as DemoCardKey, DemoCardLink } from "./demoLinks";
 import { SAMPLE_RECOMMENDED, buildSampleFloor } from "./homeSample";
 import "./home.css";
 
-type LoadState = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready"; links: DemoEntry[] };
+type Cards = Record<DemoCardKey, DemoCardLink[]>;
+type LoadState = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready"; links: Record<string, string> };
 
 function useDemoLinks(): { state: LoadState; reload: () => void } {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const load = useCallback(() => {
     setState({ kind: "loading" });
     getDemoLinks()
-      .then((data) => setState({ kind: "ready", links: demoEntries(data.links ?? {}) }))
+      .then((data) => setState({ kind: "ready", links: data.links ?? {} }))
       .catch((error: unknown) => {
         // The backend answers 404 when DEMO_MODE is off: that is "no demo", not a failure.
         if (error instanceof ApiError && error.code === "not_found") {
-          setState({ kind: "ready", links: [] });
+          setState({ kind: "ready", links: {} });
           return;
         }
         const message = error instanceof ApiError ? error.message : "The demo links could not be loaded.";
@@ -74,52 +75,46 @@ function Hero() {
   );
 }
 
-const GROUPS: { key: DemoGroup; title: string; blurb: string }[] = [
-  { key: "events", title: "Events", blurb: "Choose a seat from your personal invitation, or plan the whole room as the organiser." },
-  { key: "restaurant", title: "Restaurant", blurb: "Book a table for a date and time, or run the floor as staff during service." },
-  { key: "tools", title: "Venue tools", blurb: "Draw and change the floor plan that both kinds of venue use." },
+// Each card starts with two people to be (plan 2026-11-18, "Later decisions"), then a small
+// link to browse. The other demo links stay in the backend and are hidden by demoCards().
+const CARDS: { key: DemoCardKey; title: string; blurb: string; browse: { to: string; label: string } }[] = [
+  {
+    key: "restaurant",
+    title: "Restaurant",
+    blurb: "Book a table for a date and time, or run the floor as staff during service.",
+    browse: { to: "/", label: "Browse restaurants" },
+  },
+  {
+    key: "events",
+    title: "Events",
+    blurb: "Pick an event and choose your seat, or plan the room for an event you run.",
+    browse: { to: "/venues", label: "Browse halls and quintas" },
+  },
 ];
 
 function DemoLinks({ state, reload }: { state: LoadState; reload: () => void }) {
   if (state.kind === "loading") return <Skeleton lines={4} label="Loading demo links" />;
   if (state.kind === "error") return <ErrorState title="The demo is not reachable" message={state.message} onRetry={reload} />;
-  if (state.links.length === 0) {
+  if (Object.keys(state.links).length === 0) {
     return (
       <EmptyState title="The demo is switched off">
         <p>This server runs without demo data. Ask an organiser to sign in and create a venue.</p>
       </EmptyState>
     );
   }
+  const cards: Cards = demoCards(state.links);
   return (
     <div className="home-cards">
-      {GROUPS.map((group) => {
-        const links = state.links.filter((l) => l.group === group.key);
-        // The two verticals always show (even when empty); the tools card only when it has links.
-        if (group.key === "tools" && links.length === 0) return null;
-        return <DemoCard key={group.key} title={group.title} blurb={group.blurb} links={links} />;
-      })}
+      {CARDS.map((card) => (
+        <DemoCard key={card.key} title={card.title} blurb={card.blurb} links={cards[card.key]} browse={card.browse} />
+      ))}
     </div>
   );
 }
 
-// One short sentence per kind of page, chosen by the start of the path. The
-// path itself is not printed: personal links end in a 43-character secret
+// The path itself is never printed: personal links end in a 43-character secret
 // token, which is unreadable and has no place to wrap on a phone.
-const LINK_DESCRIPTIONS: [prefix: string, words: string][] = [
-  ["/e/", "Opens one guest's personal invitation"],
-  ["/organiser/", "Plans the whole room as the organiser"],
-  ["/r/", "Books a table as a diner"],
-  ["/restaurants/", "Opens the public page of a demo restaurant"],
-  ["/b/", "Changes or cancels an existing booking"],
-  ["/staff/", "Runs the dining room during service"],
-  ["/editor/", "Draws and changes the floor plan"],
-];
-
-function linkDescription(path: string): string {
-  return LINK_DESCRIPTIONS.find(([prefix]) => path.startsWith(prefix))?.[1] ?? "Opens this part of the demo";
-}
-
-function DemoCard({ title, blurb, links }: { title: string; blurb: string; links: DemoEntry[] }) {
+function DemoCard({ title, blurb, links, browse }: { title: string; blurb: string; links: DemoCardLink[]; browse: { to: string; label: string } }) {
   return (
     <article className="home-card">
       <h3>{title}</h3>
@@ -132,7 +127,7 @@ function DemoCard({ title, blurb, links }: { title: string; blurb: string; links
             <li key={link.name}>
               <Link to={link.path} className="home-link">
                 <span className="home-link-label">{link.label}</span>
-                <span className="home-link-desc">{linkDescription(link.path)}</span>
+                <span className="home-link-desc">{link.description}</span>
                 <span className="home-link-arrow" aria-hidden="true">
                   →
                 </span>
@@ -141,6 +136,9 @@ function DemoCard({ title, blurb, links }: { title: string; blurb: string; links
           ))}
         </ul>
       )}
+      <p className="home-browse">
+        <Link to={browse.to}>{browse.label}</Link>
+      </p>
     </article>
   );
 }

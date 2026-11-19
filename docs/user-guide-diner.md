@@ -144,3 +144,11 @@ the first matching person on the waitlist receives an email with a link to
 book that table. "Matching" means the cancelled booking freed a table at the
 time you asked for, the table fits your party, and your time has not passed
 yet: you are never offered a table for a time that is already gone.
+
+## 10. Your account
+
+**Log in** (or **My account**) in the header opens `/account`. One SeatPlan
+account does everything: under **Booking** you find your restaurant bookings
+(cancel them there), your saved restaurants and the events where you have a
+seat. If a restaurant or venue added you to its team, **Staff** shows what you
+can run. **Sign out** ends both sides.
