@@ -39,6 +39,27 @@ async function accountByApi(request: APIRequestContext, person: { name: string; 
   return { guest: body.token, work: body.work?.token ?? "" };
 }
 
+/**
+ * The server allows 10 sign-ins a minute from one address, counted per calendar minute
+ * (backend/app/security.py, rate_limit), and every test file shares that address. This file
+ * needs three, so it starts on a fresh minute and leaves the next file a fresh one too;
+ * otherwise a busy minute makes later files fail with 429 one after another.
+ */
+async function waitForNextMinute(): Promise<void> {
+  const now = new Date();
+  await new Promise((resolve) => setTimeout(resolve, (60 - now.getSeconds()) * 1000 - now.getMilliseconds() + 500));
+}
+
+test.beforeAll(async () => {
+  test.setTimeout(90_000);
+  await waitForNextMinute();
+});
+
+test.afterAll(async () => {
+  test.setTimeout(90_000);
+  await waitForNextMinute();
+});
+
 /** Signs in on /account (one form for both halves of the account). */
 async function accountSignIn(page: Page, who: { email: string; password: string }): Promise<void> {
   const form = page.getByRole("form", { name: "Sign in" });
