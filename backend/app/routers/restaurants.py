@@ -10,7 +10,7 @@ the internet can call them.
 import datetime as dt
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Query, Request, Response
+from fastapi import APIRouter, Header, Query, Request, Response
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -45,7 +45,7 @@ from app.restaurant_service.clock import slot_moment, time_of_slot
 from app.restaurant_service.emails import manage_link
 from app.restaurant_service.schedule_edit import read_schedule
 from app.restaurant_service.venue_access import load_published
-from app.security import client_ip, hash_token, rate_limit
+from app.security import client_ip, hash_token, optional_guest_account, rate_limit
 
 router = APIRouter(tags=["restaurants"])
 
@@ -268,12 +268,20 @@ def release_hold(
 
 @router.post("/r/{venue_public_id}/bookings", status_code=201, response_model=None)
 def book(
-    venue_public_id: str, body: BookingIn, request: Request, session: db.SessionDep
+    venue_public_id: str,
+    body: BookingIn,
+    request: Request,
+    session: db.SessionDep,
+    authorization: Annotated[str | None, Header()] = None,
 ) -> dict[str, Any] | JSONResponse:
     """Turn a hold into a confirmed booking and queue the confirmation email.
 
     429 `rate_limited` when the booking caps say no: 4 upcoming bookings per
     mailbox, 10 attempts per client address per UTC day (booking_caps.py).
+    A diner signed in with a guest session who books under their own address
+    owns the booking at once (it shows under Booking on /account): the session
+    proves who booked, so no emailed proof is needed. Any other token, or none,
+    books anonymously as before.
     """
     _limit(session, request, "book", BOOK_LIMIT)
     venue = load_published(session, venue_public_id)
@@ -301,6 +309,10 @@ def book(
     except SeatTaken as taken:
         at = time_of_slot(held.window[0])
         return conflict_response(session, venue, held.day, at, needs, taken.message)
+    account = optional_guest_account(session, authorization)
+    if account is not None and booking.email.strip().lower() == account.email.strip().lower():
+        booking.account_id = account.id
+        session.commit()
     answer: dict[str, Any] = {
         "booking": describe(session, venue, booking, with_phrase=True),
         "manage_token": token,

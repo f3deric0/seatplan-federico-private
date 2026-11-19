@@ -236,6 +236,15 @@ def require_guest_account(
 CurrentGuestAccount = Annotated[GuestAccount, Depends(require_guest_account)]
 
 
+def optional_guest_account(session: Session, authorization: str | None) -> GuestAccount | None:
+    """The signed-in guest account, or None for no token, a bad or ended one, or a
+    work token. Never 401: for public routes that only do more for a signed-in guest."""
+    try:
+        return require_guest_account(session, authorization)
+    except ApiError:
+        return None
+
+
 # ---------------------------------------------------------------- rate limit
 
 

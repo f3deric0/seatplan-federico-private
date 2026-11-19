@@ -768,7 +768,8 @@ export async function createBooking(
   // The backend checks the party size against the hold, so it is sent again here.
   const wishes = needs.prefs?.length ? { prefs: needs.prefs } : {};
   const body = { hold_id: holdId, ...contact, party: needs.party, needs_accessible: needs.needs_accessible, high_chairs: needs.high_chairs, ...wishes, ...(seatId === null ? {} : { seat_id: seatId }), ...(acceptPolicy ? { accept_policy: true } : {}) };
-  const server = await api.post<ServerConfirmation>(`${diner(vid)}/bookings`, body);
+  // The personal session, when there is one: a booking made signed in, under the account's own address, is that account's at once.
+  const server = await api.post<ServerConfirmation>(`${diner(vid)}/bookings`, body, "guest");
   return { booking: toBookingView(server.booking), manage_url: server.manage_path, email: contact.email, payment: server.payment ?? null };
 }
 
