@@ -81,3 +81,15 @@ describe("Home demo links", () => {
     expect(await screen.findByText("The demo is switched off")).toBeTruthy();
   });
 });
+
+describe("Home header", () => {
+  it("offers the one account and events, as every public page does, not the old organiser-only sign-in", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ links: {} }), { status: 200 })));
+    renderHome();
+    await screen.findByText("The demo is switched off");
+    const nav = screen.getByRole("navigation", { name: "Main" });
+    expect(within(nav).getByRole("link", { name: "Log in" }).getAttribute("href")).toBe("/account");
+    expect(within(nav).getByRole("link", { name: "Plan an event" }).getAttribute("href")).toBe("/events");
+    expect(screen.queryByRole("link", { name: "Organiser sign in" })).toBeNull();
+  });
+});

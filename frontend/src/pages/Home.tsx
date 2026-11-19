@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { ApiError, getDemoLinks } from "../api/client";
 import { EmptyState, ErrorState, Legend, PageShell, Skeleton } from "../design/components";
 import { SeatMap } from "../seatmap/SeatMap";
+import { PublicHeaderActions } from "./discover/PublicHeaderActions";
 import { demoCards } from "./demoLinks";
 import type { DemoCard as DemoCardKey, DemoCardLink } from "./demoLinks";
 import { SAMPLE_RECOMMENDED, buildSampleFloor } from "./homeSample";
@@ -35,7 +36,7 @@ function useDemoLinks(): { state: LoadState; reload: () => void } {
 export default function Home() {
   const { state, reload } = useDemoLinks();
   return (
-    <PageShell title="Choose your seat" headerActions={<Link to="/login" className="btn btn-ghost">Organiser sign in</Link>}>
+    <PageShell title="Choose your seat" headerActions={<PublicHeaderActions />}>
       <Hero />
       <section className="home-demo" aria-labelledby="demo-heading">
         <h2 id="demo-heading">Open the live demo</h2>
