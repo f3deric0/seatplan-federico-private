@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { accountSignOut } from "../../api/account";
 import { getGuestToken } from "../../api/client";
-import { guestLogout } from "../../api/guest";
 import { Button, PageShell, useToast } from "../../design/components";
 import { SignInForm } from "../account/SignInForm";
 import "../account/account.css";
@@ -18,9 +18,8 @@ export default function DinerAccountPage() {
   async function signOut() {
     setBusy(true);
     try {
-      await guestLogout();
-    } catch {
-      // guestLogout clears the local session even when the request fails.
+      // Both sessions of the tab, as on /account: never leave the work one open for the next person.
+      await accountSignOut();
     } finally {
       setSignedIn(false);
       setBusy(false);

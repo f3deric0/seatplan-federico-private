@@ -2,6 +2,7 @@
 // beside the page. Every owner page sits in it, so the owner always knows where they are and
 // can reach the next step without going back to the list.
 import { Link } from "react-router-dom";
+import { accountSignOut } from "../../api/account";
 import { logout } from "../../api/client";
 import { PageShell } from "../../design/components";
 import "./owner.css";
@@ -64,7 +65,14 @@ export function OwnerShell({ title, venueId, venueName, current, publicHref, chi
               </li>
             )}
             <li>
-              <Link to="/owner/sign-in" onClick={() => logout()}>
+              {/* The work session goes at once (the next page reads it); the personal one, which /account keeps beside it, right after. */}
+              <Link
+                to="/owner/sign-in"
+                onClick={() => {
+                  logout();
+                  void accountSignOut();
+                }}
+              >
                 Sign out
               </Link>
             </li>
