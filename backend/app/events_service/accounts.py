@@ -62,7 +62,7 @@ from app.security import (
 CODE_MINUTES = 15
 MAX_CODE_TRIES = 5
 MIN_PASSWORD_LENGTH = 10
-CONSENT_VERSION = "2026-11-10"
+CONSENT_VERSION = "2026-11-14"
 # Rate limits (docs/guest-accounts.md, 8.1). Module constants so tests can lower them.
 # The per-network numbers leave room for a whole conference on one Wi-Fi.
 CODE_SENDS_PER_NETWORK_HOUR = 60
@@ -79,7 +79,7 @@ FAILED_LOGINS_PER_HOUR = 20
 FAILED_LOGINS_PER_ACCOUNT_HOUR = 100
 HOUR, DAY = 3600, 86400
 CODE_KIND = {"register": "account_code", "reset": "password_code"}
-CODE_KEY = {"register": "account-code", "reset": "password-code"}
+CODE_KEY = {"register": "account-code", "reset": "password-code", "org_reg": "organiser-code"}
 EXPIRED = "This code has expired or was replaced. Please ask for a new one."
 TOO_MANY_FAILS = "Too many tries for this account. Reset your password or try again in an hour."
 # The demo shows sign-up codes on screen only for these made-up addresses
@@ -100,6 +100,23 @@ def check_new_password(password: str, email: str) -> None:
         raise ApiError(422, "validation", "password: Use at least 10 characters.")
     if password.strip().lower() == normalise_email(email):
         raise ApiError(422, "validation", "password: Do not use your email address.")
+
+
+def require_signup_mail(email: str) -> None:
+    """Fail closed on Vercel if verification email cannot be sent to this address."""
+    settings = get_settings()
+    if not settings.trust_forwarded_for:
+        return
+    if (
+        settings.email_provider != "resend"
+        or not settings.resend_api_key
+        or (not settings.email_allow_all and email not in settings.email_allowlist)
+    ):
+        raise ApiError(
+            503,
+            "service_unavailable",
+            "Account registration is temporarily unavailable. Please try again later.",
+        )
 
 
 def account_out(account: GuestAccount) -> dict[str, Any]:
@@ -354,6 +371,29 @@ def start_sign_up(
     return _code_key(row), (code if show_code else None), signup_id
 
 
+def start_standalone_sign_up(session: Session, form: SignUp) -> tuple[str | None, str]:
+    """Queue verification without joining an event; never expose the code in the response."""
+    signup_id = new_token()
+    password_hash = hash_password(form.password)
+    if find_account(session, form.email) is not None:
+        return None, signup_id
+    row, code = _new_code_row(
+        session,
+        form.email,
+        "register",
+        name=form.name,
+        password_hash=password_hash,
+        needs_accessible=form.needs_accessible,
+        signup_hash=_signup_hash(signup_id),
+        code_shown=False,
+    )
+    parts = templates.account_code("your participant account", code, sign_in_link())
+    key = _code_key(row)
+    _queue(session, key, CODE_KIND["register"], form.email, parts)
+    session.commit()
+    return key, signup_id
+
+
 def _create_account(session: Session, row: EmailCode) -> GuestAccount:
     account = GuestAccount(
         email=row.email,
@@ -532,6 +572,11 @@ def _leave_event(session: Session, guest: Guest, actor: str) -> None:
     emails we sent, and unlink it.
     """
     event = session.get(Event, guest.event_id)
+    # Profile details supplied by the account holder do not belong to the invitation.
+    guest.first_name = None
+    guest.last_name = None
+    guest.birth_date = None
+    guest.share_age = False
     if event is None or guest.token_revoked_at is not None:
         # The organiser removed this row earlier: it only remembered the
         # account, so that it could not join again. Forget that too.

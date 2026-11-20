@@ -34,6 +34,7 @@ class Settings:
     email_from: str
     email_allowlist: tuple[str, ...]
     public_base_url: str
+    email_allow_all: bool = False
     # True only on Vercel, which writes X-Forwarded-For itself (see security.client_ip).
     trust_forwarded_for: bool = False
 
@@ -140,6 +141,7 @@ def load_settings() -> Settings:
         resend_api_key=os.environ.get("RESEND_API_KEY", ""),
         email_from=os.environ.get("EMAIL_FROM", "SeatPlan <noreply@example.com>"),
         email_allowlist=_read_list("EMAIL_ALLOWLIST"),
+        email_allow_all=_read_bool("EMAIL_ALLOW_ALL"),
         public_base_url=os.environ.get("PUBLIC_BASE_URL", "http://localhost:5173"),
         # Vercel sets VERCEL=1 in every function it runs.
         trust_forwarded_for=bool(os.environ.get("VERCEL")),

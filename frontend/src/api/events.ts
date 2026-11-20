@@ -44,6 +44,10 @@ export interface AttendeeMe {
   id: number;
   name: string;
   shown_to_others_as: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  birth_date?: string | null;
+  share_age?: boolean;
   rsvp: Rsvp;
   wants_anonymous: boolean;
   needs_accessible: boolean;
@@ -186,6 +190,8 @@ export interface ShareSettings {
   enabled: boolean;
   /** "/j/<token>", a path: the page adds its own origin. Null when never switched on, or when it must be made again. */
   link: string | null;
+  /** Short, case-insensitive code participants can enter on the home page. */
+  code?: string | null;
   /** True when the server secret changed since the link was made: a new link is needed. */
   needs_new_link: boolean;
   /** Most people who may join with the link; null means no cap. */

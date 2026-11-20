@@ -17,6 +17,7 @@ from app.events_service.schemas import (
     EmptyIn,
     ForgotIn,
     GuestLoginIn,
+    RegisterIn,
     ResetIn,
     VerifyIn,
 )
@@ -36,6 +37,22 @@ DELETE_TRIES_PER_MINUTE = 10
 
 def _session_out(account: GuestAccount) -> dict[str, Any]:
     return {"token": create_guest_session(account), "account": accounts.account_out(account)}
+
+
+@router.post("/register", status_code=202)
+def register_account(body: RegisterIn, request: Request, session: db.SessionDep) -> dict[str, Any]:
+    """Create a pending account without requiring an event invitation."""
+    email = accounts.normalise_email(body.email)
+    if not body.name.strip():
+        raise ApiError(422, "validation", "name: Enter your name.")
+    accounts.check_new_password(body.password, email)
+    accounts.require_signup_mail(email)
+    accounts.count_code_send(session, request, email, "register")
+    accounts.count_app_send(session)
+    form = accounts.SignUp(body.name.strip(), email, body.password, body.needs_accessible)
+    key, signup_id = accounts.start_standalone_sign_up(session, form)
+    accounts.send_at_once(session, key)
+    return accounts.code_sent(email, None, signup_id)
 
 
 @router.post("/verify", status_code=201)

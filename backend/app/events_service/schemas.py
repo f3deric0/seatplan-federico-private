@@ -5,6 +5,7 @@ GuestIn is also used to validate each row of an imported CSV file, so a row
 from a file is checked by exactly the same rules as a guest typed in by hand.
 """
 
+from datetime import date
 from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, EmailStr, Field
@@ -60,6 +61,16 @@ class GuestPatch(Strict):
     reserved_tag: ReservedTag | None = None
     wants_anonymous: bool | None = None
     rsvp: Rsvp | None = None
+
+
+class NameProfileIn(Strict):
+    first_name: PlainText = Field(min_length=1, max_length=60)
+    last_name: PlainText = Field(min_length=1, max_length=59)
+
+
+class AgeProfileIn(Strict):
+    birth_date: date | None
+    share_age: bool = False
 
 
 class SeatChoice(Strict):

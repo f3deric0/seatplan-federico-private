@@ -1,61 +1,47 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { describe, expect, it } from "vitest";
 import Home from "./Home";
+import ParticipantStartPage from "./ParticipantStartPage";
 
-function renderHome(): void {
+function renderHome() {
   render(
-    <MemoryRouter>
-      <Home />
+    <MemoryRouter initialEntries={["/"]}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/participant" element={<ParticipantStartPage />} />
+      </Routes>
     </MemoryRouter>,
   );
 }
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
-
-describe("Home demo links", () => {
-  it("shows the demo entry points grouped by vertical", async () => {
-    // Shape of GET /demo/links in backend/app/routers/demo.py: name -> path.
-    const links = { attendee_ana: "/a/demo-token", diner: "/r/demo-venue", editor_bistro: "/editor/demo-venue" };
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ links }), { status: 200 })));
+describe("Home entry points", () => {
+  it("offers clear role paths with SeatPlan branding and a clean welcome", () => {
     renderHome();
-    expect(screen.getByText("Loading demo links...")).toBeTruthy();
-    // The API's attendee path /a/ is mapped to the page route /e/.
-    const attendee = await screen.findByRole("link", { name: /Attendee Ana/ });
-    expect(attendee.getAttribute("href")).toBe("/e/demo-token");
-    expect(screen.getByRole("link", { name: /Diner/ }).getAttribute("href")).toBe("/r/demo-venue");
-    expect(screen.getByRole("heading", { name: "Venue tools" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Welcome to SeatPlan" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "SeatPlan, home" })).toBeTruthy();
+    expect(screen.queryByText("FLOW")).toBeNull();
+    expect(screen.queryByText(/thoughtful gatherings/i)).toBeNull();
+    expect(screen.queryByText(/thoughtful seating for good gatherings/i)).toBeNull();
+    expect(screen.queryByText(/already have an account/i)).toBeNull();
+    expect(screen.getByRole("link", { name: /I’m an organiser/ }).getAttribute("href")).toBe("/organiser/register");
+    expect(screen.getByRole("link", { name: /I’m a participant/ }).getAttribute("href")).toBe("/participant");
+    expect(screen.getAllByRole("link", { name: "Organiser sign in" }).some((link) => link.getAttribute("href") === "/login")).toBe(true);
+    expect(screen.getByRole("link", { name: "Staff area" }).getAttribute("href")).toBe("/staff");
   });
 
-  it("describes each link in words instead of printing its long secret token", async () => {
-    // A real token is 43 characters with no place to break: printed, it pushed the page sideways on a phone.
-    const token = "x".repeat(43);
-    const links = { wedding_guest_choosing: `/a/${token}`, staff_floor: "/staff/demo-venue" };
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ links }), { status: 200 })));
+  it("moves the glass highlight with a pointer and resets when it leaves", () => {
     renderHome();
-    const guest = await screen.findByRole("link", { name: /Wedding Guest Choosing/ });
-    expect(guest.getAttribute("href")).toBe(`/e/${token}`);
-    expect(guest.textContent).not.toContain(token);
-    expect(guest.textContent).toContain("Opens one guest's personal invitation");
-    expect(screen.getByRole("link", { name: /Staff Floor/ }).textContent).toContain("Runs the dining room during service");
-  });
-
-  it("shows an error with a working retry when the server is down", async () => {
-    const fetchMock = vi.fn(async () => {
-      throw new TypeError("Failed to fetch");
+    const panel = screen.getByRole("region", { name: "Welcome to SeatPlan" });
+    Object.defineProperty(panel, "getBoundingClientRect", {
+      value: () => ({ left: 0, top: 0, right: 100, bottom: 100, width: 100, height: 100, x: 0, y: 0, toJSON: () => ({}) }),
     });
-    vi.stubGlobal("fetch", fetchMock);
-    renderHome();
-    expect(await screen.findByText("The demo is not reachable")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
 
-  it("explains an empty demo instead of showing nothing", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ links: {} }), { status: 200 })));
-    renderHome();
-    expect(await screen.findByText("The demo is switched off")).toBeTruthy();
+    fireEvent.pointerMove(panel, { clientX: 80, clientY: 25, pointerType: "mouse" });
+    expect(panel.getAttribute("data-glass-active")).toBe("true");
+    expect((panel as HTMLElement).style.getPropertyValue("--glass-pointer-x")).toBe("80.00%");
+
+    fireEvent.pointerLeave(panel, { pointerType: "mouse" });
+    expect(panel.getAttribute("data-glass-active")).toBe("false");
   });
 });

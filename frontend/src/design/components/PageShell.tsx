@@ -12,6 +12,8 @@ interface PageShellProps {
   width?: "normal" | "wide";
   /** Extra items on the right of the header, e.g. a "Sign out" button. */
   headerActions?: ReactNode;
+  /** Page-specific links, kept between the brand and account actions. */
+  headerNavigation?: ReactNode;
 }
 
 export function Wordmark() {
@@ -29,7 +31,7 @@ export function Wordmark() {
   );
 }
 
-export function PageShell({ title, children, width = "normal", headerActions }: PageShellProps) {
+export function PageShell({ title, children, width = "normal", headerActions, headerNavigation }: PageShellProps) {
   useEffect(() => {
     document.title = `${title} · SeatPlan`;
   }, [title]);
@@ -42,6 +44,7 @@ export function PageShell({ title, children, width = "normal", headerActions }: 
       <header className="shell-header">
         <div className={`shell-inner shell-${width}`}>
           <Wordmark />
+          {headerNavigation && <nav className="shell-navigation" aria-label="Page navigation">{headerNavigation}</nav>}
           {headerActions && <div className="shell-actions">{headerActions}</div>}
         </div>
       </header>
@@ -51,7 +54,7 @@ export function PageShell({ title, children, width = "normal", headerActions }: 
       </main>
       <footer className="shell-footer">
         <div className={`shell-inner shell-${width}`}>
-          <p>SeatPlan, a student project at Nova SBE. Demo data only: every person here is invented.</p>
+          <p>Thoughtful seating for good gatherings.</p>
         </div>
       </footer>
     </div>

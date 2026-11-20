@@ -1,5 +1,7 @@
 # SeatPlan
 
+> **Independent project status (2026-11-16):** This is Federico’s personal event application in the private `f3deric0/seatplan-events` repository, deployed at [seatplan-events-federico.vercel.app](https://seatplan-events-federico.vercel.app/). Neon is connected and the schema is ready. Real email delivery and verified sign-up are not configured or verified yet; do not use this site for real attendees until those checks pass. See [independent setup](docs/INDEPENDENT_SETUP.md) and [implementation plan](PIANO_SEATPLAN.md).
+
 SeatPlan lets people choose their own seat on a live 2D map. Two verticals share
 one core:
 
@@ -19,8 +21,9 @@ hard rules (one person per seat, accessibility, reserved seats, table sizes)
 are never broken. The database itself makes double booking impossible: every
 seat, table slot and hold is protected by a UNIQUE constraint.
 
-It is a university project (Introduction to Programming, Nova SBE). The design
-agreement between all modules is [`docs/CONTRACT.md`](docs/CONTRACT.md); every
+This personal application is based on the existing SeatPlan codebase and focuses
+on event seating. Restaurant booking remains available on its own routes. The
+design agreement between modules is [`docs/CONTRACT.md`](docs/CONTRACT.md); every
 deviation from it is explained in [`docs/decisions-log.md`](docs/decisions-log.md).
 
 ## Quick start
@@ -44,8 +47,8 @@ both demo verticals, and prints the entry links (for example `/e/<token>` for an
 attendee or `/r/<id>` for the restaurant). Run it from `backend/`: the backend
 package is imported as `app` everywhere (tests, seed, `api/index.py`).
 
-Check it works: `curl http://127.0.0.1:8000/api/health` answers
-`{"status":"ok","database":"ok",...}`.
+Check it works: `curl http://127.0.0.1:8000/api/health` answers with
+`status: ok`, `database: ok` and `schema: ready` after a migration.
 
 ### 2. Frontend
 
@@ -57,9 +60,9 @@ npm ci
 npm run dev
 ```
 
-Open <http://localhost:5173>. The home page lists the demo links. The dev
-server forwards `/api` to the backend on port 8000, so the browser only ever
-talks to one address (as on Vercel).
+Open <http://localhost:5173>. The dev server forwards `/api` to the backend on
+port 8000, so the browser only ever talks to one address (as on Vercel). With
+demo mode enabled, `GET /api/demo/links` returns the temporary event links.
 
 ### 3. Demo accounts
 

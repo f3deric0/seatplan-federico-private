@@ -7,6 +7,7 @@ app/events_service, bump the live scope, write the audit log, commit once.
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Query, Response
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -14,6 +15,7 @@ from app import db
 from app.core import audit, live
 from app.core.errors import ApiError
 from app.core.holds import commit_or_seat_taken
+from app.core.text import PlainText
 from app.events_service import chart, csv_io, exact_check, guests, optimise, plans, share
 from app.events_service.access import (
     attendee_link,
@@ -90,6 +92,41 @@ def _changed(
 # ---------------------------------------------------------------- events
 
 
+class NewEventIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: PlainText = Field(min_length=1, max_length=120)
+    starts_at: AwareDatetime
+    ends_at: AwareDatetime
+
+
+@router.post("/events/create-with-venue", status_code=201)
+def create_event_with_venue(
+    body: NewEventIn, user: CurrentOrganiser, session: db.SessionDep
+) -> dict[str, Any]:
+    """Create a new event and its empty floor together, or neither on error."""
+    if body.ends_at <= body.starts_at:
+        raise ApiError(422, "validation", "The event must end after it starts.")
+    venue = Venue(
+        organiser_id=user.id, kind="event", name=body.name, timezone="UTC", width=1000, height=800
+    )
+    session.add(venue)
+    session.flush()
+    event = Event(
+        venue_id=venue.id,
+        organiser_id=user.id,
+        name=body.name,
+        starts_at=body.starts_at,
+        ends_at=body.ends_at,
+        privacy_mode="first_initial",
+    )
+    session.add(event)
+    session.flush()
+    _changed(session, event, user, "event.create", event.public_id)
+    session.commit()
+    return {**event_dict(event), "venue_id": venue.public_id}
+
+
 @router.post("/events", status_code=201)
 def create_event(body: EventIn, user: CurrentOrganiser, session: db.SessionDep) -> dict[str, Any]:
     venue = session.scalars(select(Venue).where(Venue.public_id == body.venue_id)).first()
@@ -107,8 +144,15 @@ def create_event(body: EventIn, user: CurrentOrganiser, session: db.SessionDep) 
 
 @router.get("/events")
 def list_events(user: CurrentOrganiser, session: db.SessionDep) -> list[dict[str, Any]]:
-    query = select(Event).where(Event.organiser_id == user.id).order_by(Event.starts_at)
-    return [event_dict(event) for event in session.scalars(query)]
+    query = (
+        select(Event, Venue.public_id)
+        .join(Venue, Venue.id == Event.venue_id)
+        .where(Event.organiser_id == user.id)
+        .order_by(Event.starts_at)
+    )
+    return [
+        {**event_dict(event), "venue_id": venue_id} for event, venue_id in session.execute(query)
+    ]
 
 
 @router.get("/events/{eid}")

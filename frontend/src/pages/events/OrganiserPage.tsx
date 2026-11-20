@@ -16,6 +16,7 @@ import { Tabs } from "./Tabs";
 import { useOrganiser } from "./useOrganiser";
 import type { OrganiserState } from "./useOrganiser";
 import "./events.css";
+import "./organiser-workspace.css";
 
 export default function OrganiserPage() {
   const { eventId = "" } = useParams();
@@ -41,6 +42,7 @@ export default function OrganiserPage() {
   const data = org.load.data;
   return (
     <PageShell title={`${data.event.name}, seating plan`} width="wide">
+      <div className="ev-organiser-workspace">
       <OrganiserHeader data={data} />
       <p className="visually-hidden" role="status" aria-live="polite">
         {org.message}
@@ -48,6 +50,7 @@ export default function OrganiserPage() {
       <div className="ev-org-layout">
         <OrganiserMap org={org} data={data} />
         <SidePanel org={org} data={data} />
+      </div>
       </div>
     </PageShell>
   );

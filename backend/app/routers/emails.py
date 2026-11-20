@@ -93,6 +93,10 @@ def email_log(
     error pass through redact_links(): a queued row still holds the raw link
     in its body, and a provider error may quote it (S9).
     """
+    # Rows lack an owner identifier, so this legacy global log must not expose
+    # other organisers' activity in a multi-tenant deployment.
+    if not get_settings().demo_mode:
+        raise ApiError(404, "not_found", "Email log is unavailable.")
     query = select(EmailOutbox)
     if status is not None:
         query = query.where(EmailOutbox.status == status)

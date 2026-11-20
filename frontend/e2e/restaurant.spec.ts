@@ -61,3 +61,21 @@ test("staff seat a walk-in from the live floor", async ({ page, request }) => {
   await expect(dialog).toHaveCount(0);
   await expect.poll(async () => Number(await seated.innerText())).toBe(seatedBefore + 1);
 });
+
+test("staff do not see the previous floor while a new time is loading", async ({ page, request }) => {
+  const links = await demoLinks(request);
+  await signIn(page, STAFF, links.restaurant_staff);
+  await expect(page.getByRole("list", { name: "Tables by status" })).toBeVisible();
+  await page.route("**/api/staff/**/floor?*", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    await route.continue();
+  });
+  const slider = page.getByRole("slider", { name: /^Floor at/ });
+  const target = Number(await slider.inputValue()) === 21 * 60 ? 20 * 60 : 21 * 60;
+  await slider.fill(String(target));
+  await expect(page.getByText("Updating the floor…")).toBeVisible();
+  await expect(page.getByRole("list", { name: "Tables by status" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "New walk-in" })).toBeDisabled();
+  await expect(page.getByRole("list", { name: "Tables by status" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "New walk-in" })).toBeEnabled();
+});

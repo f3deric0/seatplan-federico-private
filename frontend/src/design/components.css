@@ -593,3 +593,10 @@
 .legend-static {
   animation: none;
 }
+
+/* Site frame: consistent spacing across the event and account journeys. */
+.shell-header .shell-inner { min-height: 4.5rem; }
+.shell-main { padding-block: clamp(1.5rem, 4vw, 3rem) 4rem; }
+.shell-footer { padding-block: 1.5rem; }
+.wordmark-text { font-family: var(--font-body); font-size: 1.35rem; font-weight: 750; letter-spacing: -.055em; }
+@media (min-width: 48rem) { .shell-inner { padding-inline: 2rem; } }

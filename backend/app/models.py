@@ -304,6 +304,10 @@ class Guest(Base):
     # "invited" (typed by the organiser) or "self_registered" (joined with
     # the shared link).
     source: Mapped[str] = mapped_column(String(20), default="invited", server_default="invited")
+    first_name: Mapped[str | None] = mapped_column(String(60))
+    last_name: Mapped[str | None] = mapped_column(String(60))
+    birth_date: Mapped[date | None] = mapped_column(Date)
+    share_age: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("FALSE"))
 
 
 class Acquaintance(Base):

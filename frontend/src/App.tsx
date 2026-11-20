@@ -4,13 +4,17 @@ import { Route, Routes } from "react-router-dom";
 import EditorPage from "./pages/editor/EditorPage";
 import AttendeePage from "./pages/events/AttendeePage";
 import OrganiserPage from "./pages/events/OrganiserPage";
+import OrganiserDashboard from "./pages/OrganiserDashboard";
+import OrganiserRegister from "./pages/OrganiserRegister";
 import AccountPage from "./pages/account/AccountPage";
 import ForgotPage from "./pages/account/ForgotPage";
 import GuestSignInPage from "./pages/account/GuestSignInPage";
 import MyEventsPage from "./pages/account/MyEventsPage";
+import ParticipantRegisterPage from "./pages/account/ParticipantRegisterPage";
 import MySeatPage from "./pages/account/MySeatPage";
 import ResetPage from "./pages/account/ResetPage";
 import Home from "./pages/Home";
+import ParticipantStartPage from "./pages/ParticipantStartPage";
 import JoinPage from "./pages/join/JoinPage";
 import JoinSignInPage from "./pages/join/JoinSignInPage";
 import RegisterPage from "./pages/join/RegisterPage";
@@ -19,14 +23,18 @@ import NotFound from "./pages/NotFound";
 import BookingPage from "./pages/restaurant/BookingPage";
 import ManageBookingPage from "./pages/restaurant/ManageBookingPage";
 import StaffPage from "./pages/restaurant/StaffPage";
+import StaffAccess from "./pages/StaffAccess";
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/participant" element={<ParticipantStartPage />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/organiser/register" element={<OrganiserRegister />} />
       {/* Events: personal attendee link, organiser workspace */}
       <Route path="/e/:token" element={<AttendeePage />} />
+      <Route path="/organiser" element={<OrganiserDashboard />} />
       <Route path="/organiser/:eventId" element={<OrganiserPage />} />
       {/* Events: the shared link (visitors) and guest accounts (docs/guest-accounts.md 10.3) */}
       <Route path="/j/:token" element={<JoinPage />} />
@@ -36,12 +44,14 @@ export default function App() {
       {/* The fixed /my pages come before /my/:eventId, so "account" is never read as an event id. */}
       <Route path="/my/account" element={<AccountPage />} />
       <Route path="/my/sign-in" element={<GuestSignInPage />} />
+      <Route path="/my/register" element={<ParticipantRegisterPage />} />
       <Route path="/my/forgot" element={<ForgotPage />} />
       <Route path="/my/reset" element={<ResetPage />} />
       <Route path="/my/:eventId" element={<MySeatPage />} />
       {/* Restaurants: public booking, manage-or-cancel link, staff floor */}
       <Route path="/r/:venueId" element={<BookingPage />} />
       <Route path="/b/:token" element={<ManageBookingPage />} />
+      <Route path="/staff" element={<StaffAccess />} />
       <Route path="/staff/:venueId" element={<StaffPage />} />
       {/* Shared: floor-plan editor for both kinds of venue */}
       <Route path="/editor/:venueId" element={<EditorPage />} />

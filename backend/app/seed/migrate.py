@@ -21,10 +21,12 @@ The DDL below is fixed text written in this file, never built from input, so
 contract section 7 ("no string-built SQL") still holds.
 """
 
+import os
+
 from sqlalchemy import Connection, inspect, text
 
 from app import db
-from app.config import get_settings
+from app.config import _normalise_database_url, get_settings
 
 # (table, column, the column's type and rules as ALTER TABLE wants them).
 # Each server default must match the one in models.py word for word, so a new
@@ -36,6 +38,10 @@ NEW_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("events", "share_cap", "INTEGER"),
     ("guests", "account_id", "INTEGER REFERENCES guest_accounts (id)"),
     ("guests", "source", "VARCHAR(20) NOT NULL DEFAULT 'invited'"),
+    ("guests", "first_name", "VARCHAR(60)"),
+    ("guests", "last_name", "VARCHAR(60)"),
+    ("guests", "birth_date", "DATE"),
+    ("guests", "share_age", "BOOLEAN NOT NULL DEFAULT FALSE"),
     ("email_outbox", "image_png", "TEXT"),
 )
 
@@ -90,10 +96,22 @@ def upgrade_schema(connection: Connection) -> list[str]:
 
 def main() -> None:
     settings = get_settings()
-    db.init_engine(settings.database_url)
+    raw_url = os.environ.get("DATABASE_URL_UNPOOLED", "").strip() or settings.database_url
+    db.init_engine(_normalise_database_url(raw_url))
     for line in db.create_all():
         print(line)
     print("Tables are ready.")
+
+
+def apply_schema_migration(*, only_when_empty: bool = False) -> list[str]:
+    """Apply the schema using Neon/Vercel's direct URL without changing app state."""
+    settings = get_settings()
+    raw_url = os.environ.get("DATABASE_URL_UNPOOLED", "").strip() or settings.database_url
+    engine = db.make_engine(_normalise_database_url(raw_url))
+    try:
+        return db.create_all(engine=engine, only_when_empty=only_when_empty)
+    finally:
+        engine.dispose()
 
 
 if __name__ == "__main__":

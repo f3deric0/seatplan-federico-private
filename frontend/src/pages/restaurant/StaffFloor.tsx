@@ -23,14 +23,14 @@ import { WhatIfCard } from "./WhatIf";
 
 export function StaffFloor({ venueId, date }: { venueId: string; date: string }) {
   const [time, setTime] = useState(nowTime);
-  const { state, reload } = useLoad(() => getFloor(venueId, date, time), `${date}|${time}`);
+  const { state, reload } = useLoad(async () => ({ floor: await getFloor(venueId, date, time), requestedTime: time }), `${date}|${time}`);
   useLive(venueDayScope(venueId, date), () => reload(true));
   if (state.status === "loading") return <Skeleton lines={8} label="Loading the floor" />;
   if (state.status === "error") {
     if (needsSignIn(state.error)) return <SignInPrompt venueId={venueId} />;
     return <ErrorState title="We could not load the floor" message={errorMessage(state.error)} onRetry={() => reload()} />;
   }
-  return <FloorView venueId={venueId} date={date} floor={state.data} time={time} onTime={setTime} onRefresh={() => reload(true)} />;
+  return <FloorView venueId={venueId} date={date} floor={state.data.floor} time={time} updating={state.data.requestedTime !== time} onTime={setTime} onRefresh={() => reload(true)} />;
 }
 
 interface FloorViewProps {
@@ -40,6 +40,7 @@ interface FloorViewProps {
   floor: Floor;
   time: string;
   onTime: (time: string) => void;
+  updating: boolean;
   onRefresh: () => void;
 }
 
@@ -73,7 +74,7 @@ function useMoves(venueId: string, floor: Floor, done: (message: string, tableId
   return { moveTo, dropOn, dropOnMap };
 }
 
-function FloorView({ venueId, date, floor, time, onTime, onRefresh }: FloorViewProps) {
+function FloorView({ venueId, date, floor, time, onTime, updating, onRefresh }: FloorViewProps) {
   const toast = useToast();
   const [tableId, setTableId] = useState<number | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
@@ -97,9 +98,9 @@ function FloorView({ venueId, date, floor, time, onTime, onRefresh }: FloorViewP
   const { moveTo, dropOn, dropOnMap } = useMoves(venueId, floor, done, problem);
 
   return (
-    <div className="st-floor">
-      <FloorHeader floor={floor} time={time} onTime={onTime} onWalkin={() => setWalkin(true)} />
-      <div className="st-grid">
+    <div className="st-floor" aria-busy={updating}>
+      <FloorHeader floor={floor} time={time} onTime={onTime} onWalkin={() => setWalkin(true)} updating={updating} />
+      {updating ? <Skeleton lines={6} label="Updating the floor" /> : <div className="st-grid">
         <div className="st-main">
           <div onDragOver={(e) => e.preventDefault()} onDrop={dropOnMap}>
             <SeatMap
@@ -129,7 +130,7 @@ function FloorView({ venueId, date, floor, time, onTime, onRefresh }: FloorViewP
           </section>
           <WhatIfCard venueId={venueId} date={date} time={time} />
         </aside>
-      </div>
+      </div>}
       <MoveDialog venueId={venueId} booking={moving} tables={floor.tables} onClose={() => setMoving(null)} onMoved={(b) => done(`${b.name} is now at ${tablesText(b.table_labels)}.`, [...(moving?.table_ids ?? []), ...b.table_ids])} />
       <WalkinDialog venueId={venueId} date={date} time={time} open={walkin} onClose={() => setWalkin(false)} onSeated={(b) => done(`Walk-in of ${b.party_size} seated at ${tablesText(b.table_labels)}.`, b.table_ids)} />
       <span className="visually-hidden" role="status" aria-live="polite">
@@ -139,19 +140,19 @@ function FloorView({ venueId, date, floor, time, onTime, onRefresh }: FloorViewP
   );
 }
 
-function FloorHeader({ floor, time, onTime, onWalkin }: { floor: Floor; time: string; onTime: (t: string) => void; onWalkin: () => void }) {
+function FloorHeader({ floor, time, onTime, onWalkin, updating }: { floor: Floor; time: string; onTime: (t: string) => void; onWalkin: () => void; updating: boolean }) {
   const counts = countByStatus(floor.tables);
   return (
     <div className="st-floor-head">
-      <ul className="st-counts" aria-label="Tables by status">
+      {updating ? <p role="status">Updating the floor…</p> : <ul className="st-counts" aria-label="Tables by status">
         {FLOOR_ORDER.map((status) => (
           <li key={status} className={`st-count st-count-${status}`}>
             <span className="st-count-number tabular">{counts[status]}</span> {FLOOR_LOOK[status].label}
           </li>
         ))}
-      </ul>
+      </ul>}
       <TimeScrubber services={floor.services} time={time} onChange={onTime} />
-      <Button onClick={onWalkin}>New walk-in</Button>
+      <Button onClick={onWalkin} disabled={updating}>New walk-in</Button>
     </div>
   );
 }
