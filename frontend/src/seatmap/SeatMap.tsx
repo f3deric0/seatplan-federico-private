@@ -47,6 +47,8 @@ export interface SeatMapProps {
   ownId?: number | null;
   /** Targets the viewer's last action changed (the tables staff just seated or moved). Their next change only moves, silently: the page has already said what happened. */
   actedOn?: readonly number[] | null;
+  /** Seat currently targeted by an organiser drag-and-drop. */
+  dropTargetId?: number | null;
   /** Each time this becomes an id, the map zooms in on that target and centres it ("Show on map"). */
   focusId?: number | null;
   /** Writes occupant names under the seats once zoomed in far enough to read them (organiser map). */
@@ -270,6 +272,7 @@ export function SeatMap(props: SeatMapProps) {
               isSelectable={isSelectable}
               selectedId={selectedId}
               activeId={activeId}
+              dropTargetId={props.dropTargetId ?? null}
               highlight={highlight}
               marked={props.marked ?? NOTHING}
               markedLabel={props.markedLabel ?? "changed"}

@@ -4,7 +4,7 @@
 // stray click cannot mix the preview with real moves. Seats the preview
 // changes get a square outline (`marked`), not the attendee's round
 // "recommended" halo, and real names are written under the seats.
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { DragEvent } from "react";
 import type { OrganiserEvent } from "../../api/events";
 import { Legend } from "../../design/components";
@@ -23,12 +23,14 @@ export function OrganiserMap({ org, data }: { org: OrganiserState; data: Organis
   const changed = useMemo(() => (preview ? changedSeats(preview, data.guests) : NO_MARKS), [preview, data.guests]);
   const blocked = useMemo(() => new Set(map.seats.filter((s) => s.state === "blocked").map((s) => s.id)), [map.seats]);
   const selectedSeat = data.guests.find((g) => g.id === org.selectedGuest)?.seat_id ?? null;
+  const [dropTargetId, setDropTargetId] = useState<number | null>(null);
 
   const selectable = (seatId: number): boolean => preview === null && !blocked.has(seatId);
   const onSelect = (seatId: number): void => void pickSeat(org, data, seatId, org.selectedGuest);
 
   const onDrop = (event: DragEvent<HTMLDivElement>): void => {
     event.preventDefault();
+    setDropTargetId(null);
     const guestId = Number(event.dataTransfer.getData("text/plain"));
     const seatId = seatIdFromElement(document.elementFromPoint(event.clientX, event.clientY));
     if (!guestId || seatId === null || !selectable(seatId)) {
@@ -39,6 +41,16 @@ export function OrganiserMap({ org, data }: { org: OrganiserState; data: Organis
     void pickSeat(org, data, seatId, guestId);
   };
 
+  const onDragOver = (event: DragEvent<HTMLDivElement>): void => {
+    event.preventDefault();
+    const seatId = seatIdFromElement(document.elementFromPoint(event.clientX, event.clientY));
+    setDropTargetId(seatId);
+  };
+
+  const onDragLeave = (event: DragEvent<HTMLDivElement>): void => {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropTargetId(null);
+  };
+
   return (
     <div className="ev-org-map" ref={org.mapRef}>
       {preview && (
@@ -47,7 +59,12 @@ export function OrganiserMap({ org, data }: { org: OrganiserState; data: Organis
           the Optimise tab.
         </p>
       )}
-      <div className="ev-map" onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+      <div className="ev-map" onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}>
+        {dropTargetId !== null && (
+          <p className="ev-drop-hint" role="status">
+            {selectable(dropTargetId) ? "Release to place the guest here." : "This seat is unavailable. Choose a free seat."}
+          </p>
+        )}
         <SeatMap
           label={`Seating plan, ${data.event.name}`}
           zones={map.zones}
@@ -55,6 +72,7 @@ export function OrganiserMap({ org, data }: { org: OrganiserState; data: Organis
           seats={seats}
           selectable={selectable}
           selectedId={selectedSeat}
+          dropTargetId={dropTargetId}
           marked={changed}
           markedLabel={CHANGED_LABEL}
           showOccupants
