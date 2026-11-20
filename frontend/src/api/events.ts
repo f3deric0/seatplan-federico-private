@@ -26,6 +26,11 @@ export interface EventSummary {
   deadline_passed: boolean;
   /** The scope for useLive, for example "event-abc123". */
   live_scope: string;
+  /** Organiser answers only (docs/api.md, "Events"): the kind of event and where it is. */
+  event_type?: string | null;
+  event_type_label?: string | null;
+  listed?: boolean;
+  venue_name?: string | null;
 }
 
 /** One number per term of the optimiser objective (ScoreBreakdown in events_model.py). */
@@ -319,6 +324,60 @@ export interface EventPatch {
   change_deadline?: string | null;
 }
 
+// ---------- Room setups (docs/api.md, "Event room layouts") ----------
+
+export type LayoutPresetKey = "banquet" | "cabaret" | "theatre" | "classroom" | "u_shape" | "boardroom" | "cocktail";
+
+/** A setup drawn small: whole centimetres, front of the room at the top, no ids or labels. */
+export interface LayoutPreview {
+  width: number;
+  height: number;
+  zones: { kind: string; x: number; y: number; w: number; h: number }[];
+  /** (x, y) is the top-left of the unrotated box; rotation turns it around its centre. Seat x, y are seat centres in the room. */
+  tables: { shape: "round" | "rect" | "row"; x: number; y: number; w: number; h: number; rotation: number; seats: { x: number; y: number; accessible?: true }[] }[];
+}
+
+export interface LayoutPreset {
+  key: LayoutPresetKey;
+  label: string;
+  description: string;
+  /** Seats this setup gives in this hall; 0 when it does not fit. */
+  capacity: number;
+  preview: LayoutPreview;
+}
+
+export interface EventLayouts {
+  /** The setup the event's room still matches, or "custom" (always on the hall's own plan). */
+  current: LayoutPresetKey | "custom";
+  /** True once the event runs on its own copy of the hall: only then may the editor open it. */
+  own_layout: boolean;
+  /** Public id of the venue holding the event's map, for /editor/:venueId. */
+  venue_id: string;
+  capacity: number;
+  /** Guests still coming, and those of them with a seat. */
+  guests: number;
+  seated: number;
+  presets: LayoutPreset[];
+}
+
+export interface LayoutApplied extends EventLayouts {
+  applied: LayoutPresetKey;
+  reseated: number;
+  unseated: number;
+}
+
+/** The facts a 409 `guests_seated` or 422 `not_enough_seats` carries in `error.details`. */
+export interface LayoutConfirmFacts {
+  seated: number;
+  capacity: number;
+  guests: number;
+  /** Seated guests who need a step-free seat, and the step-free seats of the setup (a hard rule for the re-seat). */
+  accessible_needed?: number;
+  accessible_seats?: number;
+  /** People holding a seat right now: their holds are dropped. */
+  holding?: number;
+}
+
 function eventPath(eventId: string, rest = ""): string {
   return `/events/${encodeURIComponent(eventId)}${rest}`;
 }
@@ -460,4 +519,13 @@ export async function importGuests(eventId: string, csv: string): Promise<Import
 export async function exportGuestsCsv(eventId: string): Promise<string> {
   const response = await csvFetch(eventPath(eventId, "/export.csv"), { headers: csvHeaders(null) });
   return response.text();
+}
+
+export function getLayouts(eventId: string): Promise<EventLayouts> {
+  return api.get<EventLayouts>(eventPath(eventId, "/layouts"));
+}
+
+/** Without `confirm` the server refuses (409/422) when guests would be moved or left without a seat. */
+export function applyLayout(eventId: string, preset: LayoutPresetKey, confirm = false): Promise<LayoutApplied> {
+  return api.post<LayoutApplied>(eventPath(eventId, "/layout"), confirm ? { preset, confirm: true } : { preset });
 }

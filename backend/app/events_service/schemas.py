@@ -11,6 +11,7 @@ from typing import Literal
 from pydantic import AwareDatetime, BaseModel, ConfigDict, EmailStr, Field
 
 from app.core.text import PlainText
+from app.events_service.event_types import EventType
 
 PrivacyMode = Literal["full_name", "first_initial", "anonymous"]
 ReservedTag = Literal["vip", "family", "speaker"]
@@ -31,6 +32,7 @@ class EventIn(Strict):
     ends_at: AwareDatetime
     privacy_mode: PrivacyMode = "first_initial"
     change_deadline: AwareDatetime | None = None
+    event_type: EventType | None = None
 
 
 class EventPatch(Strict):
@@ -39,6 +41,7 @@ class EventPatch(Strict):
     ends_at: AwareDatetime | None = None
     privacy_mode: PrivacyMode | None = None
     change_deadline: AwareDatetime | None = None
+    event_type: EventType | None = None  # null clears it
 
 
 class GuestIn(Strict):
@@ -116,6 +119,17 @@ class PrivacyIn(Strict):
 
 Code = Field(pattern=r"^[0-9]{6}$")
 Password = Field(min_length=1, max_length=200)
+
+
+class LayoutPresetIn(Strict):
+    """POST /events/{eid}/layout: one of events_service/layout_presets.PRESET_KEYS."""
+
+    preset: Literal[
+        "banquet", "cabaret", "theatre", "classroom", "u_shape", "boardroom", "cocktail"
+    ]
+    # Needed when guests already have seats, or the setup has fewer seats than
+    # guests coming: the page asks first, then sends confirm=true.
+    confirm: bool = False
 
 
 class EmptyIn(Strict):

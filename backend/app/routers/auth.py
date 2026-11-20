@@ -15,7 +15,6 @@ from app.models import Organiser
 from app.security import (
     CurrentUser,
     client_ip,
-    create_session_token,
     hash_password,
     limit_reached,
     network_of,
@@ -23,6 +22,7 @@ from app.security import (
     rate_limit,
     tokens_match,
     verify_password,
+    work_session_token,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -76,7 +76,7 @@ def login(body: LoginIn, request: Request, session: db.SessionDep) -> LoginOut:
         for key, limit in failures:
             rate_limit(session, key, limit, HOUR)
         raise ApiError(401, "unauthorised", "Email or password is not correct.")
-    return LoginOut(token=create_session_token(user.id), user=_user_out(user))
+    return LoginOut(token=work_session_token(user), user=_user_out(user))
 
 
 @router.get("/me")

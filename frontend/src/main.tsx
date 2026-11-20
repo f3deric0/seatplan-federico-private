@@ -9,6 +9,7 @@ import "./design/tokens.css";
 import "./design/base.css";
 import "./design/components.css";
 import "./design/premium.css";
+import "./design/restaurant-theme.css";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("index.html must contain <div id=\"root\">");

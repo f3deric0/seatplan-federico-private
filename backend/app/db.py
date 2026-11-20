@@ -77,8 +77,8 @@ def create_all(
 ) -> list[str]:
     """Create missing tables, then add the listed new columns and indexes.
 
-    Existing rows are left alone. Returns one line per column or index step
-    (seed/migrate.py prints them).
+    Only explicit data migrations can change existing rows. Returns one line
+    per migration step (seed/migrate.py prints them).
 
     Two runs at once would both try CREATE TABLE and one would crash, so each
     run first takes a lock that lasts until the end of its transaction; the

@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.core import audit
 from app.core.errors import ApiError
+from app.core.parent_venue import shown_venue
 from app.core.privacy import display_name
 from app.events_service.access import (
     deadline_passed,
@@ -98,8 +99,9 @@ def page(session: Session, me: Guest) -> dict[str, Any]:
     """The whole attendee page (AttendeeView in the frontend)."""
     event = event_of(session, me)
     venue = load_venue(session, event)
+    shown = shown_venue(session, venue) or venue
     return {
-        "venue": {"name": venue.name},
+        "venue": {"name": shown.name},
         "event": event_summary(event),
         "me": me_dict(session, event, me),
         "map": attendee_map(session, event, venue, me),

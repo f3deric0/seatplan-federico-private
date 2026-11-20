@@ -1,5 +1,5 @@
 // Route /organiser/:eventId: the organiser's workspace. Laptop first:
-// the full map on the left, a side panel with four tabs on the right.
+// the full map on the left, a side panel with five tabs on the right.
 // On narrow screens the panel simply moves under the map.
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -8,6 +8,7 @@ import type { OrganiserEvent } from "../../api/events";
 import { ErrorState, PageShell, Skeleton } from "../../design/components";
 import { formatDateTime } from "./format";
 import { GuestsTab } from "./GuestsTab";
+import { LayoutTab } from "./LayoutTab";
 import { OptimiseTab } from "./OptimiseTab";
 import { OrganiserMap } from "./OrganiserMap";
 import { PrintTab } from "./PrintTab";
@@ -62,10 +63,11 @@ function OrganiserHeader({ data }: { data: OrganiserEvent }) {
   return (
     <header className="ev-org-header">
       <div>
+        {data.event.event_type_label && <p className="ev-eyebrow">{data.event.event_type_label}</p>}
         <h1 className="ev-title">{data.event.name}</h1>
         <p className="ev-when">
           <time dateTime={data.event.starts_at}>{formatDateTime(data.event.starts_at)}</time>
-          <span> · {data.venue.name}</span>
+          <span> · {data.event.venue_name ?? data.venue.name}</span>
         </p>
       </div>
       <p className="ev-progress">
@@ -82,13 +84,20 @@ function SidePanel({ org, data }: { org: OrganiserState; data: OrganiserEvent })
   const [tab, setTab] = useState("guests");
   const items = [
     { id: "guests", label: "Guests", content: <GuestsTab org={org} data={data} /> },
+    // One-click room setups (plan 2026-11-18, "Later decisions"); the setup it previews is drawn on the map.
+    { id: "layout", label: "Layout", content: <LayoutTab org={org} data={data} /> },
     { id: "optimise", label: "Optimise", content: <OptimiseTab org={org} data={data} /> },
     { id: "settings", label: "Settings", content: <SettingsTab org={org} data={data} /> },
     { id: "print", label: "Print", content: <PrintTab eventId={org.eventId} eventName={data.event.name} /> },
   ];
+  // A setup preview belongs to the Layout tab: leaving the tab puts the real plan back on the map.
+  const changeTab = (id: string): void => {
+    if (id !== "layout") org.setLayoutPreview(null);
+    setTab(id);
+  };
   return (
     <aside className="ev-side" aria-label="Plan tools">
-      <Tabs label="Plan tools" items={items} current={tab} onChange={setTab} />
+      <Tabs label="Plan tools" items={items} current={tab} onChange={changeTab} />
     </aside>
   );
 }

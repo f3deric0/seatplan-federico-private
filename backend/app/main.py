@@ -11,6 +11,7 @@ api/index.py calls create_app() itself.
 """
 
 from collections.abc import Awaitable, Callable
+from typing import Any
 
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -24,15 +25,26 @@ from app.config import APP_VERSION, Settings, get_settings
 from app.core import live
 from app.core.errors import ApiError
 from app.routers import (
+    account,
     attendee,
     auth,
     bookings,
     demo,
+    diners,
+    discovery,
     emails,
     events,
     guest_accounts,
     guest_events,
     health,
+    members,
+    menus,
+    owner_payments,
+    owner_rooms,
+    owners,
+    payments,
+    photos,
+    public_events,
     restaurants,
     staff,
     venues,
@@ -66,7 +78,7 @@ _SECURITY_HEADERS = {
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "no-referrer",
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(self)",
 }
 
 
@@ -76,7 +88,10 @@ def error_body(code: str, message: str) -> dict[str, dict[str, str]]:
 
 async def _api_error(_request: Request, exc: Exception) -> JSONResponse:
     assert isinstance(exc, ApiError)
-    return JSONResponse(error_body(exc.code, exc.message), status_code=exc.status)
+    body: dict[str, Any] = error_body(exc.code, exc.message)
+    if exc.details is not None:
+        body["error"]["details"] = exc.details
+    return JSONResponse(body, status_code=exc.status)
 
 
 async def _http_error(_request: Request, exc: Exception) -> JSONResponse:
@@ -131,6 +146,11 @@ async def _add_security_headers(
 def _register_routers(app: FastAPI) -> None:
     for module in (
         health,
+        account,
+        members,
+        owners,
+        owner_rooms,
+        photos,
         auth,
         venues,
         demo,
@@ -140,6 +160,12 @@ def _register_routers(app: FastAPI) -> None:
         guest_accounts,
         guest_events,
         restaurants,
+        discovery,
+        public_events,
+        diners,
+        menus,
+        owner_payments,
+        payments,
         bookings,
         staff,
         emails,

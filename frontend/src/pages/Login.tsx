@@ -20,7 +20,7 @@ function messageFor(error: unknown): string {
   return error.message;
 }
 
-export default function Login() {
+export default function Login({ defaultNext = "/organiser" }: { defaultNext?: string } = {}) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const isStaff = params.get("next") === "/staff";
@@ -41,7 +41,7 @@ export default function Login() {
     try {
       const result = await login(email.trim(), password);
       toast.show(`Welcome back, ${result.user.name}.`, "success");
-      navigate(safeNextPath(params.get("next") ?? "/organiser"));
+      navigate(safeNextPath(params.get("next") ?? defaultNext));
     } catch (caught) {
       setError(messageFor(caught));
     } finally {
